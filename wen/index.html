@@ -6,136 +6,349 @@
 <title>文 · 文渊 — Logos</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;600;700&display=swap');
-  * { margin:0; padding:0; box-sizing:border-box; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
-    --bg:#0b0b12; --card:rgba(22,22,36,0.88); --border:rgba(60,60,90,0.35);
-    --text:#e8e8f2; --text-sec:#a0a0bc; --text-dim:#6a6a88;
-    --accent:#7c6fff; --accent-dim:rgba(108,99,255,0.12);
-    --green:#4ade80; --blue:#60a5fa; --cyan:#22d3ee; --orange:#fb923c;
-    --radius:10px;
+    --bg: #0b0b12; --surface: rgba(16,16,26,0.85); --card: rgba(22,22,36,0.88);
+    --border: rgba(60,60,90,0.35); --text: #e8e8f2; --text-sec: #a0a0bc; --text-dim: #6a6a88;
+    --accent: #7c6fff; --accent-dim: rgba(108,99,255,0.1); --accent-glow: rgba(108,99,255,0.2);
+    --radius: 10px;
   }
-  body { font-family:'Inter',-apple-system,sans-serif; color:var(--text); min-height:100vh; line-height:1.6; }
-  .bg-layer { position:fixed; inset:0; z-index:0; background:linear-gradient(135deg,#0b0b12,#1a1028); }
-  .app { position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column; }
-
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif; color: var(--text);
+    min-height: 100vh; line-height: 1.6; background: var(--bg);
+  }
+  .bg-layer {
+    position: fixed; inset: 0; z-index: 0;
+    background: url('../bg.jpg') center/cover no-repeat;
+    filter: brightness(0.15) saturate(0.4);
+  }
+  .bg-layer::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,11,18,0.3) 0%, rgba(11,11,18,0.95) 100%);
+  }
+  .app { position: relative; z-index: 1; min-height: 100vh; }
+  
   .topbar {
-    display:flex; align-items:center; justify-content:space-between;
-    padding:0.8rem 2rem; background:rgba(11,11,18,0.7); backdrop-filter:blur(20px);
-    border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.8rem 2rem; background: rgba(11,11,18,0.7);
+    backdrop-filter: blur(20px); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
   }
-  .topbar-left { display:flex; align-items:center; gap:1rem; }
-  .back-link { color:var(--text-dim); text-decoration:none; font-size:0.82rem; transition:color 0.2s; }
-  .back-link:hover { color:var(--text); }
-  .realm-badge {
-    padding:0.2rem 0.7rem; border-radius:4px; font-size:0.72rem; font-weight:600;
-    background:var(--accent-dim); color:var(--accent);
-    font-family:'JetBrains Mono',monospace;
+  .topbar-left { display: flex; align-items: center; gap: 1rem; }
+  .back-link {
+    color: var(--text-dim); text-decoration: none; font-size: 0.85rem;
+    transition: color 0.2s;
   }
-
-  .content { max-width:960px; margin:0 auto; padding:2.5rem 2rem 4rem; }
-
-  .page-header { margin-bottom:2.5rem; }
-  .page-icon { font-size:3rem; margin-bottom:0.5rem; }
-  .page-title { font-family:'Noto Serif SC',serif; font-size:2rem; font-weight:700; color:var(--accent); }
-  .page-tagline { font-size:0.9rem; color:var(--text-sec); margin-top:0.3rem; }
-
-  /* Module Cards */
-  .module-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1.2rem; margin-bottom:2rem; }
-  .module-card {
-    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
-    padding:1.5rem; transition:border-color 0.2s;
+  .back-link:hover { color: var(--accent); }
+  .realm-mark {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), #a78bfa);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    box-shadow: 0 0 16px var(--accent-glow);
   }
-  .module-card:hover { border-color:rgba(108,99,255,0.4); }
-  .module-title { font-weight:600; font-size:0.95rem; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.5rem; }
-  .module-desc { font-size:0.78rem; color:var(--text-dim); line-height:1.7; }
-
-  /* Data Table */
-  .section-title { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-dim); margin-bottom:0.8rem; display:flex; align-items:center; gap:0.5rem; }
-  .section-title .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); }
-
-  table { width:100%; border-collapse:collapse; font-size:0.82rem; }
-  th { text-align:left; padding:0.6rem 0.8rem; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-dim); border-bottom:1px solid var(--border); font-weight:600; }
-  td { padding:0.7rem 0.8rem; border-bottom:1px solid rgba(60,60,90,0.15); vertical-align:top; }
-  tr:hover td { background:rgba(108,99,255,0.04); }
-
-  .badge { display:inline-block; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.68rem; font-weight:600; font-family:'JetBrains Mono',monospace; }
-  .badge-pending { background:rgba(251,146,60,0.1); color:var(--orange); }
-  .badge-wip { background:rgba(96,165,250,0.1); color:var(--blue); }
-  .badge-done { background:rgba(74,222,128,0.1); color:var(--green); }
-
-  .wo-id { font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--accent); }
-  .empty-state { text-align:center; padding:2rem; color:var(--text-dim); font-size:0.85rem; }
-
-  .footer { text-align:center; padding:2rem; font-size:0.72rem; color:var(--text-dim); border-top:1px solid var(--border); margin-top:auto; }
+  .topbar-title { font-weight: 700; font-size: 1.05rem; }
+  .topbar-title span { color: var(--accent); }
+  
+  .content { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+  
+  .hero { text-align: center; padding: 3rem 0 2rem; }
+  .hero-glyph { font-size: 3.5rem; margin-bottom: 0.8rem; }
+  .hero-title {
+    font-size: 2.2rem; font-weight: 700; color: var(--accent);
+    font-family: 'Noto Serif SC', serif; margin-bottom: 0.5rem;
+  }
+  .hero-sub { color: var(--text-sec); font-size: 0.95rem; }
+  .hero-penname {
+    display: inline-block; margin-top: 0.6rem;
+    padding: 0.2rem 0.8rem; background: var(--accent-dim);
+    border: 1px solid rgba(108,99,255,0.3); border-radius: 20px;
+    font-size: 0.78rem; color: var(--accent);
+  }
+  
+  /* Stats */
+  .kpi-row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem; margin-bottom: 2rem;
+  }
+  .kpi-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1rem 1.2rem; text-align: center;
+  }
+  .kpi-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 0.3rem; }
+  .kpi-value { font-size: 1.5rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+  .kpi-unit { font-size: 0.75rem; font-weight: 400; color: var(--text-dim); }
+  
+  /* Section */
+  .section { margin-bottom: 2.5rem; }
+  .section-title {
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text-dim); margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .section-title .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  
+  /* Work cards */
+  .works-grid { display: flex; flex-direction: column; gap: 1rem; }
+  .work-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.4rem 1.6rem;
+    border-left: 3px solid var(--accent);
+    transition: border-color 0.2s, transform 0.15s;
+    cursor: default;
+  }
+  .work-card:hover { border-color: var(--accent); transform: translateX(4px); }
+  .work-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 0.5rem; }
+  .work-title {
+    font-size: 1.1rem; font-weight: 600;
+    font-family: 'Noto Serif SC', serif;
+  }
+  .work-meta {
+    display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+    margin-bottom: 0.6rem;
+  }
+  .badge {
+    display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px;
+    font-size: 0.65rem; font-weight: 600; font-family: 'JetBrains Mono', monospace;
+  }
+  .badge-novel { background: rgba(108,99,255,0.12); color: #a78bfa; }
+  .badge-drama { background: rgba(251,146,60,0.12); color: #fb923c; }
+  .badge-short { background: rgba(96,165,250,0.12); color: #60a5fa; }
+  .badge-tale { background: rgba(74,222,128,0.12); color: #4ade80; }
+  .badge-dark { background: rgba(248,113,113,0.12); color: #f87171; }
+  .badge-history { background: rgba(34,211,238,0.12); color: #22d3ee; }
+  .word-count {
+    font-size: 0.72rem; font-family: 'JetBrains Mono', monospace; color: var(--text-dim);
+  }
+  .work-synopsis {
+    font-size: 0.85rem; color: var(--text-sec); line-height: 1.6;
+    margin-bottom: 0.5rem;
+  }
+  .work-link-tag {
+    font-size: 0.72rem; color: var(--accent); opacity: 0.7;
+  }
+  
+  /* Relation map */
+  .relation-box {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.2rem 1.5rem;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;
+    line-height: 2; color: var(--text-sec);
+  }
+  .relation-box .arrow { color: var(--accent); }
+  .relation-box .work-ref { color: var(--text); font-weight: 500; }
+  
+  /* Footer */
+  .footer {
+    text-align: center; padding: 2rem; color: var(--text-dim); font-size: 0.75rem;
+    border-top: 1px solid var(--border); margin-top: 2rem;
+  }
 </style>
 </head>
 <body>
 <div class="bg-layer"></div>
 <div class="app">
+
   <div class="topbar">
     <div class="topbar-left">
-      <a class="back-link" href="../index.html">← 返回四象总览</a>
-      <span class="realm-badge">WEN · 文渊</span>
+      <a href="../index.html" class="back-link">← Logos</a>
+      <div class="realm-mark">✒️</div>
+      <div class="topbar-title"><span>文</span> · 文渊</div>
     </div>
   </div>
 
   <div class="content">
-    <div class="page-header">
-      <div class="page-icon">✒️</div>
-      <div class="page-title">文 · 文渊</div>
-      <div class="page-tagline">文学创作工坊 — 炼化旧作，淬炼新篇</div>
+    <div class="hero">
+      <div class="hero-glyph">✒️</div>
+      <div class="hero-title">文 · 文渊</div>
+      <div class="hero-sub">文学创作工坊 — 炼化旧作，淬炼新篇</div>
+      <div class="hero-penname">笔名：闻道</div>
     </div>
 
-    <div class="module-grid">
-      <div class="module-card">
-        <div class="module-title">📝 旧作炼化</div>
-        <div class="module-desc">
-          上传旧作（散文、小说、诗歌、随笔），Agent 深度炼化：<br>
-          · 提炼思想内核与主题脉络<br>
-          · 分析文风特征（叙事视角、节奏、修辞偏好）<br>
-          · 评价文笔细节（句式、意象、语言质感）<br>
-          · 产出个人写作风格档案
-        </div>
+    <!-- Stats -->
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">作品总数</div>
+        <div class="kpi-value">10</div>
       </div>
-      <div class="module-card">
-        <div class="module-title">🖊️ 新作创作</div>
-        <div class="module-desc">
-          从灵感碎片到完整作品：<br>
-          · 灵感 → 大纲 → 初稿 → 修改定稿<br>
-          · 根据风格档案保持文风一致<br>
-          · Agent 作为守门人，确保不越界
-        </div>
+      <div class="kpi-card">
+        <div class="kpi-label">总字数</div>
+        <div class="kpi-value">140,051<span class="kpi-unit"> 字</span></div>
       </div>
-      <div class="module-card">
-        <div class="module-title">📦 素材库</div>
-        <div class="module-desc">
-          长期积累创作资源：<br>
-          · 灵感记录<br>
-          · 人物原型库<br>
-          · 世界观设定集
-        </div>
+      <div class="kpi-card">
+        <div class="kpi-label">长篇</div>
+        <div class="kpi-value">2</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">短/中篇</div>
+        <div class="kpi-value">3</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">戏剧</div>
+        <div class="kpi-value">2</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">童话</div>
+        <div class="kpi-value">2</div>
       </div>
     </div>
 
-    <div class="section-title"><div class="dot"></div> Work Orders</div>
-    <table>
-      <thead><tr><th>WO#</th><th>Title</th><th>Status</th><th>Priority</th><th>Updated</th></tr></thead>
-      <tbody>
-        <tr><td><span class="wo-id">WO-0001</span></td><td>文渊模块初始化</td><td><span class="badge badge-done">DONE</span></td><td>P1</td><td>2026-06-11</td></tr>
-        <tr><td><span class="wo-id">WO-0002</span></td><td>旧作上传 & 炼化流程启动</td><td><span class="badge badge-pending">PENDING</span></td><td>P2</td><td>—</td></tr>
-      </tbody>
-    </table>
+    <!-- Works Catalog -->
+    <div class="section">
+      <div class="section-title"><div class="dot"></div> 作品目录</div>
+      <div class="works-grid">
+        
+        <!-- 1. 庭院深深 -->
+        <div class="work-card">
+          <div class="work-header">
+            <div class="work-title">庭院深深</div>
+            <div class="word-count">32,503 字</div>
+          </div>
+          <div class="work-meta">
+            <span class="badge badge-novel">长篇</span>
+          </div>
+          <div class="work-synopsis">女皇用三年织了一张巨网。千万无辜平民深陷网中，成了"燃料、毒瘤、耗材"。在合理的世界中，人只能清醒或不清醒地沉沦吗？</div>
+        </div>
 
-    <div class="section-title" style="margin-top:2rem;"><div class="dot"></div> 产出物</div>
-    <table>
-      <thead><tr><th>Document</th><th>Type</th><th>Status</th><th>Updated</th></tr></thead>
-      <tbody>
-        <tr><td>个人写作风格档案</td><td>Profile</td><td><span class="badge badge-pending">待创建</span></td><td>—</td></tr>
-      </tbody>
-    </table>
+        <!-- 2. 世事悠悠 -->
+        <div class="work-card">
+          <div class="work-header">
+            <div class="work-title">世事悠悠 (Per Saecula)</div>
+            <div class="word-count">35,911 字</div>
+          </div>
+          <div class="work-meta">
+            <span class="badge badge-drama">长篇戏剧</span>
+          </div>
+          <div class="work-synopsis">25世纪核战重启后的新人类文明。大南共和国青年路超，在远东求学，两国战争爆发后返乡游击抗敌。功高震主的父亲竟被本国总统诱杀。忠诚与虚无之间，他该何去何从？</div>
+        </div>
+
+        <!-- 3. 依依林影 -->
+        <div class="work-card">
+          <div class="work-header">
+            <div class="work-title">依依林影</div>
+            <div class="word-count">21,189 字</div>
+          </div>
+          <div class="work-meta">
+            <span class="badge badge-novel">中篇</span>
+            <span class="work-link-tag">→ 《世事悠悠》关联</span>
+          </div>
+          <div class="work-synopsis">升龙城破后第七天。占领军的配给制下，向阳家阁楼里，林影透过木板缝隙注视着街道。恐惧在慢慢发酵成麻木的味道。</div>
+        </div>
+
+        <!-- 4. 糖果总动员 -->
+        <div class="work-card">
+          <div class="work-header">
+            <div class="work-title">糖果总动员</div>
+            <div class="word-count">14,580 字</div>
+          </div>
+          <div class="work-meta">
+            <span class="badge badge-dark">黑童话</span>
+            <span class="work-link-tag">→ 《天使印钞机》关联</span>
+          </div>
+          <div class="work-synopsis">不思议王国用"主辅备"原则维持制糖产业的平衡。小明为奇妙小镇设计了"产业推恩令"。人们能反抗命运的暴虐绞索，但能否挣脱温和的轭？</div>
+        </div>
+
+        <!-- 5. 天使印钞机 -->
+        <div class="work-card">
+          <div class="work-header">
+            <div class="work-title">天使印钞机</div>
+            <div class="word-count">10,150 字</div>
+          </div>
+          <div class="work-meta">
+            <span class="badge badge-tale">童话</span>
+          </div>
+          <div class="work-synopsis">纪律严明的不思议王国之外，逃离的孩子们建立了追求自由的奇妙小镇。然而小镇面临着一系列危机。"天使印钞机"的出现，会改变这一切吗？</div>
+        </div>
+
+        <!-- 6. 仙鹤接引 -->
+        <div class="work-card">
+          <div class="work-header">
+            <div class="work-title">仙鹤接引</div>
+            <div class="word-count">10,431 字</div>
+          </div>
+          <div class="work-meta">
+            <span class="badge badge-short">短篇</span>
+          </div>
+          <div class="work-synopsis">两名神师在海上危难之际，以圣戈刺入垂死同伴心脏。教廷为平息风暴，创造了仙鹤接引的美丽传说。当谎言成为救赎的桥梁，信仰的根基是否因此动摇？</div>
+        </div>
+
+        <!-- 7. 枫林向晚 -->
+        <div class="work-card">
+          <div class="work-header">
+            <div class="work-title">枫林向晚</div>
+            <div class="word-count">4,677 字</div>
+          </div>
+          <div class="work-meta">
+            <span class="badge badge-short">短篇</span>
+          </div>
+          <div class="work-synopsis">仙京大学外卖骑手红枫的日常。秋高气爽的天空下，骑电动车穿梭于校园与城市之间。</div>
+        </div>
+
+        <!-- 8. 没有真正的苏格兰人 -->
+        <div class="work-card">
+          <div class="work-header">
+            <div class="work-title">没有真正的苏格兰人</div>
+            <div class="word-count">4,437 字</div>
+          </div>
+          <div class="work-meta">
+            <span class="badge badge-history">英国历史笑话</span>
+          </div>
+          <div class="work-synopsis">戏剧小品。低地苏格兰人、英格兰人、高地苏格兰人和威尔士酒保之间的身份辩论——谁才是"真正的苏格兰人"？</div>
+        </div>
+
+        <!-- 9. 电梯间 -->
+        <div class="work-card">
+          <div class="work-header">
+            <div class="work-title">电梯间</div>
+            <div class="word-count">3,240 字</div>
+          </div>
+          <div class="work-meta">
+            <span class="badge badge-short">短篇</span>
+          </div>
+          <div class="work-synopsis">京师大学物理楼六楼电梯间。两位物理学博士在等待咖啡的间隙，讨论着时间、空间和人生的荒诞。</div>
+        </div>
+
+        <!-- 10. 请死在996以后 -->
+        <div class="work-card">
+          <div class="work-header">
+            <div class="work-title">请死在996以后</div>
+            <div class="word-count">3,833 字</div>
+          </div>
+          <div class="work-meta">
+            <span class="badge badge-drama">中篇戏剧</span>
+          </div>
+          <div class="work-synopsis">社畜为全勤奖暴雨冲往公司，当晚21:42猝死。他的"好兄弟"得知消息，第一反应竟不是悲痛……</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Relation Map -->
+    <div class="section">
+      <div class="section-title"><div class="dot"></div> 作品关联图谱</div>
+      <div class="relation-box">
+        <span class="work-ref">世事悠悠</span> <span class="arrow">──→</span> <span class="work-ref">依依林影</span>（同一世界观：核战后新人类文明）<br>
+        <span class="work-ref">天使印钞机</span> <span class="arrow">──→</span> <span class="work-ref">糖果总动员</span>（同一世界观：不思议王国与奇妙小镇）
+      </div>
+    </div>
+
+    <!-- Next Steps -->
+    <div class="section">
+      <div class="section-title"><div class="dot"></div> 待办</div>
+      <div style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem; font-size: 0.85rem; line-height: 2;">
+        ☐ 逐篇深度炼化：风格画像 + 内核总结 + 改进建议<br>
+        ☐ 建立个人写作风格档案<br>
+        ☐ 提炼叙事偏好与修辞特征<br>
+        ☐ 辅助新作品创作
+      </div>
+    </div>
   </div>
 
-  <div class="footer">Logos · 文渊 · Literary Workshop</div>
+  <div class="footer">
+    <span>Logos · 文渊 · 文学创作工坊</span>
+  </div>
+
 </div>
 </body>
 </html>
