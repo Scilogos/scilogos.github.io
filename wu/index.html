@@ -5,151 +5,252 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>武 · 武道 — Logos</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;600;700&display=swap');
-  * { margin:0; padding:0; box-sizing:border-box; }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
-    --bg:#0b0b12; --card:rgba(22,22,36,0.88); --border:rgba(60,60,90,0.35);
-    --text:#e8e8f2; --text-sec:#a0a0bc; --text-dim:#6a6a88;
-    --accent:#4ade80; --accent-dim:rgba(74,222,128,0.12);
-    --blue:#60a5fa; --cyan:#22d3ee; --orange:#fb923c; --purple:#7c6fff;
-    --radius:10px;
+    --bg: #0b0b12; --surface: rgba(16,16,26,0.85); --card: rgba(22,22,36,0.88);
+    --border: rgba(60,60,90,0.35); --text: #e8e8f2; --text-sec: #a0a0bc; --text-dim: #6a6a88;
+    --accent: #4ade80; --accent-dim: rgba(74,222,128,0.1); --accent-glow: rgba(74,222,128,0.2);
+    --radius: 10px;
   }
-  body { font-family:'Inter',-apple-system,sans-serif; color:var(--text); min-height:100vh; line-height:1.6; }
-  .bg-layer { position:fixed; inset:0; z-index:0; background:linear-gradient(135deg,#0b0b12,#0d1a14); }
-  .app { position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column; }
-
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif; color: var(--text);
+    min-height: 100vh; line-height: 1.6; background: var(--bg);
+  }
+  .bg-layer {
+    position: fixed; inset: 0; z-index: 0;
+    background: url('../bg.jpg') center/cover no-repeat;
+    filter: brightness(0.15) saturate(0.4);
+  }
+  .bg-layer::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,11,18,0.3) 0%, rgba(11,11,18,0.95) 100%);
+  }
+  .app { position: relative; z-index: 1; min-height: 100vh; }
+  
+  /* Topbar */
   .topbar {
-    display:flex; align-items:center; justify-content:space-between;
-    padding:0.8rem 2rem; background:rgba(11,11,18,0.7); backdrop-filter:blur(20px);
-    border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.8rem 2rem; background: rgba(11,11,18,0.7);
+    backdrop-filter: blur(20px); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
   }
-  .topbar-left { display:flex; align-items:center; gap:1rem; }
-  .back-link { color:var(--text-dim); text-decoration:none; font-size:0.82rem; transition:color 0.2s; }
-  .back-link:hover { color:var(--text); }
-  .realm-badge {
-    padding:0.2rem 0.7rem; border-radius:4px; font-size:0.72rem; font-weight:600;
-    background:var(--accent-dim); color:var(--accent);
-    font-family:'JetBrains Mono',monospace;
+  .topbar-left { display: flex; align-items: center; gap: 1rem; }
+  .back-link {
+    color: var(--text-dim); text-decoration: none; font-size: 0.85rem;
+    transition: color 0.2s;
   }
-
-  .content { max-width:960px; margin:0 auto; padding:2.5rem 2rem 4rem; }
-  .page-header { margin-bottom:2.5rem; }
-  .page-icon { font-size:3rem; margin-bottom:0.5rem; }
-  .page-title { font-family:'Noto Serif SC',serif; font-size:2rem; font-weight:700; color:var(--accent); }
-  .page-tagline { font-size:0.9rem; color:var(--text-sec); margin-top:0.3rem; }
-
-  .module-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1.2rem; margin-bottom:2rem; }
-  .module-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; transition:border-color 0.2s; }
-  .module-card:hover { border-color:rgba(74,222,128,0.4); }
-  .module-title { font-weight:600; font-size:0.95rem; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.5rem; }
-  .module-desc { font-size:0.78rem; color:var(--text-dim); line-height:1.7; }
-
-  .section-title { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-dim); margin-bottom:0.8rem; display:flex; align-items:center; gap:0.5rem; }
-  .section-title .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); }
-
-  table { width:100%; border-collapse:collapse; font-size:0.82rem; }
-  th { text-align:left; padding:0.6rem 0.8rem; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-dim); border-bottom:1px solid var(--border); font-weight:600; }
-  td { padding:0.7rem 0.8rem; border-bottom:1px solid rgba(60,60,90,0.15); vertical-align:top; }
-  tr:hover td { background:rgba(74,222,128,0.04); }
-
-  .badge { display:inline-block; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.68rem; font-weight:600; font-family:'JetBrains Mono',monospace; }
-  .badge-pending { background:rgba(251,146,60,0.1); color:var(--orange); }
-  .badge-wip { background:rgba(96,165,250,0.1); color:var(--blue); }
-  .badge-done { background:rgba(74,222,128,0.1); color:var(--green); }
-  .wo-id { font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--accent); }
-
-  /* KPI Cards */
-  .kpi-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem; margin-bottom:2rem; }
-  .kpi-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1.1rem 1.3rem; }
-  .kpi-label { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-dim); margin-bottom:0.4rem; }
-  .kpi-value { font-size:1.5rem; font-weight:700; font-family:'JetBrains Mono',monospace; }
-
-  .footer { text-align:center; padding:2rem; font-size:0.72rem; color:var(--text-dim); border-top:1px solid var(--border); margin-top:auto; }
+  .back-link:hover { color: var(--accent); }
+  .realm-mark {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), #22c55e);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    box-shadow: 0 0 16px var(--accent-glow);
+  }
+  .topbar-title { font-weight: 700; font-size: 1.05rem; }
+  .topbar-title span { color: var(--accent); }
+  
+  .content { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+  
+  /* Hero */
+  .hero {
+    text-align: center; padding: 3rem 0 2rem;
+  }
+  .hero-glyph { font-size: 3.5rem; margin-bottom: 0.8rem; }
+  .hero-title { font-size: 2.2rem; font-weight: 700; color: var(--accent); margin-bottom: 0.5rem; }
+  .hero-sub { color: var(--text-sec); font-size: 0.95rem; }
+  
+  /* KPI */
+  .kpi-row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem; margin-bottom: 2rem;
+  }
+  .kpi-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.1rem 1.3rem;
+    transition: border-color 0.2s;
+  }
+  .kpi-card:hover { border-color: var(--accent); }
+  .kpi-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 0.4rem; }
+  .kpi-value { font-size: 1.8rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+  .kpi-sub { font-size: 0.72rem; color: var(--text-dim); margin-top: 0.25rem; }
+  
+  /* Section */
+  .section { margin-bottom: 2rem; }
+  .section-title {
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text-dim); margin-bottom: 0.8rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .section-title .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  
+  /* Module cards */
+  .module-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+  .module-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.3rem;
+    border-left: 3px solid var(--accent);
+    transition: border-color 0.2s;
+  }
+  .module-card:hover { border-color: var(--accent); }
+  .module-icon { font-size: 1.4rem; margin-bottom: 0.5rem; }
+  .module-title { font-weight: 600; margin-bottom: 0.3rem; }
+  .module-desc { font-size: 0.82rem; color: var(--text-sec); line-height: 1.5; }
+  
+  /* Data table */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .data-table th {
+    text-align: left; padding: 0.6rem 1rem; font-size: 0.68rem;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-dim); border-bottom: 1px solid var(--border); font-weight: 600;
+  }
+  .data-table td {
+    padding: 0.7rem 1rem; border-bottom: 1px solid rgba(60,60,90,0.15);
+  }
+  .data-table tr:hover td { background: rgba(74,222,128,0.04); }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  
+  /* Status */
+  .badge {
+    display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px;
+    font-size: 0.68rem; font-weight: 600; font-family: 'JetBrains Mono', monospace;
+  }
+  .badge-active { background: var(--accent-dim); color: var(--accent); }
+  .badge-pending { background: rgba(251,146,60,0.1); color: #fb923c; }
+  
+  /* Footer */
+  .footer {
+    text-align: center; padding: 2rem; color: var(--text-dim); font-size: 0.75rem;
+    border-top: 1px solid var(--border); margin-top: 2rem;
+  }
 </style>
 </head>
 <body>
 <div class="bg-layer"></div>
 <div class="app">
+
   <div class="topbar">
     <div class="topbar-left">
-      <a class="back-link" href="../index.html">← 返回四象总览</a>
-      <span class="realm-badge">WU · 武道</span>
+      <a href="../index.html" class="back-link">← Logos</a>
+      <div class="realm-mark">💪</div>
+      <div class="topbar-title"><span>武</span> · 武道</div>
     </div>
   </div>
 
   <div class="content">
-    <div class="page-header">
-      <div class="page-icon">💪</div>
-      <div class="page-title">武 · 武道</div>
-      <div class="page-tagline">身体重塑系统 — 数据驱动，科学训练</div>
+    <div class="hero">
+      <div class="hero-glyph">💪</div>
+      <div class="hero-title">武 · 武道</div>
+      <div class="hero-sub">身体重塑系统 — 数据驱动，科学训练</div>
     </div>
 
+    <!-- Current Body Data -->
     <div class="kpi-row">
       <div class="kpi-card">
-        <div class="kpi-label">当前阶段</div>
-        <div class="kpi-value" style="color:var(--accent); font-size:1rem;">待定</div>
+        <div class="kpi-label">体重</div>
+        <div class="kpi-value">83<span style="font-size:0.9rem; font-weight:400;"> kg</span></div>
+        <div class="kpi-sub">录入于 2026-06-11</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">训练天数</div>
-        <div class="kpi-value">0</div>
+        <div class="kpi-label">体脂率</div>
+        <div class="kpi-value">27<span style="font-size:0.9rem; font-weight:400;">%</span></div>
+        <div class="kpi-sub">录入于 2026-06-11</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">数据录入次数</div>
-        <div class="kpi-value">0</div>
+        <div class="kpi-label">项目状态</div>
+        <div class="kpi-value" style="font-size:1rem;"><span class="badge badge-active">DATA READY</span></div>
+        <div class="kpi-sub">基础数据已录入，待制定方案</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">执行周期</div>
+        <div class="kpi-value" style="font-size:1.2rem;">暑假</div>
+        <div class="kpi-sub">2026 暑假期间完成</div>
       </div>
     </div>
 
-    <div class="module-grid">
-      <div class="module-card">
-        <div class="module-title">📊 身体数据</div>
-        <div class="module-desc">
-          不定期上传身体数据：<br>
-          · 身高、体重、体脂率、水分率、肌肉量<br>
-          · 每次上传后评估进展<br>
-          · 数据趋势追踪与可视化
-        </div>
+    <!-- Body Data Table -->
+    <div class="section">
+      <div class="section-title"><div class="dot"></div> 身体数据追踪</div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>日期</th>
+              <th>体重 (kg)</th>
+              <th>体脂率 (%)</th>
+              <th>水分率 (%)</th>
+              <th>肌肉量 (kg)</th>
+              <th>备注</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="mono">2026-06-11</td>
+              <td class="mono">83</td>
+              <td class="mono">27</td>
+              <td class="mono">—</td>
+              <td class="mono">—</td>
+              <td>首次录入，后续将上传更多数据</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <div class="module-card">
-        <div class="module-title">🏋️ 训练计划</div>
-        <div class="module-desc">
-          周期化训练方案：<br>
-          · 增肌 / 减脂 / 体能，按阶段切换<br>
-          · 每日安排：动作、组数、次数、重量、休息<br>
-          · 根据数据动态调整
+    </div>
+
+    <!-- Three Modules -->
+    <div class="section">
+      <div class="section-title"><div class="dot"></div> 三大模块</div>
+      <div class="module-grid">
+        <div class="module-card">
+          <div class="module-icon">📊</div>
+          <div class="module-title">身体数据 KPI</div>
+          <div class="module-desc">
+            不定期上传身体数据（体重、体脂率、水分率、肌肉量等），追踪变化趋势。<br>
+            每次上传后自动评估进展，生成趋势图表。
+          </div>
         </div>
-      </div>
-      <div class="module-card">
-        <div class="module-title">🥗 营养与恢复</div>
-        <div class="module-desc">
-          饮食与恢复策略：<br>
-          · 每日热量目标 + 宏量营养素分配<br>
-          · 食谱建议<br>
-          · 睡眠、拉伸、补剂方案
+        <div class="module-card">
+          <div class="module-icon">🏋️</div>
+          <div class="module-title">周期化训练计划</div>
+          <div class="module-desc">
+            根据目标和数据制定训练方案：增肌/减脂/体能阶段切换。<br>
+            每日安排：动作、组数、次数、重量、休息间隔。
+          </div>
+        </div>
+        <div class="module-card">
+          <div class="module-icon">🥗</div>
+          <div class="module-title">营养与恢复</div>
+          <div class="module-desc">
+            每日热量目标 + 宏量营养素分配 + 食谱建议。<br>
+            恢复策略：睡眠、拉伸、补剂方案。
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="section-title"><div class="dot"></div> Work Orders</div>
-    <table>
-      <thead><tr><th>WO#</th><th>Title</th><th>Status</th><th>Priority</th><th>Updated</th></tr></thead>
-      <tbody>
-        <tr><td><span class="wo-id">WO-0001</span></td><td>武道模块初始化</td><td><span class="badge badge-done">DONE</span></td><td>P1</td><td>2026-06-11</td></tr>
-        <tr><td><span class="wo-id">WO-0002</span></td><td>首次身体数据录入 & 基线建立</td><td><span class="badge badge-pending">PENDING</span></td><td>P2</td><td>—</td></tr>
-      </tbody>
-    </table>
-
-    <div class="section-title" style="margin-top:2rem;"><div class="dot"></div> 产出物</div>
-    <table>
-      <thead><tr><th>Document</th><th>Type</th><th>Status</th><th>Updated</th></tr></thead>
-      <tbody>
-        <tr><td>训练计划表</td><td>Plan</td><td><span class="badge badge-pending">待创建</span></td><td>—</td></tr>
-        <tr><td>营养方案</td><td>Plan</td><td><span class="badge badge-pending">待创建</span></td><td>—</td></tr>
-        <tr><td>身体数据趋势表</td><td>Tracker</td><td><span class="badge badge-pending">待创建</span></td><td>—</td></tr>
-      </tbody>
-    </table>
+    <!-- Next Steps -->
+    <div class="section">
+      <div class="section-title"><div class="dot"></div> 待办</div>
+      <div style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem;">
+        <div style="font-size:0.85rem; line-height:2;">
+          ☐ 上传更多身体数据（水分率、肌肉量等）<br>
+          ☐ 基于当前数据（83kg / 27%体脂）制定初步训练计划<br>
+          ☐ 制定营养方案<br>
+          ☐ 建立数据追踪表格
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="footer">Logos · 武道 · Body Reshaping System</div>
+  <div class="footer">
+    <span>Logos · 武道 · 身体重塑系统</span>
+  </div>
+
 </div>
 </body>
 </html>
