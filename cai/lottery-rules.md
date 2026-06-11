@@ -1,3 +1,13 @@
+---
+AIGC:
+    Label: "1"
+    ContentProducer: 001191110102MACQD9K64018705
+    ProduceID: 1114223602571880_0/project_7649036488834875654-files/cai/lottery-rules.md
+    ReservedCode1: ""
+    ContentPropagator: 001191110102MACQD9K64028705
+    PropagateID: 1114223602571880#1781147466160
+    ReservedCode2: ""
+---
 # 中国彩票游戏规则汇编 — 体彩 & 福彩
 
 > 本文档整理中国体彩和福彩主要游戏类别的投注规则与开奖规则，供"彩票博弈"项目研究参考。
@@ -399,3 +409,188 @@
 ---
 
 *彩票规则汇编 v1.0 · 2026-06-11 · 数据来源：中国体彩网、中国福彩网、官方游戏规则文件*
+
+---
+
+> 本内容由 Coze AI 生成，请遵循相关法律法规及《人工智能生成合成内容标识办法》使用与传播。
+
+---
+
+## 第六部分：数据获取详细指南
+
+> ⚠️ **核心结论：中国彩票没有像 baostock 那样的现成 Python 包**。但官方 JSON API 都可直连，写几行 requests 代码即可批量拉取历史数据，比股票数据反而更简单。
+
+### 6.1 官方 JSON API（免费、无需注册）
+
+#### 福彩 API（中国福利彩票官网）
+
+**基础 URL：**
+```
+https://www.cwl.gov.cn/cwl_admin/front/cwlkj/search/kjxx/findDrawNotice
+```
+
+**参数说明：**
+
+| 参数 | 说明 | 示例 |
+|------|------|------|
+| `name` | 彩种代码 | `ssq`(双色球), `3d`(福彩3D), `qlc`(七乐彩) |
+| `issueCount` | 获取期数 | `100` |
+| `issueStart` | 起始期号 | `2023001`（可选） |
+| `issueEnd` | 结束期号 | `2024100`（可选） |
+| `dayStart` | 起始日期 | `2023-01-01`（可选） |
+| `dayEnd` | 结束日期 | `2024-01-01`（可选） |
+
+**返回格式：** JSON，关键字段 `result` 数组，每条含：
+- `code`：期号
+- `date`：开奖日期
+- `red`：红球号码（逗号分隔）
+- `blue`：蓝球号码
+- `poolmoney`：奖池金额
+- `prizegrades`：各奖级中奖详情
+
+**示例代码：**
+```python
+import requests
+import pandas as pd
+
+url = "https://www.cwl.gov.cn/cwl_admin/front/cwlkj/search/kjxx/findDrawNotice"
+params = {"name": "ssq", "issueCount": 500}  # 获取最近500期双色球
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+}
+resp = requests.get(url, params=params, headers=headers, timeout=10)
+data = resp.json()
+
+records = []
+for item in data["result"]:
+    records.append({
+        "期号": item["code"],
+        "日期": item["date"],
+        "红球": item["red"],
+        "蓝球": item["blue"],
+        "奖池": item.get("poolmoney", ""),
+    })
+df = pd.DataFrame(records)
+df.to_csv("ssq_history.csv", index=False, encoding="utf-8-sig")
+print(f"获取 {len(df)} 期数据")
+```
+
+---
+
+#### 体彩 API（中国体育彩票官网 · sporttery.cn）
+
+**基础 URL：**
+```
+https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry
+```
+
+**参数说明：**
+
+| 参数 | 说明 | 示例 |
+|------|------|------|
+| `gameNo` | 彩种编号 | `85`(大乐透), `35`(排列3), `350`(排列5), `04`(七星彩) |
+| `provinceId` | 省份ID | `0`(全国) |
+| `pageSize` | 每页条数 | `30`(最大100) |
+| `isVerify` | 是否验证 | `1` |
+| `pageNo` | 页码 | `1`, `2`, `3`... |
+
+**返回格式：** JSON，关键字段 `value.list` 数组，每条含：
+- `lotteryDrawNum`：期号
+- `lotteryDrawTime`：开奖日期
+- `lotteryDrawResult`：开奖号码（空格分隔）
+- `lotterySaleEndtime`：销售截止时间
+
+**示例代码（大乐透全量数据）：**
+```python
+import requests
+import json
+import pandas as pd
+
+all_records = []
+for page in range(1, 100):  # 最多约70页
+    url = "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry"
+    params = {
+        "gameNo": "85",       # 大乐透
+        "provinceId": "0",
+        "pageSize": "100",
+        "isVerify": "1",
+        "pageNo": str(page),
+    }
+    resp = requests.get(url, params=params, timeout=10)
+    data = resp.json()
+    lists = data.get("value", {}).get("list", [])
+    if not lists:
+        break
+    for item in lists:
+        all_records.append({
+            "期号": item["lotteryDrawNum"],
+            "日期": item["lotteryDrawTime"],
+            "开奖号码": item["lotteryDrawResult"],
+        })
+
+df = pd.DataFrame(all_records)
+df.to_csv("dlt_history.csv", index=False, encoding="utf-8-sig")
+print(f"获取 {len(df)} 期大乐透数据")
+```
+
+---
+
+### 6.2 Python 包
+
+| 包名 | 安装 | 说明 | 状态 |
+|------|------|------|------|
+| **lotterycn** | `pip install lotterycn` | 中国彩票分析库，支持双色球/福彩3D/大乐透数据获取与分析 | v0.0.4 (2022)，较旧但仍可用 |
+| **lotterymcp** | `npm install lotterymcp` | 将彩票数据接入 Claude/Cursor 等 AI 工具（Node.js 非 Python） | 较新 |
+
+> `lotterycn` 是目前唯一的中国彩票 Python 包，但更新不频繁。生产级项目建议直接使用官方 API（6.1节），更可控。
+
+---
+
+### 6.3 第三方 API 服务（付费）
+
+| 服务商 | URL | 价格 | 特点 |
+|--------|-----|------|------|
+| **极速数据** | jisuapi.com | 免费额度+付费 | 支持开奖查询+历史数据，JSON格式，文档清晰 |
+| **聚合数据** | juhe.cn | 免费额度+付费 | 覆盖彩种全，含销售额/奖池等详细信息 |
+| **520API** | 520-api.com | 付费 | 专业彩票开奖API，更新及时 |
+| **阿里云市场** | 阿里云API市场 | 按调用付费 | JSON接口，适合生产环境 |
+
+> 免费额度通常仅够测试，批量研究建议直接用官方 API 或自建爬虫。
+
+---
+
+### 6.4 数据网站（可爬取/手动下载）
+
+| 网站 | URL | 数据范围 | 特点 |
+|------|-----|----------|------|
+| **500彩票网** | datachart.500.com | 全部历史 | 支持 URL 参数一次拉取所有数据，最省事 |
+| **开奖助手网** | kjh.55128.cn | 全部历史 | HTML表格，需BeautifulSoup解析 |
+| **中彩网** | kaijiang.zhcw.com | 全部历史 | 福彩3D等数据格式规范 |
+| **中国体彩网** | lottery.gov.cn | 全部历史 | AJAX加载JSON数据 |
+| **Kaggle** | kaggle.com | 部分彩种 | 用户上传的CSV，格式统一但可能非最新 |
+| **GitHub** | 搜索 "lottery-data china" | 部分彩种 | 社区维护的CSV/SQL数据集 |
+
+**500彩票网特别说明（最省事方案）：**
+
+双色球历史数据可直接通过 URL 参数获取：
+```
+https://datachart.500.com/ssq/history/newinc/history.php?start=03001&end=26001
+```
+- `start` 和 `end` 为期号（如 03001 = 2003年第001期）
+- 一个请求即可拿到所有历史数据，无需翻页
+- 同理：`dlt`（大乐透）、`pls`（排列3）等
+
+---
+
+### 6.5 本项目推荐数据获取方案
+
+| 优先级 | 方案 | 彩种 | 理由 |
+|--------|------|------|------|
+| ⭐⭐⭐ | 福彩官网 API | 双色球、福彩3D、七乐彩 | 免费、权威、JSON直接解析 |
+| ⭐⭐⭐ | 体彩 sporttery API | 大乐透、排列3/5、七星彩 | 免费、权威、分页灵活 |
+| ⭐⭐ | 500彩票网 | 全彩种 | 一个请求拿全部，但非官方源 |
+| ⭐ | lotterycn 包 | 双色球、3D、大乐透 | 封装好但更新慢，适合快速验证 |
+
+---
+
+*彩票规则汇编 v1.1 · 2026-06-11 · 新增数据获取指南*
