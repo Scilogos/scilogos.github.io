@@ -3,16 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Logos · Enterprise Workspace</title>
+<title>Logos · 四象归元</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;600;700&display=swap');
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   :root {
     --bg: #0b0b12;
     --surface: rgba(16,16,26,0.85);
-    --surface-solid: #10101a;
     --card: rgba(22,22,36,0.88);
     --card-hover: rgba(30,30,48,0.92);
     --border: rgba(60,60,90,0.35);
@@ -22,19 +21,12 @@
     --text-dim: #6a6a88;
     --accent: #7c6fff;
     --accent-dim: rgba(108,99,255,0.12);
-    --accent-glow: rgba(108,99,255,0.2);
     --green: #4ade80;
-    --green-dim: rgba(74,222,128,0.1);
-    --orange: #fb923c;
-    --orange-dim: rgba(251,146,60,0.1);
-    --red: #f87171;
-    --red-dim: rgba(248,113,113,0.1);
-    --blue: #60a5fa;
-    --blue-dim: rgba(96,165,250,0.1);
     --cyan: #22d3ee;
-    --cyan-dim: rgba(34,211,238,0.1);
-    --radius: 10px;
-    --radius-sm: 6px;
+    --orange: #fb923c;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --radius: 12px;
   }
 
   html { scroll-behavior: smooth; }
@@ -44,963 +36,236 @@
     color: var(--text);
     min-height: 100vh;
     line-height: 1.6;
-    position: relative;
   }
 
-  /* BG image */
+  /* BG */
   .bg-layer {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
+    position: fixed; inset: 0; z-index: 0;
     background: url('bg.jpg') center/cover no-repeat;
-    filter: brightness(0.25) saturate(0.6);
+    filter: brightness(0.2) saturate(0.5);
   }
   .bg-layer::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(11,11,18,0.5) 0%, rgba(11,11,18,0.85) 40%, rgba(11,11,18,0.97) 100%);
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,11,18,0.4) 0%, rgba(11,11,18,0.8) 50%, rgba(11,11,18,0.97) 100%);
   }
 
-  .app {
-    position: relative;
-    z-index: 1;
-    min-height: 100vh;
-  }
+  .app { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
 
-  /* ===== TOP BAR ===== */
+  /* TOPBAR */
   .topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: flex; align-items: center; justify-content: space-between;
     padding: 0.8rem 2rem;
-    background: rgba(11,11,18,0.7);
-    backdrop-filter: blur(20px);
+    background: rgba(11,11,18,0.7); backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    position: sticky; top: 0; z-index: 100;
   }
-
-  .topbar-left {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-
+  .topbar-left { display: flex; align-items: center; gap: 1rem; }
   .logos-mark {
-    width: 36px; height: 36px;
-    border-radius: 8px;
+    width: 36px; height: 36px; border-radius: 8px;
     background: linear-gradient(135deg, var(--accent), #a78bfa);
     display: flex; align-items: center; justify-content: center;
     font-family: 'JetBrains Mono', monospace;
-    font-weight: 700; font-size: 1.1rem; color: #fff;
-    box-shadow: 0 0 16px var(--accent-glow);
+    font-weight: 700; font-size: 1rem; color: #fff;
+    box-shadow: 0 0 16px rgba(108,99,255,0.2);
   }
-
-  .topbar-title {
-    font-weight: 700; font-size: 1.05rem;
-    letter-spacing: -0.01em;
-  }
-
+  .topbar-title { font-weight: 700; font-size: 1.05rem; }
   .topbar-title span { color: var(--accent); }
-
-  .topbar-right {
-    display: flex; align-items: center; gap: 1.5rem;
-    font-size: 0.78rem; color: var(--text-dim);
-  }
-
-  .topbar-status {
-    display: flex; align-items: center; gap: 0.4rem;
-  }
-
+  .topbar-right { font-size: 0.78rem; color: var(--text-dim); display: flex; align-items: center; gap: 0.5rem; }
   .status-dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--green);
-    box-shadow: 0 0 6px rgba(74,222,128,0.4);
-    animation: pulse 2s infinite;
+    width: 7px; height: 7px; border-radius: 50%; background: var(--green);
+    box-shadow: 0 0 6px rgba(74,222,128,0.4); animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+
+  /* HERO */
+  .hero {
+    text-align: center; padding: 6rem 2rem 4rem;
+    max-width: 800px; margin: 0 auto;
+  }
+  .hero-kanji {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 4.5rem; font-weight: 700;
+    letter-spacing: 0.15em;
+    background: linear-gradient(135deg, var(--accent), var(--cyan), var(--green));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+  }
+  .hero-sub {
+    font-size: 1.1rem; color: var(--text-sec); font-weight: 300;
+    letter-spacing: 0.05em; margin-bottom: 0.5rem;
+  }
+  .hero-motto {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 0.9rem; color: var(--text-dim); font-style: italic;
   }
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+  /* FOUR REALMS GRID */
+  .realms {
+    max-width: 1100px; margin: 0 auto; padding: 0 2rem 4rem;
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;
   }
+  @media (max-width: 720px) { .realms { grid-template-columns: 1fr; } }
 
-  /* ===== NAV TABS ===== */
-  .nav-tabs {
-    display: flex; gap: 0;
-    padding: 0 2rem;
-    background: rgba(11,11,18,0.5);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
-    overflow-x: auto;
+  .realm-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 2rem;
+    transition: all 0.3s ease; cursor: pointer;
+    text-decoration: none; color: inherit;
+    position: relative; overflow: hidden;
   }
-
-  .nav-tab {
-    padding: 0.75rem 1.3rem;
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--text-dim);
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s;
-    white-space: nowrap;
+  .realm-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    border-radius: var(--radius) var(--radius) 0 0;
   }
-
-  .nav-tab:hover { color: var(--text-sec); }
-
-  .nav-tab.active {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
+  .realm-card:hover {
+    border-color: var(--border-active); transform: translateY(-4px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
   }
+  .realm-card[data-realm="wen"]::before { background: var(--accent); }
+  .realm-card[data-realm="li"]::before { background: var(--cyan); }
+  .realm-card[data-realm="wu"]::before { background: var(--green); }
+  .realm-card[data-realm="cai"]::before { background: var(--orange); }
 
-  /* ===== CONTENT ===== */
-  .content {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 1.5rem 2rem 3rem;
+  .realm-icon { font-size: 2.5rem; margin-bottom: 0.8rem; }
+  .realm-name {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1.4rem; font-weight: 700; margin-bottom: 0.3rem;
   }
-
-  .panel {
-    display: none;
-  }
-
-  .panel.active {
-    display: block;
-  }
-
-  /* ===== KPI CARDS ===== */
-  .kpi-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .kpi-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.1rem 1.3rem;
-    transition: border-color 0.2s;
-  }
-
-  .kpi-card:hover { border-color: var(--border-active); }
-
-  .kpi-label {
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-dim);
-    margin-bottom: 0.4rem;
-  }
-
-  .kpi-value {
-    font-size: 1.5rem;
-    font-weight: 700;
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  .kpi-sub {
-    font-size: 0.72rem;
-    color: var(--text-dim);
-    margin-top: 0.25rem;
-  }
-
-  /* ===== SECTION ===== */
-  .section {
-    margin-bottom: 2rem;
-  }
-
-  .section-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 0.8rem;
-  }
-
-  .section-title {
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--text-dim);
-    display: flex; align-items: center; gap: 0.5rem;
-  }
-
-  .section-title .dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--accent);
-  }
-
-  .section-action {
-    font-size: 0.72rem;
-    color: var(--accent);
-    cursor: pointer;
-  }
-
-  /* ===== WORK ORDER TABLE ===== */
-  .wo-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.82rem;
-  }
-
-  .wo-table th {
-    text-align: left;
-    padding: 0.6rem 0.8rem;
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-dim);
-    border-bottom: 1px solid var(--border);
-    font-weight: 600;
-  }
-
-  .wo-table td {
-    padding: 0.7rem 0.8rem;
-    border-bottom: 1px solid rgba(60,60,90,0.15);
-    vertical-align: top;
-  }
-
-  .wo-table tr:hover td {
-    background: rgba(108,99,255,0.04);
-  }
-
-  .wo-id {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--accent);
-  }
-
-  .wo-title-cell {
-    max-width: 320px;
-  }
-
-  .wo-title {
-    font-weight: 500;
-    color: var(--text);
-  }
-
-  .wo-desc {
-    font-size: 0.72rem;
-    color: var(--text-dim);
-    margin-top: 0.15rem;
-    line-height: 1.4;
-  }
-
-  /* Status badge */
-  .badge {
-    display: inline-block;
-    padding: 0.15rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.68rem;
-    font-weight: 600;
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  .badge-done { background: var(--green-dim); color: var(--green); }
-  .badge-wip { background: var(--blue-dim); color: var(--blue); }
-  .badge-pending { background: var(--orange-dim); color: var(--orange); }
-  .badge-blocked { background: var(--red-dim); color: var(--red); }
-  .badge-review { background: var(--cyan-dim); color: var(--cyan); }
-
-  /* Priority */
-  .pri-high { color: var(--red); font-weight: 600; }
-  .pri-mid { color: var(--orange); }
-  .pri-low { color: var(--text-dim); }
-
-  /* ===== CODE RECORD TABLE ===== */
-  .code-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.82rem;
-  }
-
-  .code-table th {
-    text-align: left;
-    padding: 0.6rem 0.8rem;
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-dim);
-    border-bottom: 1px solid var(--border);
-    font-weight: 600;
-  }
-
-  .code-table td {
-    padding: 0.7rem 0.8rem;
-    border-bottom: 1px solid rgba(60,60,90,0.15);
-    vertical-align: top;
-  }
-
-  .code-table tr:hover td {
-    background: rgba(108,99,255,0.04);
-  }
-
-  .code-file {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.78rem;
-    color: var(--cyan);
-  }
-
-  .code-lang {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem;
-    padding: 0.1rem 0.4rem;
-    border-radius: 3px;
-    background: var(--accent-dim);
-    color: var(--accent);
-  }
-
-  .code-desc {
-    font-size: 0.75rem;
-    color: var(--text-sec);
-    max-width: 300px;
-  }
-
-  .code-version {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--text-dim);
-  }
-
-  /* ===== DOC RECORD TABLE ===== */
-  .doc-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.82rem;
-  }
-
-  .doc-table th {
-    text-align: left;
-    padding: 0.6rem 0.8rem;
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-dim);
-    border-bottom: 1px solid var(--border);
-    font-weight: 600;
-  }
-
-  .doc-table td {
-    padding: 0.7rem 0.8rem;
-    border-bottom: 1px solid rgba(60,60,90,0.15);
-    vertical-align: top;
-  }
-
-  .doc-table tr:hover td {
-    background: rgba(108,99,255,0.04);
-  }
-
-  .doc-name {
-    font-weight: 500;
-    color: var(--text);
-  }
-
-  .doc-type {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem;
-    padding: 0.1rem 0.4rem;
-    border-radius: 3px;
-  }
-
-  .doc-type-report { background: var(--green-dim); color: var(--green); }
-  .doc-type-draft { background: var(--orange-dim); color: var(--orange); }
-  .doc-type-ref { background: var(--blue-dim); color: var(--blue); }
-  .doc-type-data { background: var(--cyan-dim); color: var(--cyan); }
-
-  /* ===== TIMELINE (Activity Feed) ===== */
-  .timeline {
-    position: relative;
-    padding-left: 1.6rem;
-  }
-
-  .timeline::before {
-    content: '';
-    position: absolute;
-    left: 0.4rem;
-    top: 0.5rem;
-    bottom: 0.5rem;
-    width: 1px;
-    background: linear-gradient(to bottom, var(--accent), var(--border) 40%, transparent);
-  }
-
-  .tl-entry {
-    position: relative;
-    margin-bottom: 1.2rem;
-    padding: 0.9rem 1.1rem;
-    background: var(--card);
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    transition: border-color 0.2s;
-  }
-
-  .tl-entry:hover { border-color: var(--border-active); }
-
-  .tl-entry::before {
-    content: '';
-    position: absolute;
-    left: -1.35rem;
-    top: 1.1rem;
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 6px var(--accent-glow);
-  }
-
-  .tl-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.3rem;
-  }
-
-  .tl-title {
-    font-weight: 600;
-    font-size: 0.88rem;
-  }
-
-  .tl-time {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
-    color: var(--text-dim);
-    flex-shrink: 0;
-  }
-
-  .tl-body {
-    font-size: 0.82rem;
-    color: var(--text-sec);
-    line-height: 1.6;
-  }
-
-  .tl-body strong {
-    color: var(--text);
-    font-weight: 500;
-  }
-
-  .tl-tags {
-    display: flex; gap: 0.35rem; margin-top: 0.5rem; flex-wrap: wrap;
-  }
-
-  .tl-tag {
-    font-size: 0.65rem;
-    padding: 0.1rem 0.45rem;
-    border-radius: 3px;
-    font-weight: 500;
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  .tl-tag-code { background: var(--blue-dim); color: var(--blue); }
-  .tl-tag-doc { background: var(--green-dim); color: var(--green); }
-  .tl-tag-data { background: var(--orange-dim); color: var(--orange); }
-  .tl-tag-ai { background: var(--accent-dim); color: var(--accent); }
-  .tl-tag-bug { background: var(--red-dim); color: var(--red); }
-  .tl-tag-sys { background: var(--cyan-dim); color: var(--cyan); }
-
-  /* ===== MEETING / MILESTONE ===== */
-  .milestone-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1rem;
-  }
-
-  .milestone-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.1rem 1.3rem;
-    transition: border-color 0.2s;
-  }
-
-  .milestone-card:hover { border-color: var(--border-active); }
-
-  .ms-date {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--accent);
-    margin-bottom: 0.3rem;
-  }
-
-  .ms-title {
-    font-weight: 600;
-    font-size: 0.95rem;
-    margin-bottom: 0.3rem;
-  }
-
-  .ms-desc {
-    font-size: 0.78rem;
-    color: var(--text-dim);
-    line-height: 1.5;
-  }
-
-  .ms-status {
-    margin-top: 0.5rem;
-  }
-
-  /* ===== MEMBER / RESOURCE TABLE ===== */
-  .res-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.82rem;
-  }
-
-  .res-table th {
-    text-align: left;
-    padding: 0.6rem 0.8rem;
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-dim);
-    border-bottom: 1px solid var(--border);
-    font-weight: 600;
-  }
-
-  .res-table td {
-    padding: 0.7rem 0.8rem;
-    border-bottom: 1px solid rgba(60,60,90,0.15);
-  }
-
-  .res-table tr:hover td {
-    background: rgba(108,99,255,0.04);
-  }
-
-  .res-name { font-weight: 500; }
-
-  .res-role {
-    font-size: 0.72rem;
-    padding: 0.1rem 0.45rem;
-    border-radius: 3px;
-    font-weight: 500;
-  }
-
-  .role-pm { background: var(--accent-dim); color: var(--accent); }
-  .role-dev { background: var(--blue-dim); color: var(--blue); }
-  .role-ana { background: var(--green-dim); color: var(--green); }
-  .role-wrt { background: var(--orange-dim); color: var(--orange); }
-
-  /* ===== FOOTER ===== */
-  .footer {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
+  .realm-card[data-realm="wen"] .realm-name { color: var(--accent); }
+  .realm-card[data-realm="li"] .realm-name { color: var(--cyan); }
+  .realm-card[data-realm="wu"] .realm-name { color: var(--green); }
+  .realm-card[data-realm="cai"] .realm-name { color: var(--orange); }
+
+  .realm-tagline { font-size: 0.82rem; color: var(--text-sec); margin-bottom: 1rem; }
+  .realm-desc { font-size: 0.78rem; color: var(--text-dim); line-height: 1.7; }
+  .realm-desc br { display: block; margin: 0.2rem 0; }
+
+  .realm-status {
+    margin-top: 1.2rem; padding-top: 1rem;
     border-top: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.72rem;
-    color: var(--text-dim);
+    display: flex; justify-content: space-between; align-items: center;
   }
+  .realm-status-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+  .realm-status-badge {
+    padding: 0.2rem 0.6rem; border-radius: 4px;
+    font-size: 0.68rem; font-weight: 600; font-family: 'JetBrains Mono', monospace;
+  }
+  .badge-pending { background: rgba(251,146,60,0.1); color: var(--orange); }
+  .badge-active { background: rgba(74,222,128,0.1); color: var(--green); }
 
+  .realm-enter {
+    font-size: 0.72rem; color: var(--text-dim); margin-top: 0.8rem;
+    display: flex; align-items: center; gap: 0.3rem;
+    transition: color 0.2s;
+  }
+  .realm-card:hover .realm-enter { color: var(--text); }
+
+  /* FOOTER */
+  .footer {
+    text-align: center; padding: 2rem;
+    font-size: 0.72rem; color: var(--text-dim);
+    border-top: 1px solid var(--border);
+    margin-top: auto;
+  }
   .footer .logos-label {
     font-family: 'JetBrains Mono', monospace;
-    color: var(--accent);
-    font-weight: 600;
-  }
-
-  /* ===== RESPONSIVE ===== */
-  @media (max-width: 768px) {
-    .topbar { padding: 0.7rem 1rem; }
-    .nav-tabs { padding: 0 1rem; }
-    .content { padding: 1rem; }
-    .kpi-row { grid-template-columns: repeat(2, 1fr); }
-    .milestone-row { grid-template-columns: 1fr; }
-    .wo-table, .code-table, .doc-table, .res-table { font-size: 0.75rem; }
-    .wo-table th:nth-child(n+5), .wo-table td:nth-child(n+5),
-    .code-table th:nth-child(n+5), .code-table td:nth-child(n+5),
-    .doc-table th:nth-child(n+5), .doc-table td:nth-child(n+5) { display: none; }
+    color: var(--accent); font-weight: 600;
   }
 </style>
 </head>
 <body>
 
 <div class="bg-layer"></div>
-
 <div class="app">
 
-  <!-- TOP BAR -->
   <div class="topbar">
     <div class="topbar-left">
-      <div class="logos-mark">Λ</div>
-      <div class="topbar-title"><span>Logos</span> Workspace</div>
+      <div class="logos-mark">L</div>
+      <div class="topbar-title"><span>Logos</span> · 四象归元</div>
     </div>
     <div class="topbar-right">
-      <div class="topbar-status">
-        <div class="status-dot"></div>
-        <span>Agent Online</span>
-      </div>
-      <span id="clock">—</span>
+      <div class="status-dot"></div>
+      <span>System Online</span>
     </div>
   </div>
 
-  <!-- NAV TABS -->
-  <div class="nav-tabs">
-    <div class="nav-tab active" data-panel="overview">📊 Overview</div>
-    <div class="nav-tab" data-panel="projects">🏛️ Four Realms</div>
-    <div class="nav-tab" data-panel="workorders">📋 Work Orders</div>
-    <div class="nav-tab" data-panel="code">💻 Code Repo</div>
-    <div class="nav-tab" data-panel="docs">📄 Documents</div>
-    <div class="nav-tab" data-panel="timeline">🕐 Activity</div>
-    <div class="nav-tab" data-panel="milestones">🏁 Milestones</div>
-    <div class="nav-tab" data-panel="team">👥 Team</div>
+  <div class="hero">
+    <div class="hero-kanji">文 理 武 财</div>
+    <div class="hero-sub">LOGOS · FOUR REALMS</div>
+    <div class="hero-motto">「以 Logos 之名，统摄暑假及下学期全部核心任务」</div>
   </div>
 
-  <!-- CONTENT -->
-  <div class="content">
-
-    <!-- ====== OVERVIEW ====== -->
-    <div class="panel active" id="panel-overview">
-      <div class="kpi-row">
-        <div class="kpi-card">
-          <div class="kpi-label">Total Work Orders</div>
-          <div class="kpi-value" id="kpi-wo">1</div>
-          <div class="kpi-sub">0 completed</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Code Files</div>
-          <div class="kpi-value" id="kpi-code">0</div>
-          <div class="kpi-sub">0 Python / 0 Other</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Documents</div>
-          <div class="kpi-value" id="kpi-doc">0</div>
-          <div class="kpi-sub">0 reports / 0 drafts</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Last Activity</div>
-          <div class="kpi-value" style="font-size:1rem;" id="kpi-last">2026-06-09</div>
-          <div class="kpi-sub">Dashboard initialized</div>
-        </div>
+  <div class="realms">
+    <a class="realm-card" data-realm="wen" href="wen/index.html">
+      <div class="realm-icon">✒️</div>
+      <div class="realm-name">文 · 文渊</div>
+      <div class="realm-tagline">文学创作工坊 — 炼化旧作，淬炼新篇</div>
+      <div class="realm-desc">
+        深度炼化旧作 → 风格画像<br>
+        新点子 → 大纲 → 初稿 → 定稿<br>
+        素材库：灵感、人物原型、世界观设定
       </div>
-
-      <div class="section">
-        <div class="section-head">
-          <div class="section-title"><div class="dot"></div> Recent Activity</div>
-        </div>
-        <div class="timeline">
-          <div class="tl-entry">
-            <div class="tl-head">
-              <div class="tl-title">🚀 Dashboard Initialized</div>
-              <div class="tl-time">2026-06-09 10:19</div>
-            </div>
-            <div class="tl-body">
-              <strong>Logos Workspace</strong> 上线。参考华为 ERP 管理流程，集成工单管理、代码仓库、文档中心、里程碑追踪等模块。<br>
-              背景图：雨中白鹭 — Logos 的精神图腾。
-            </div>
-            <div class="tl-tags">
-              <span class="tl-tag tl-tag-sys">system</span>
-              <span class="tl-tag tl-tag-ai">setup</span>
-            </div>
-          </div>
-        </div>
+      <div class="realm-status">
+        <span class="realm-status-label">Status</span>
+        <span class="realm-status-badge badge-pending">待启动</span>
       </div>
-    </div>
+      <div class="realm-enter">进入文渊 →</div>
+    </a>
 
-    <!-- ====== FOUR REALMS ====== -->
-    <div class="panel" id="panel-projects">
-      <div class="section">
-        <div class="section-head">
-          <div class="section-title"><div class="dot"></div> 文理武财 · 四象归元</div>
-        </div>
-        <div class="realm-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:1rem;">
-
-          <div class="milestone-card" style="border-left: 3px solid var(--accent);">
-            <div style="font-size:1.6rem; margin-bottom:0.4rem;">✒️</div>
-            <div class="ms-title" style="color:var(--accent);">文 · 文渊</div>
-            <div class="ms-desc">
-              文学创作工坊<br>
-              深度炼化旧作 → 风格画像<br>
-              新点子 → 大纲 → 初稿 → 定稿<br>
-              <span style="color:var(--text-dim); font-size:0.7rem;">STATUS: 待启动</span>
-            </div>
-          </div>
-
-          <div class="milestone-card" style="border-left: 3px solid var(--cyan);">
-            <div style="font-size:1.6rem; margin-bottom:0.4rem;">🔬</div>
-            <div class="ms-title" style="color:var(--cyan);">理 · 理境</div>
-            <div class="ms-desc">
-              生信科研阵地（多模态融合）<br>
-              文献 → 结构化笔记 → 方法论对比<br>
-              实验 pipeline → 论文撰写<br>
-              <span style="color:var(--text-dim); font-size:0.7rem;">STATUS: 待启动</span>
-            </div>
-          </div>
-
-          <div class="milestone-card" style="border-left: 3px solid var(--green);">
-            <div style="font-size:1.6rem; margin-bottom:0.4rem;">💪</div>
-            <div class="ms-title" style="color:var(--green);">武 · 武道</div>
-            <div class="ms-desc">
-              身体重塑系统<br>
-              身体数据 → 训练计划 → 营养方案<br>
-              周期化推进 + 动态调整<br>
-              <span style="color:var(--text-dim); font-size:0.7rem;">STATUS: 待启动</span>
-            </div>
-          </div>
-
-          <div class="milestone-card" style="border-left: 3px solid var(--orange);">
-            <div style="font-size:1.6rem; margin-bottom:0.4rem;">📊</div>
-            <div class="ms-title" style="color:var(--orange);">财 · 财略</div>
-            <div class="ms-desc">
-              量化经济课程 Project<br>
-              具体内容待详细说明后补充<br>
-              组员账号已归 neko 统管<br>
-              <span style="color:var(--text-dim); font-size:0.7rem;">STATUS: 待需求输入</span>
-            </div>
-          </div>
-
-        </div>
+    <a class="realm-card" data-realm="li" href="li/index.html">
+      <div class="realm-icon">🔬</div>
+      <div class="realm-name">理 · 理境</div>
+      <div class="realm-tagline">生信科研阵地 — 多模态融合，从文献到实验</div>
+      <div class="realm-desc">
+        文献 → 结构化笔记 → 方法论对比<br>
+        实验 pipeline 设计与代码实现<br>
+        论文撰写全流程协作
       </div>
-    </div>
-
-    <!-- ====== WORK ORDERS ====== -->
-    <div class="panel" id="panel-workorders">
-      <div class="kpi-row">
-        <div class="kpi-card">
-          <div class="kpi-label">Open</div>
-          <div class="kpi-value" style="color:var(--orange);" id="wo-open">1</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">In Progress</div>
-          <div class="kpi-value" style="color:var(--blue);" id="wo-wip">0</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">In Review</div>
-          <div class="kpi-value" style="color:var(--cyan);" id="wo-review">0</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Done</div>
-          <div class="kpi-value" style="color:var(--green);" id="wo-done">0</div>
-        </div>
+      <div class="realm-status">
+        <span class="realm-status-label">Status</span>
+        <span class="realm-status-badge badge-pending">待启动</span>
       </div>
+      <div class="realm-enter">进入理境 →</div>
+    </a>
 
-      <div class="section">
-        <div class="section-head">
-          <div class="section-title"><div class="dot"></div> Work Order Register</div>
-        </div>
-        <div style="overflow-x:auto;">
-          <table class="wo-table">
-            <thead>
-              <tr>
-                <th>WO#</th>
-                <th>Title</th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>Assignee</th>
-                <th>Created</th>
-                <th>Updated</th>
-              </tr>
-            </thead>
-            <tbody id="wo-tbody">
-              <tr>
-                <td><span class="wo-id">WO-0001</span></td>
-                <td class="wo-title-cell">
-                  <div class="wo-title">Project Setup & Dashboard Init</div>
-                  <div class="wo-desc">初始化 Logos Workspace，搭建 ERP 风格管理看板</div>
-                </td>
-                <td><span class="pri-high">P1</span></td>
-                <td><span class="badge badge-done">DONE</span></td>
-                <td>Agent</td>
-                <td>2026-06-09</td>
-                <td>2026-06-09</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+    <a class="realm-card" data-realm="wu" href="wu/index.html">
+      <div class="realm-icon">💪</div>
+      <div class="realm-name">武 · 武道</div>
+      <div class="realm-tagline">身体重塑系统 — 数据驱动，科学训练</div>
+      <div class="realm-desc">
+        身体数据 → 训练计划 → 营养方案<br>
+        周期化推进 + 动态调整<br>
+        增肌 / 减脂 / 体能，按阶段切换
       </div>
-    </div>
-
-    <!-- ====== CODE REPO ====== -->
-    <div class="panel" id="panel-code">
-      <div class="kpi-row">
-        <div class="kpi-card">
-          <div class="kpi-label">Total Files</div>
-          <div class="kpi-value" id="code-total">0</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Python</div>
-          <div class="kpi-value" style="color:var(--blue);" id="code-py">0</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Latest Commit</div>
-          <div class="kpi-value" style="font-size:0.85rem;" id="code-latest">—</div>
-        </div>
+      <div class="realm-status">
+        <span class="realm-status-label">Status</span>
+        <span class="realm-status-badge badge-pending">待启动</span>
       </div>
+      <div class="realm-enter">进入武道 →</div>
+    </a>
 
-      <div class="section">
-        <div class="section-head">
-          <div class="section-title"><div class="dot"></div> Code File Register</div>
-        </div>
-        <div style="overflow-x:auto;">
-          <table class="code-table">
-            <thead>
-              <tr>
-                <th>File</th>
-                <th>Lang</th>
-                <th>Description</th>
-                <th>Version</th>
-                <th>WO#</th>
-                <th>Updated</th>
-              </tr>
-            </thead>
-            <tbody id="code-tbody">
-              <!-- Code entries will be added here -->
-            </tbody>
-          </table>
-        </div>
+    <a class="realm-card" data-realm="cai" href="cai/index.html">
+      <div class="realm-icon">📊</div>
+      <div class="realm-name">财 · 财略</div>
+      <div class="realm-tagline">量化经济课程 Project — 待详细需求输入</div>
+      <div class="realm-desc">
+        课程：量化经济与行为<br>
+        形式：组队 Project<br>
+        组员账号已归 neko 统管<br>
+        <em style="color:var(--orange);">等待详细指令后补充</em>
       </div>
-    </div>
-
-    <!-- ====== DOCUMENTS ====== -->
-    <div class="panel" id="panel-docs">
-      <div class="kpi-row">
-        <div class="kpi-card">
-          <div class="kpi-label">Total Docs</div>
-          <div class="kpi-value" id="doc-total">0</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Reports</div>
-          <div class="kpi-value" style="color:var(--green);" id="doc-report">0</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Drafts</div>
-          <div class="kpi-value" style="color:var(--orange);" id="doc-draft">0</div>
-        </div>
+      <div class="realm-status">
+        <span class="realm-status-label">Status</span>
+        <span class="realm-status-badge badge-pending">待需求输入</span>
       </div>
-
-      <div class="section">
-        <div class="section-head">
-          <div class="section-title"><div class="dot"></div> Document Register</div>
-        </div>
-        <div style="overflow-x:auto;">
-          <table class="doc-table">
-            <thead>
-              <tr>
-                <th>Document</th>
-                <th>Type</th>
-                <th>Description</th>
-                <th>Version</th>
-                <th>WO#</th>
-                <th>Updated</th>
-              </tr>
-            </thead>
-            <tbody id="doc-tbody">
-              <!-- Doc entries will be added here -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ====== ACTIVITY TIMELINE ====== -->
-    <div class="panel" id="panel-timeline">
-      <div class="section">
-        <div class="section-head">
-          <div class="section-title"><div class="dot"></div> Full Activity Log</div>
-        </div>
-        <div class="timeline" id="full-timeline">
-          <div class="tl-entry">
-            <div class="tl-head">
-              <div class="tl-title">🚀 Dashboard Initialized</div>
-              <div class="tl-time">2026-06-09 10:19</div>
-            </div>
-            <div class="tl-body">
-              <strong>Logos Workspace</strong> v2 上线。华为 ERP 风格，7 大模块集成。<br>
-              WO-0001 已完成：项目初始化与看板搭建。
-            </div>
-            <div class="tl-tags">
-              <span class="tl-tag tl-tag-sys">system</span>
-              <span class="tl-tag tl-tag-ai">setup</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ====== MILESTONES ====== -->
-    <div class="panel" id="panel-milestones">
-      <div class="section">
-        <div class="section-head">
-          <div class="section-title"><div class="dot"></div> Milestones & Deadlines</div>
-        </div>
-        <div class="milestone-row" id="milestone-list">
-          <div class="milestone-card">
-            <div class="ms-date">📅 TBD</div>
-            <div class="ms-title">Project Deadline</div>
-            <div class="ms-desc">量化经济与行为课程 Project 截止日期待确认</div>
-            <div class="ms-status"><span class="badge badge-pending">PENDING</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ====== TEAM ====== -->
-    <div class="panel" id="panel-team">
-      <div class="section">
-        <div class="section-head">
-          <div class="section-title"><div class="dot"></div> Team & Resource Allocation</div>
-        </div>
-        <div style="overflow-x:auto;">
-          <table class="res-table">
-            <thead>
-              <tr>
-                <th>Member</th>
-                <th>Role</th>
-                <th>Active WO#</th>
-                <th>Status</th>
-                <th>Last Active</th>
-              </tr>
-            </thead>
-            <tbody id="team-tbody">
-              <tr>
-                <td class="res-name">neko (Logos)</td>
-                <td><span class="res-role role-pm">PM / Owner</span></td>
-                <td>—</td>
-                <td><span class="badge badge-done">Active</span></td>
-                <td>2026-06-09</td>
-              </tr>
-              <tr>
-                <td class="res-name">Claw Agent</td>
-                <td><span class="res-role role-dev">Agent / Dev</span></td>
-                <td>—</td>
-                <td><span class="badge badge-wip">Online</span></td>
-                <td>2026-06-09</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
+      <div class="realm-enter">进入财略 →</div>
+    </a>
   </div>
 
-  <!-- FOOTER -->
   <div class="footer">
-    <span><span class="logos-label">Logos</span> · Enterprise Workspace v2</span>
-    <span>Maintained by Claw Agent · Huawei ERP Reference Architecture</span>
+    <span class="logos-label">Logos</span> · Enterprise Workspace v2 · Maintained by Claw Agent
   </div>
 
 </div>
-
-<script>
-  // Tab switching
-  document.querySelectorAll('.nav-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      tab.classList.add('active');
-      document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
-    });
-  });
-
-  // Clock
-  function updateClock() {
-    const now = new Date();
-    document.getElementById('clock').textContent =
-      now.toLocaleDateString('zh-CN', {month:'2-digit', day:'2-digit'}) + ' ' +
-      now.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
-  }
-  updateClock();
-  setInterval(updateClock, 30000);
-</script>
-
 </body>
 </html>
