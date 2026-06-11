@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>理 · 理境 — Logos</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;600;700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --bg:#0b0b12; --card:rgba(22,22,36,0.88); --border:rgba(60,60,90,0.35);
+    --text:#e8e8f2; --text-sec:#a0a0bc; --text-dim:#6a6a88;
+    --accent:#22d3ee; --accent-dim:rgba(34,211,238,0.12);
+    --green:#4ade80; --blue:#60a5fa; --orange:#fb923c; --purple:#7c6fff;
+    --radius:10px;
+  }
+  body { font-family:'Inter',-apple-system,sans-serif; color:var(--text); min-height:100vh; line-height:1.6; }
+  .bg-layer { position:fixed; inset:0; z-index:0; background:linear-gradient(135deg,#0b0b12,#0d1a24); }
+  .app { position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column; }
+
+  .topbar {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0.8rem 2rem; background:rgba(11,11,18,0.7); backdrop-filter:blur(20px);
+    border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100;
+  }
+  .topbar-left { display:flex; align-items:center; gap:1rem; }
+  .back-link { color:var(--text-dim); text-decoration:none; font-size:0.82rem; transition:color 0.2s; }
+  .back-link:hover { color:var(--text); }
+  .realm-badge {
+    padding:0.2rem 0.7rem; border-radius:4px; font-size:0.72rem; font-weight:600;
+    background:var(--accent-dim); color:var(--accent);
+    font-family:'JetBrains Mono',monospace;
+  }
+
+  .content { max-width:960px; margin:0 auto; padding:2.5rem 2rem 4rem; }
+  .page-header { margin-bottom:2.5rem; }
+  .page-icon { font-size:3rem; margin-bottom:0.5rem; }
+  .page-title { font-family:'Noto Serif SC',serif; font-size:2rem; font-weight:700; color:var(--accent); }
+  .page-tagline { font-size:0.9rem; color:var(--text-sec); margin-top:0.3rem; }
+
+  .module-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1.2rem; margin-bottom:2rem; }
+  .module-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; transition:border-color 0.2s; }
+  .module-card:hover { border-color:rgba(34,211,238,0.4); }
+  .module-title { font-weight:600; font-size:0.95rem; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.5rem; }
+  .module-desc { font-size:0.78rem; color:var(--text-dim); line-height:1.7; }
+
+  .section-title { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-dim); margin-bottom:0.8rem; display:flex; align-items:center; gap:0.5rem; }
+  .section-title .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); }
+
+  table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+  th { text-align:left; padding:0.6rem 0.8rem; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-dim); border-bottom:1px solid var(--border); font-weight:600; }
+  td { padding:0.7rem 0.8rem; border-bottom:1px solid rgba(60,60,90,0.15); vertical-align:top; }
+  tr:hover td { background:rgba(34,211,238,0.04); }
+
+  .badge { display:inline-block; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.68rem; font-weight:600; font-family:'JetBrains Mono',monospace; }
+  .badge-pending { background:rgba(251,146,60,0.1); color:var(--orange); }
+  .badge-wip { background:rgba(96,165,250,0.1); color:var(--blue); }
+  .badge-done { background:rgba(74,222,128,0.1); color:var(--green); }
+  .wo-id { font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--accent); }
+
+  .footer { text-align:center; padding:2rem; font-size:0.72rem; color:var(--text-dim); border-top:1px solid var(--border); margin-top:auto; }
+</style>
+</head>
+<body>
+<div class="bg-layer"></div>
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <a class="back-link" href="../index.html">← 返回四象总览</a>
+      <span class="realm-badge">LI · 理境</span>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-header">
+      <div class="page-icon">🔬</div>
+      <div class="page-title">理 · 理境</div>
+      <div class="page-tagline">生信科研阵地 — 多模态融合，从文献到实验</div>
+    </div>
+
+    <div class="module-grid">
+      <div class="module-card">
+        <div class="module-title">📄 文献管理</div>
+        <div class="module-desc">
+          上传文献 PDF，Agent 结构化处理：<br>
+          · 结构化摘要（研究问题 / 方法 / 数据集 / 结论 / 局限性）<br>
+          · 方法论横向对比（同一问题不同论文的解法差异）<br>
+          · 引用网络梳理（奠基性工作追踪）
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-title">🧪 实验与代码</div>
+        <div class="module-desc">
+          生信代码开发全流程：<br>
+          · 多模态融合 pipeline（特征提取、对齐、融合策略）<br>
+          · 下游任务评估<br>
+          · 代码调试、运行日志记录
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-title">📝 论文撰写</div>
+        <div class="module-desc">
+          从 idea 到论文的全流程协作：<br>
+          · idea 讨论 → 实验设计 → 结果分析<br>
+          · 各章节起草与润色<br>
+          · 格式排版与引用管理
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title"><div class="dot"></div> Work Orders</div>
+    <table>
+      <thead><tr><th>WO#</th><th>Title</th><th>Status</th><th>Priority</th><th>Updated</th></tr></thead>
+      <tbody>
+        <tr><td><span class="wo-id">WO-0001</span></td><td>理境模块初始化</td><td><span class="badge badge-done">DONE</span></td><td>P1</td><td>2026-06-11</td></tr>
+        <tr><td><span class="wo-id">WO-0002</span></td><td>文献上传 & 结构化阅读流程启动</td><td><span class="badge badge-pending">PENDING</span></td><td>P2</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <div class="section-title" style="margin-top:2rem;"><div class="dot"></div> 产出物</div>
+    <table>
+      <thead><tr><th>Document</th><th>Type</th><th>Status</th><th>Updated</th></tr></thead>
+      <tbody>
+        <tr><td>文献笔记库</td><td>Notes</td><td><span class="badge badge-pending">待创建</span></td><td>—</td></tr>
+        <tr><td>方法论对比表</td><td>Analysis</td><td><span class="badge badge-pending">待创建</span></td><td>—</td></tr>
+        <tr><td>实验代码仓库</td><td>Code</td><td><span class="badge badge-pending">待创建</span></td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">Logos · 理境 · Bioinformatics Research</div>
+</div>
+</body>
+</html>
