@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>财 · 财略 — Logos</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;600;700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --bg:#0b0b12; --card:rgba(22,22,36,0.88); --border:rgba(60,60,90,0.35);
+    --text:#e8e8f2; --text-sec:#a0a0bc; --text-dim:#6a6a88;
+    --accent:#fb923c; --accent-dim:rgba(251,146,60,0.12);
+    --green:#4ade80; --blue:#60a5fa; --cyan:#22d3ee; --purple:#7c6fff;
+    --radius:10px;
+  }
+  body { font-family:'Inter',-apple-system,sans-serif; color:var(--text); min-height:100vh; line-height:1.6; }
+  .bg-layer { position:fixed; inset:0; z-index:0; background:linear-gradient(135deg,#0b0b12,#1a140d); }
+  .app { position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column; }
+
+  .topbar {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0.8rem 2rem; background:rgba(11,11,18,0.7); backdrop-filter:blur(20px);
+    border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100;
+  }
+  .topbar-left { display:flex; align-items:center; gap:1rem; }
+  .back-link { color:var(--text-dim); text-decoration:none; font-size:0.82rem; transition:color 0.2s; }
+  .back-link:hover { color:var(--text); }
+  .realm-badge {
+    padding:0.2rem 0.7rem; border-radius:4px; font-size:0.72rem; font-weight:600;
+    background:var(--accent-dim); color:var(--accent);
+    font-family:'JetBrains Mono',monospace;
+  }
+
+  .content { max-width:960px; margin:0 auto; padding:2.5rem 2rem 4rem; }
+  .page-header { margin-bottom:2.5rem; }
+  .page-icon { font-size:3rem; margin-bottom:0.5rem; }
+  .page-title { font-family:'Noto Serif SC',serif; font-size:2rem; font-weight:700; color:var(--accent); }
+  .page-tagline { font-size:0.9rem; color:var(--text-sec); margin-top:0.3rem; }
+
+  /* Placeholder card */
+  .placeholder-card {
+    background:var(--card); border:1px dashed rgba(251,146,60,0.3); border-radius:var(--radius);
+    padding:2.5rem; text-align:center; margin-bottom:2rem;
+  }
+  .placeholder-icon { font-size:2rem; margin-bottom:1rem; }
+  .placeholder-text { font-size:0.9rem; color:var(--text-sec); margin-bottom:0.5rem; }
+  .placeholder-hint { font-size:0.78rem; color:var(--text-dim); }
+
+  .module-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1.2rem; margin-bottom:2rem; }
+  .module-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; transition:border-color 0.2s; opacity:0.7; }
+  .module-card:hover { border-color:rgba(251,146,60,0.4); opacity:1; }
+  .module-title { font-weight:600; font-size:0.95rem; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.5rem; }
+  .module-desc { font-size:0.78rem; color:var(--text-dim); line-height:1.7; }
+
+  .section-title { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-dim); margin-bottom:0.8rem; display:flex; align-items:center; gap:0.5rem; }
+  .section-title .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); }
+
+  table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+  th { text-align:left; padding:0.6rem 0.8rem; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-dim); border-bottom:1px solid var(--border); font-weight:600; }
+  td { padding:0.7rem 0.8rem; border-bottom:1px solid rgba(60,60,90,0.15); vertical-align:top; }
+  tr:hover td { background:rgba(251,146,60,0.04); }
+
+  .badge { display:inline-block; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.68rem; font-weight:600; font-family:'JetBrains Mono',monospace; }
+  .badge-pending { background:rgba(251,146,60,0.1); color:var(--accent); }
+  .badge-done { background:rgba(74,222,128,0.1); color:var(--green); }
+  .wo-id { font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--accent); }
+
+  .footer { text-align:center; padding:2rem; font-size:0.72rem; color:var(--text-dim); border-top:1px solid var(--border); margin-top:auto; }
+</style>
+</head>
+<body>
+<div class="bg-layer"></div>
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <a class="back-link" href="../index.html">← 返回四象总览</a>
+      <span class="realm-badge">CAI · 财略</span>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-header">
+      <div class="page-icon">📊</div>
+      <div class="page-title">财 · 财略</div>
+      <div class="page-tagline">量化经济课程 Project — 专属战区</div>
+    </div>
+
+    <div class="placeholder-card">
+      <div class="placeholder-icon">⏳</div>
+      <div class="placeholder-text">等待详细需求输入</div>
+      <div class="placeholder-hint">
+        课程：量化经济与行为<br>
+        形式：组队 Project · 组员账号已归 neko 统管<br>
+        请提供：项目题目、要求、截止日期、交付形式、评分标准
+      </div>
+    </div>
+
+    <div class="module-grid">
+      <div class="module-card">
+        <div class="module-title">📋 任务拆解</div>
+        <div class="module-desc">
+          根据项目要求拆解任务、分配工单<br>
+          <em style="color:var(--accent);">待需求明确后细化</em>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-title">🧮 数据与模型</div>
+        <div class="module-desc">
+          数据处理与模型构建<br>
+          <em style="color:var(--accent);">待需求明确后细化</em>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-title">📝 报告与交付</div>
+        <div class="module-desc">
+          协助报告撰写与排版<br>
+          <em style="color:var(--accent);">待需求明确后细化</em>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title"><div class="dot"></div> Work Orders</div>
+    <table>
+      <thead><tr><th>WO#</th><th>Title</th><th>Status</th><th>Priority</th><th>Updated</th></tr></thead>
+      <tbody>
+        <tr><td><span class="wo-id">WO-0001</span></td><td>财略模块初始化</td><td><span class="badge badge-done">DONE</span></td><td>P1</td><td>2026-06-11</td></tr>
+        <tr><td><span class="wo-id">WO-0002</span></td><td>接收详细需求 & 制定项目计划</td><td><span class="badge badge-pending">PENDING</span></td><td>P0</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <div class="section-title" style="margin-top:2rem;"><div class="dot"></div> 产出物</div>
+    <table>
+      <thead><tr><th>Document</th><th>Type</th><th>Status</th><th>Updated</th></tr></thead>
+      <tbody>
+        <tr><td>项目计划书</td><td>Plan</td><td><span class="badge badge-pending">待需求输入</span></td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">Logos · 财略 · Quantitative Economics Project</div>
+</div>
+</body>
+</html>
