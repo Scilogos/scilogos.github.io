@@ -11,7 +11,9 @@
     --bg:#0b0b12; --card:rgba(22,22,36,0.88); --border:rgba(60,60,90,0.35);
     --text:#e8e8f2; --text-sec:#a0a0bc; --text-dim:#6a6a88;
     --accent:#fb923c; --accent-dim:rgba(251,146,60,0.12);
-    --green:#4ade80; --blue:#60a5fa; --cyan:#22d3ee; --purple:#7c6fff;
+    --green:#4ade80; --green-dim:rgba(74,222,128,0.1);
+    --blue:#60a5fa; --blue-dim:rgba(96,165,250,0.1);
+    --cyan:#22d3ee; --purple:#7c6fff;
     --radius:10px;
   }
   body { font-family:'Inter',-apple-system,sans-serif; color:var(--text); min-height:100vh; line-height:1.6; }
@@ -38,22 +40,13 @@
   .page-title { font-family:'Noto Serif SC',serif; font-size:2rem; font-weight:700; color:var(--accent); }
   .page-tagline { font-size:0.9rem; color:var(--text-sec); margin-top:0.3rem; }
 
-  /* Placeholder card */
-  .placeholder-card {
-    background:var(--card); border:1px dashed rgba(251,146,60,0.3); border-radius:var(--radius);
-    padding:2.5rem; text-align:center; margin-bottom:2rem;
-  }
-  .placeholder-icon { font-size:2rem; margin-bottom:1rem; }
-  .placeholder-text { font-size:0.9rem; color:var(--text-sec); margin-bottom:0.5rem; }
-  .placeholder-hint { font-size:0.78rem; color:var(--text-dim); }
-
   .module-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1.2rem; margin-bottom:2rem; }
-  .module-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; transition:border-color 0.2s; opacity:0.7; }
-  .module-card:hover { border-color:rgba(251,146,60,0.4); opacity:1; }
+  .module-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; transition:border-color 0.2s; }
+  .module-card:hover { border-color:rgba(251,146,60,0.4); }
   .module-title { font-weight:600; font-size:0.95rem; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.5rem; }
   .module-desc { font-size:0.78rem; color:var(--text-dim); line-height:1.7; }
 
-  .section-title { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-dim); margin-bottom:0.8rem; display:flex; align-items:center; gap:0.5rem; }
+  .section-title { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-dim); margin-bottom:0.8rem; display:flex; align-items:center; gap:0.5rem; margin-top:2rem; }
   .section-title .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); }
 
   table { width:100%; border-collapse:collapse; font-size:0.82rem; }
@@ -63,8 +56,19 @@
 
   .badge { display:inline-block; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.68rem; font-weight:600; font-family:'JetBrains Mono',monospace; }
   .badge-pending { background:rgba(251,146,60,0.1); color:var(--accent); }
-  .badge-done { background:rgba(74,222,128,0.1); color:var(--green); }
+  .badge-wip { background:var(--blue-dim); color:var(--blue); }
+  .badge-done { background:var(--green-dim); color:var(--green); }
   .wo-id { font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--accent); }
+
+  .highlight-box {
+    background:rgba(251,146,60,0.08); border:1px solid rgba(251,146,60,0.25);
+    border-radius:var(--radius); padding:1.2rem 1.5rem; margin-bottom:2rem;
+  }
+  .highlight-box h3 { color:var(--accent); font-size:0.95rem; margin-bottom:0.5rem; }
+  .highlight-box p { font-size:0.82rem; color:var(--text-sec); line-height:1.7; }
+
+  .doc-link { color:var(--accent); text-decoration:none; font-size:0.82rem; }
+  .doc-link:hover { text-decoration:underline; }
 
   .footer { text-align:center; padding:2rem; font-size:0.72rem; color:var(--text-dim); border-top:1px solid var(--border); margin-top:auto; }
 </style>
@@ -83,39 +87,41 @@
     <div class="page-header">
       <div class="page-icon">📊</div>
       <div class="page-title">财 · 财略</div>
-      <div class="page-tagline">量化经济课程 Project — 专属战区</div>
+      <div class="page-tagline">量化经济与行为课程 Project — 彩票博弈</div>
     </div>
 
-    <div class="placeholder-card">
-      <div class="placeholder-icon">⏳</div>
-      <div class="placeholder-text">等待详细需求输入</div>
-      <div class="placeholder-hint">
-        课程：量化经济与行为<br>
-        形式：组队 Project · 组员账号已归 neko 统管<br>
-        请提供：项目题目、要求、截止日期、交付形式、评分标准
-      </div>
+    <div class="highlight-box">
+      <h3>🔬 研究问题</h3>
+      <p>验证都市传说：彩票开奖是否倾向于开出购买人数最少的号码？<br>
+      对照实验：深度学习预测 vs 对抗学习（彩民-庄家博弈）预测，检验两组之间是否存在统计学显著差异。</p>
     </div>
 
     <div class="module-grid">
       <div class="module-card">
-        <div class="module-title">📋 任务拆解</div>
+        <div class="module-title">🧠 实验组 A：深度学习</div>
         <div class="module-desc">
-          根据项目要求拆解任务、分配工单<br>
-          <em style="color:var(--accent);">待需求明确后细化</em>
+          用 LSTM/Transformer 直接从历史开奖数据学习号码模式<br>
+          输入：历史 N 期开奖序列<br>
+          输出：下一期号码概率分布<br>
+          训练：标准监督学习
         </div>
       </div>
       <div class="module-card">
-        <div class="module-title">🧮 数据与模型</div>
+        <div class="module-title">⚔️ 实验组 B：对抗学习</div>
         <div class="module-desc">
-          数据处理与模型构建<br>
-          <em style="color:var(--accent);">待需求明确后细化</em>
+          GAN 框架模拟彩民-庄家博弈<br>
+          Generator（彩民）：生成预测号码<br>
+          Discriminator（庄家）：判断热门号码，倾向避开<br>
+          交替优化，寻找 Nash 均衡
         </div>
       </div>
       <div class="module-card">
-        <div class="module-title">📝 报告与交付</div>
+        <div class="module-title">📊 统计检验</div>
         <div class="module-desc">
-          协助报告撰写与排版<br>
-          <em style="color:var(--accent);">待需求明确后细化</em>
+          相同测试集上比较两组预测准确率<br>
+          配对 t 检验 / 非参数检验<br>
+          多彩种交叉验证<br>
+          若 H₀ 成立（纯随机），两组无显著差异
         </div>
       </div>
     </div>
@@ -125,17 +131,51 @@
       <thead><tr><th>WO#</th><th>Title</th><th>Status</th><th>Priority</th><th>Updated</th></tr></thead>
       <tbody>
         <tr><td><span class="wo-id">WO-0001</span></td><td>财略模块初始化</td><td><span class="badge badge-done">DONE</span></td><td>P1</td><td>2026-06-11</td></tr>
-        <tr><td><span class="wo-id">WO-0002</span></td><td>接收详细需求 & 制定项目计划</td><td><span class="badge badge-pending">PENDING</span></td><td>P0</td><td>—</td></tr>
+        <tr><td><span class="wo-id">WO-0002</span></td><td>项目说明 & 规则汇编文档</td><td><span class="badge badge-done">DONE</span></td><td>P1</td><td>2026-06-11</td></tr>
+        <tr><td><span class="wo-id">WO-0003</span></td><td>数据采集：历史开奖数据 + 投注分布代理变量</td><td><span class="badge badge-pending">PENDING</span></td><td>P0</td><td>—</td></tr>
+        <tr><td><span class="wo-id">WO-0004</span></td><td>实验组 A 实现：深度学习预测模型</td><td><span class="badge badge-pending">PENDING</span></td><td>P1</td><td>—</td></tr>
+        <tr><td><span class="wo-id">WO-0005</span></td><td>实验组 B 实现：对抗学习预测模型</td><td><span class="badge badge-pending">PENDING</span></td><td>P1</td><td>—</td></tr>
+        <tr><td><span class="wo-id">WO-0006</span></td><td>统计检验 & 论文撰写</td><td><span class="badge badge-pending">PENDING</span></td><td>P2</td><td>—</td></tr>
       </tbody>
     </table>
 
-    <div class="section-title" style="margin-top:2rem;"><div class="dot"></div> 产出物</div>
+    <div class="section-title"><div class="dot"></div> 项目文档</div>
     <table>
-      <thead><tr><th>Document</th><th>Type</th><th>Status</th><th>Updated</th></tr></thead>
+      <thead><tr><th>Document</th><th>Type</th><th>Status</th><th>Link</th></tr></thead>
       <tbody>
-        <tr><td>项目计划书</td><td>Plan</td><td><span class="badge badge-pending">待需求输入</span></td><td>—</td></tr>
+        <tr><td>项目说明</td><td>Brief</td><td><span class="badge badge-done">DONE</span></td><td><a class="doc-link" href="project-brief.md">project-brief.md</a></td></tr>
+        <tr><td>彩票规则汇编</td><td>Reference</td><td><span class="badge badge-done">DONE</span></td><td><a class="doc-link" href="lottery-rules.md">lottery-rules.md</a></td></tr>
+        <tr><td>数据采集脚本</td><td>Code</td><td><span class="badge badge-pending">PENDING</span></td><td>—</td></tr>
+        <tr><td>实验代码</td><td>Code</td><td><span class="badge badge-pending">PENDING</span></td><td>—</td></tr>
+        <tr><td>课程报告</td><td>Report</td><td><span class="badge badge-pending">PENDING</span></td><td>—</td></tr>
       </tbody>
     </table>
+
+    <div class="section-title"><div class="dot"></div> 推荐彩种</div>
+    <table>
+      <thead><tr><th>彩种</th><th>类型</th><th>推荐理由</th><th>数据特点</th></tr></thead>
+      <tbody>
+        <tr><td>排列3 / 福彩3D</td><td>数字型</td><td>结构简单，每日开奖，数据量大</td><td>3位数字，1000种组合</td></tr>
+        <tr><td>双色球 / 大乐透</td><td>乐透型</td><td>社会关注度最高，与都市传说直接相关</td><td>数据历史长，但结构复杂</td></tr>
+        <tr><td>快乐8</td><td>基诺型</td><td>维度丰富，号码覆盖模式有趣</td><td>80选10，复杂度高</td></tr>
+      </tbody>
+    </table>
+
+    <div class="section-title"><div class="dot"></div> 关键风险</div>
+    <div class="module-grid">
+      <div class="module-card">
+        <div class="module-title">⚠️ 投注分布数据</div>
+        <div class="module-desc">官方不公开各号码具体投注量，只有全国总销量。需寻找代理变量（赔率变化、销量、论坛数据）或设计模拟实验。</div>
+      </div>
+      <div class="module-card">
+        <div class="module-title">⚠️ Null Result 处理</div>
+        <div class="module-desc">若开奖确为纯随机，两组都无法学到有效模式。需设计好 null result 的报告框架，这本身也是有价值的科学结论。</div>
+      </div>
+      <div class="module-card">
+        <div class="module-title">⚠️ GAN 训练稳定性</div>
+        <div class="module-desc">对抗学习存在模式坍塌等已知问题，需谨慎设计网络架构和训练策略。</div>
+      </div>
+    </div>
   </div>
 
   <div class="footer">Logos · 财略 · Quantitative Economics Project</div>
