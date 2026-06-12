@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>务 · 作业与考试 — Logos</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0b0b12; --surface: rgba(16,16,26,0.85); --card: rgba(22,22,36,0.88);
+    --border: rgba(60,60,90,0.35); --text: #e8e8f2; --text-sec: #a0a0bc; --text-dim: #6a6a88;
+    --accent: #a78bfa; --accent-dim: rgba(167,139,250,0.1); --accent-glow: rgba(167,139,250,0.2);
+    --warn: #fb923c; --warn-dim: rgba(251,146,60,0.1);
+    --danger: #f87171; --danger-dim: rgba(248,113,113,0.1);
+    --ok: #4ade80; --ok-dim: rgba(74,222,128,0.1);
+    --radius: 10px;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif; color: var(--text);
+    min-height: 100vh; line-height: 1.6; background: var(--bg);
+  }
+  .bg-layer {
+    position: fixed; inset: 0; z-index: 0;
+    background: url('../bg.jpg') center/cover no-repeat;
+    filter: brightness(0.15) saturate(0.4);
+  }
+  .bg-layer::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,11,18,0.3) 0%, rgba(11,11,18,0.95) 100%);
+  }
+  .app { position: relative; z-index: 1; min-height: 100vh; }
+
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.8rem 2rem; background: rgba(11,11,18,0.7);
+    backdrop-filter: blur(20px); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 1rem; }
+  .back-link { color: var(--text-dim); text-decoration: none; font-size: 0.85rem; transition: color 0.2s; }
+  .back-link:hover { color: var(--accent); }
+  .realm-mark {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; box-shadow: 0 0 16px var(--accent-glow);
+  }
+  .topbar-title { font-weight: 700; font-size: 1.05rem; }
+  .topbar-title span { color: var(--accent); }
+
+  .content { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+
+  .hero { text-align: center; padding: 3rem 0 2rem; }
+  .hero-glyph { font-size: 3.5rem; margin-bottom: 0.8rem; }
+  .hero-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 2.2rem; font-weight: 700; color: var(--accent); margin-bottom: 0.5rem;
+  }
+  .hero-sub { color: var(--text-sec); font-size: 0.95rem; }
+
+  .kpi-row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem; margin-bottom: 2rem;
+  }
+  .kpi-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.1rem 1.3rem;
+    transition: border-color 0.2s;
+  }
+  .kpi-card:hover { border-color: var(--accent); }
+  .kpi-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 0.4rem; }
+  .kpi-value { font-size: 1.6rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+  .kpi-sub { font-size: 0.72rem; color: var(--text-dim); margin-top: 0.25rem; }
+
+  .section { margin-bottom: 2rem; }
+  .section-title {
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text-dim); margin-bottom: 0.8rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .section-title .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+  .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .data-table th {
+    text-align: left; padding: 0.6rem 1rem; font-size: 0.68rem;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-dim); border-bottom: 1px solid var(--border); font-weight: 600;
+  }
+  .data-table td { padding: 0.7rem 1rem; border-bottom: 1px solid rgba(60,60,90,0.15); }
+  .data-table tr:hover td { background: rgba(167,139,250,0.04); }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  .badge {
+    display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px;
+    font-size: 0.68rem; font-weight: 600; font-family: 'JetBrains Mono', monospace;
+  }
+  .badge-active { background: var(--ok-dim); color: var(--ok); }
+  .badge-pending { background: var(--warn-dim); color: var(--warn); }
+  .badge-danger { background: var(--danger-dim); color: var(--danger); }
+  .badge-info { background: var(--accent-dim); color: var(--accent); }
+
+  .module-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+  .module-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.3rem;
+    border-left: 3px solid var(--accent);
+    transition: border-color 0.2s;
+  }
+  .module-card:hover { border-color: var(--accent); }
+  .module-icon { font-size: 1.4rem; margin-bottom: 0.5rem; }
+  .module-title { font-weight: 600; margin-bottom: 0.3rem; }
+  .module-desc { font-size: 0.82rem; color: var(--text-sec); line-height: 1.5; }
+
+  .upload-guide {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .upload-guide h3 { color: var(--accent); margin-bottom: 0.8rem; font-size: 1rem; }
+  .upload-guide ol { padding-left: 1.5rem; font-size: 0.85rem; color: var(--text-sec); line-height: 2; }
+  .upload-guide code {
+    background: rgba(167,139,250,0.1); color: var(--accent);
+    padding: 0.15rem 0.4rem; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+  }
+
+  .file-item {
+    display: flex; align-items: center; gap: 0.8rem;
+    padding: 0.8rem 1rem; background: var(--card);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    margin-bottom: 0.5rem; transition: border-color 0.2s;
+  }
+  .file-item:hover { border-color: var(--accent); }
+  .file-icon { font-size: 1.3rem; }
+  .file-name { font-weight: 500; font-size: 0.9rem; }
+  .file-meta { font-size: 0.72rem; color: var(--text-dim); }
+
+  .footer {
+    text-align: center; padding: 2rem; color: var(--text-dim); font-size: 0.75rem;
+    border-top: 1px solid var(--border); margin-top: 2rem;
+  }
+</style>
+</head>
+<body>
+<div class="bg-layer"></div>
+<div class="app">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <a href="../index.html" class="back-link">← Logos</a>
+      <div class="realm-mark">📋</div>
+      <div class="topbar-title"><span>务</span> · 作业与考试</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="hero">
+      <div class="hero-glyph">📋</div>
+      <div class="hero-title">务 · 作业与考试</div>
+      <div class="hero-sub">世俗事务处理站 — 课件、作业、考试，逐个击破</div>
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">活跃课程</div>
+        <div class="kpi-value">0</div>
+        <div class="kpi-sub">待录入课程信息</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">待完成作业</div>
+        <div class="kpi-value">0</div>
+        <div class="kpi-sub">当前无待办</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">已上传课件</div>
+        <div class="kpi-value">0</div>
+        <div class="kpi-sub">开始上传以激活模块</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">模块状态</div>
+        <div class="kpi-value" style="font-size:1rem;"><span class="badge badge-pending">待启动</span></div>
+        <div class="kpi-sub">上传第一个课件即激活</div>
+      </div>
+    </div>
+
+    <!-- Three Modules -->
+    <div class="section">
+      <div class="section-title"><div class="dot"></div> 三大模块</div>
+      <div class="module-grid">
+        <div class="module-card">
+          <div class="module-icon">📚</div>
+          <div class="module-title">课件与资料</div>
+          <div class="module-desc">
+            上传课程 PDF / PPT / Word 等课件，自动归档分类。<br>
+            Agent 可解析课件内容，生成复习笔记与重点提炼。<br>
+            支持按课程 → 章节 → 文件层级浏览。
+          </div>
+        </div>
+        <div class="module-card">
+          <div class="module-icon">✍️</div>
+          <div class="module-title">作业追踪</div>
+          <div class="module-desc">
+            记录每门课的作业要求与截止日期。<br>
+            作业进度追踪：未开始 / 进行中 / 已提交。<br>
+            支持作业内容讨论与协作完成。
+          </div>
+        </div>
+        <div class="module-card">
+          <div class="module-icon">🎯</div>
+          <div class="module-title">考试备战</div>
+          <div class="module-desc">
+            考试时间表与倒计时提醒。<br>
+            基于课件生成复习提纲与自测题。<br>
+            重点知识图谱与考点总结。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload Guide -->
+    <div class="section">
+      <div class="section-title"><div class="dot"></div> 📖 如何上传课件到本模块</div>
+      <div class="upload-guide">
+        <h3>方式一：GitHub 网页端上传（最简单）</h3>
+        <ol>
+          <li>打开仓库：<code>github.com/Scilogos/scilogos.github.io</code></li>
+          <li>进入 <code>exam/materials/</code> 目录</li>
+          <li>按课程创建子文件夹，如 <code>exam/materials/BIO306/</code></li>
+          <li>点击 <strong>Add file → Upload files</strong></li>
+          <li>拖入 PDF / Word / PPT 等文件</li>
+          <li>填写 commit 信息，点 <strong>Commit changes</strong></li>
+          <li>✅ 完成！文件会在几分钟内同步到网页</li>
+        </ol>
+      </div>
+
+      <div class="upload-guide">
+        <h3>方式二：在对话中让我帮你传</h3>
+        <ol>
+          <li>直接把文件发到项目对话里</li>
+          <li>告诉我属于哪门课（如"这是 BIO306 第5章课件"）</li>
+          <li>我会自动：解析内容 → 归档到对应目录 → 上传到 GitHub → 更新本页</li>
+        </ol>
+      </div>
+
+      <div class="upload-guide">
+        <h3>方式三：Git 命令行（适合批量操作）</h3>
+        <ol>
+          <li>克隆仓库：<code>git clone https://github.com/Scilogos/scilogos.github.io.git</code></li>
+          <li>进入目录：<code>cd scilogos.github.io/exam/materials/</code></li>
+          <li>创建课程文件夹：<code>mkdir -p BIO306</code></li>
+          <li>复制文件：<code>cp ~/Downloads/lecture5.pdf BIO306/</code></li>
+          <li>提交推送：
+            <br><code>git add .</code>
+            <br><code>git commit -m "add: BIO306 lecture 5"</code>
+            <br><code>git push</code>
+          </li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Directory Structure -->
+    <div class="section">
+      <div class="section-title"><div class="dot"></div> 文件目录结构</div>
+      <div style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.3rem; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: var(--text-sec); line-height: 1.8;">
+        <div style="color: var(--accent);">exam/</div>
+        <div>&nbsp;&nbsp;├── index.html &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--text-dim)">← 本页面</span></div>
+        <div>&nbsp;&nbsp;├── materials/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--text-dim)">← 课件资料存放处</span></div>
+        <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── BIO306/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--text-dim)">← 按课程名分文件夹</span></div>
+        <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── lecture01.pdf</div>
+        <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── lecture02.pdf</div>
+        <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── ...</div>
+        <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── MATH201/</div>
+        <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── [课程名]/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--text-dim)">← 新课程自动创建</span></div>
+        <div>&nbsp;&nbsp;├── notes/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--text-dim)">← Agent 生成的复习笔记</span></div>
+        <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── BIO306/</div>
+        <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── [课程名]/</div>
+        <div>&nbsp;&nbsp;└── assignments/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--text-dim)">← 作业相关文件</span></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── BIO306/</div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── [课程名]/</div>
+      </div>
+    </div>
+
+    <!-- Work Orders -->
+    <div class="section">
+      <div class="section-title"><div class="dot"></div> Work Orders</div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>WO#</th>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Updated</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="mono">WO-0001</td>
+              <td>作业与考试模块初始化</td>
+              <td><span class="badge badge-active">DONE</span></td>
+              <td>P1</td>
+              <td>2026-06-12</td>
+            </tr>
+            <tr>
+              <td class="mono">WO-0002</td>
+              <td>首门课程课件上传 & 笔记生成</td>
+              <td><span class="badge badge-pending">PENDING</span></td>
+              <td>P1</td>
+              <td>—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Uploaded Files -->
+    <div class="section">
+      <div class="section-title"><div class="dot"></div> 已上传课件</div>
+      <div style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.3rem; text-align: center; color: var(--text-dim); font-size: 0.85rem;">
+        暂无课件，上传第一个文件即开始 ✨
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <span>Logos · 作业与考试 · 世俗事务处理站</span>
+  </div>
+
+</div>
+</body>
+</html>
