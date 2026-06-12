@@ -6,28 +6,26 @@
 <title>理·理境 — Logos</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Inter:wght@300;400;600&display=swap');
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   :root {
     --bg-deep: #0a0e1a;
-    --bg-card: rgba(15, 25, 50, 0.85);
     --accent: #4fc3f7;
     --accent-dim: #1565c0;
     --text: #e0e6ed;
     --text-muted: #8899aa;
     --border: rgba(79, 195, 247, 0.15);
   }
-
   body {
     background: var(--bg-deep);
     color: var(--text);
     font-family: 'Inter', 'Noto Serif SC', sans-serif;
     min-height: 100vh;
-    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
   }
-
-  /* animated background */
   body::before {
     content: '';
     position: fixed;
@@ -35,338 +33,22 @@
     width: 200%; height: 200%;
     background: radial-gradient(ellipse at 30% 20%, rgba(21, 101, 192, 0.15) 0%, transparent 50%),
                 radial-gradient(ellipse at 70% 80%, rgba(79, 195, 247, 0.08) 0%, transparent 50%);
-    animation: drift 20s ease-in-out infinite alternate;
     z-index: -1;
   }
-
-  @keyframes drift {
-    0% { transform: translate(0, 0) rotate(0deg); }
-    100% { transform: translate(-3%, 3%) rotate(2deg); }
-  }
-
-  /* header */
-  header {
-    text-align: center;
-    padding: 60px 20px 30px;
-  }
-
-  header .glyph {
-    font-size: 3rem;
-    color: var(--accent);
-    text-shadow: 0 0 30px rgba(79, 195, 247, 0.3);
-    margin-bottom: 10px;
-    font-family: 'Noto Serif SC', serif;
-  }
-
-  header h1 {
-    font-family: 'Noto Serif SC', serif;
-    font-size: 2.2rem;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    color: var(--accent);
-  }
-
-  header .subtitle {
-    color: var(--text-muted);
-    font-size: 0.95rem;
-    margin-top: 8px;
-    font-weight: 300;
-  }
-
-  /* breadcrumb */
-  .breadcrumb {
-    text-align: center;
-    padding: 10px 0 30px;
-    font-size: 0.85rem;
-  }
-
-  .breadcrumb a {
-    color: var(--text-muted);
-    text-decoration: none;
-    transition: color 0.2s;
-  }
-
+  .glyph { font-size: 4rem; margin-bottom: 20px; color: var(--accent); text-shadow: 0 0 30px rgba(79, 195, 247, 0.3); }
+  h1 { font-family: 'Noto Serif SC', serif; font-size: 2.5rem; color: var(--accent); letter-spacing: 0.15em; margin-bottom: 10px; }
+  .subtitle { color: var(--text-muted); font-size: 1rem; font-weight: 300; margin-bottom: 30px; }
+  .status { color: var(--text-muted); font-size: 0.85rem; opacity: 0.6; }
+  .breadcrumb { margin-top: 40px; }
+  .breadcrumb a { color: var(--text-muted); text-decoration: none; font-size: 0.85rem; }
   .breadcrumb a:hover { color: var(--accent); }
-  .breadcrumb .sep { color: var(--text-muted); margin: 0 8px; }
-
-  /* course section */
-  .course-section {
-    max-width: 900px;
-    margin: 0 auto 40px;
-    padding: 0 20px;
-  }
-
-  .course-header {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 25px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .course-header .icon {
-    font-size: 2rem;
-  }
-
-  .course-header h2 {
-    font-family: 'Noto Serif SC', serif;
-    font-size: 1.5rem;
-    color: var(--accent);
-  }
-
-  .course-header .meta {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    margin-left: auto;
-  }
-
-  /* chapter grid */
-  .chapter-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px;
-  }
-
-  .chapter-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
-    transition: transform 0.2s, border-color 0.2s;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .chapter-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0;
-    width: 4px; height: 100%;
-    background: linear-gradient(180deg, var(--accent), var(--accent-dim));
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-
-  .chapter-card:hover {
-    transform: translateY(-2px);
-    border-color: rgba(79, 195, 247, 0.3);
-  }
-
-  .chapter-card:hover::before { opacity: 1; }
-
-  .chapter-num {
-    font-size: 0.75rem;
-    color: var(--accent);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
-
-  .chapter-title {
-    font-size: 1.05rem;
-    font-weight: 600;
-    margin: 8px 0 4px;
-  }
-
-  .chapter-title-en {
-    font-size: 0.82rem;
-    color: var(--text-muted);
-    font-weight: 300;
-  }
-
-  .chapter-pages {
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    margin-top: 10px;
-    opacity: 0.7;
-  }
-
-  /* knowledge tree */
-  .tree-section {
-    max-width: 900px;
-    margin: 0 auto 60px;
-    padding: 0 20px;
-  }
-
-  .tree-section h3 {
-    font-family: 'Noto Serif SC', serif;
-    font-size: 1.2rem;
-    color: var(--accent);
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .tree {
-    font-family: 'Courier New', monospace;
-    font-size: 0.88rem;
-    line-height: 1.8;
-    color: var(--text-muted);
-    padding: 20px;
-    background: rgba(10, 14, 26, 0.6);
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    white-space: pre;
-    overflow-x: auto;
-  }
-
-  .tree .root { color: var(--accent); font-weight: 600; }
-  .tree .branch { color: #80cbc4; }
-  .tree .leaf { color: var(--text); }
-
-  /* status badge */
-  .status-badge {
-    display: inline-block;
-    padding: 2px 10px;
-    border-radius: 12px;
-    font-size: 0.72rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .status-active {
-    background: rgba(79, 195, 247, 0.15);
-    color: var(--accent);
-    border: 1px solid rgba(79, 195, 247, 0.3);
-  }
-
-  /* footer */
-  footer {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--text-muted);
-    font-size: 0.8rem;
-    border-top: 1px solid var(--border);
-  }
-
-  footer a {
-    color: var(--accent);
-    text-decoration: none;
-  }
-
-  @media (max-width: 600px) {
-    header h1 { font-size: 1.6rem; }
-    .chapter-grid { grid-template-columns: 1fr; }
-  }
 </style>
 </head>
 <body>
-
-<header>
   <div class="glyph">🔬</div>
   <h1>理 · 理境</h1>
   <p class="subtitle">生信科研阵地 · Bioinformatics Research</p>
-</header>
-
-<div class="breadcrumb">
-  <a href="/">Logos</a>
-  <span class="sep">›</span>
-  <span>理境</span>
-</div>
-
-<!-- Genomics Course -->
-<div class="course-section">
-  <div class="course-header">
-    <div class="icon">🧬</div>
-    <div>
-      <h2>Genomics 基因组学</h2>
-      <span class="status-badge status-active">备考复习中</span>
-    </div>
-    <div class="meta">10 Chapters · 973 Pages</div>
-  </div>
-
-  <div class="chapter-grid">
-    <div class="chapter-card">
-      <div class="chapter-num">Chapter 1</div>
-      <div class="chapter-title">基因组学导论</div>
-      <div class="chapter-title-en">Introduction to Genomics</div>
-      <div class="chapter-pages">83 pages</div>
-    </div>
-    <div class="chapter-card">
-      <div class="chapter-num">Chapter 2</div>
-      <div class="chapter-title">人类基因组计划</div>
-      <div class="chapter-title-en">Human Genome Project (HGP)</div>
-      <div class="chapter-pages">87 pages</div>
-    </div>
-    <div class="chapter-card">
-      <div class="chapter-num">Chapter 3</div>
-      <div class="chapter-title">二代测序</div>
-      <div class="chapter-title-en">2nd Generation Sequencing</div>
-      <div class="chapter-pages">91 pages</div>
-    </div>
-    <div class="chapter-card">
-      <div class="chapter-num">Chapter 4</div>
-      <div class="chapter-title">三代测序</div>
-      <div class="chapter-title-en">3rd Generation Sequencing</div>
-      <div class="chapter-pages">68 pages</div>
-    </div>
-    <div class="chapter-card">
-      <div class="chapter-num">Chapter 5</div>
-      <div class="chapter-title">基因组结构</div>
-      <div class="chapter-title-en">Genome Structure</div>
-      <div class="chapter-pages">84 pages</div>
-    </div>
-    <div class="chapter-card">
-      <div class="chapter-num">Chapter 6</div>
-      <div class="chapter-title">基因组功能元件</div>
-      <div class="chapter-title-en">Functional Elements of Genome</div>
-      <div class="chapter-pages">111 pages</div>
-    </div>
-    <div class="chapter-card">
-      <div class="chapter-num">Chapter 7</div>
-      <div class="chapter-title">ENCODE 项目 I-II</div>
-      <div class="chapter-title-en">The ENCODE Project I-II</div>
-      <div class="chapter-pages">128 pages</div>
-    </div>
-    <div class="chapter-card">
-      <div class="chapter-num">Chapter 8</div>
-      <div class="chapter-title">ENCODE 项目 III-IV</div>
-      <div class="chapter-title-en">The ENCODE Portal (III-IV)</div>
-      <div class="chapter-pages">25 pages</div>
-    </div>
-    <div class="chapter-card">
-      <div class="chapter-num">Chapter 9</div>
-      <div class="chapter-title">染色质状态</div>
-      <div class="chapter-title-en">Chromatin States</div>
-      <div class="chapter-pages">119 pages</div>
-    </div>
-    <div class="chapter-card">
-      <div class="chapter-num">Chapter 10</div>
-      <div class="chapter-title">染色质状态检测技术</div>
-      <div class="chapter-title-en">Detecting Techniques for Chromatin States</div>
-      <div class="chapter-pages">97 pages</div>
-    </div>
-  </div>
-</div>
-
-<!-- Knowledge Tree -->
-<div class="tree-section">
-  <h3>知识结构 Knowledge Map</h3>
-  <div class="tree"><span class="root">基因组学 Genomics</span>
-├── <span class="branch">基础概念 (Ch 1)</span>
-│   └── <span class="leaf">基因组学定义、研究范畴</span>
-├── <span class="branch">人类基因组计划 (Ch 2)</span>
-│   └── <span class="leaf">HGP 历史、成果、意义</span>
-├── <span class="branch">测序技术演进 (Ch 3-4)</span>
-│   ├── <span class="leaf">二代测序 (Illumina 等)</span>
-│   └── <span class="leaf">三代测序 (PacBio, Oxford Nanopore)</span>
-├── <span class="branch">基因组结构与功能 (Ch 5-6)</span>
-│   ├── <span class="leaf">基因组结构特征</span>
-│   └── <span class="leaf">功能元件识别 (Enhancer, Promoter 等)</span>
-├── <span class="branch">功能基因组学 (Ch 7-8)</span>
-│   ├── <span class="leaf">ENCODE 计划 I-II</span>
-│   └── <span class="leaf">ENCODE 数据门户 III-IV</span>
-└── <span class="branch">表观基因组学 (Ch 9-10)</span>
-    ├── <span class="leaf">染色质状态分类</span>
-    └── <span class="leaf">检测技术 (ATAC-seq, ChIP-seq 等)</span></div>
-</div>
-
-<footer>
-  <p>理·理境 — Logos 四象计划</p>
-  <p><a href="/">返回总览</a></p>
-</footer>
-
+  <p class="status">待激活 — 等待研究方向与文献上传</p>
+  <div class="breadcrumb"><a href="/">← 返回总览</a></div>
 </body>
 </html>
