@@ -113,6 +113,6 @@
 ## 七、当前进度
 - [x] Ch1 · Introduction to Genomics · 基因组学导论
 - [x] Ch2 · Human Genome Project · 人类基因组计划
-- [ ] Ch3 · 2nd Generation Sequencing · 二代测序
+- [x] Ch3 · 2nd Generation Sequencing · 二代测序
 - [ ] ...（共21个章节）
 
