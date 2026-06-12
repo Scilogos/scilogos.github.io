@@ -67,7 +67,6 @@
     font-size: 0.78rem; color: var(--accent);
   }
   
-  /* Stats */
   .kpi-row {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 1rem; margin-bottom: 2rem;
@@ -80,7 +79,6 @@
   .kpi-value { font-size: 1.5rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
   .kpi-unit { font-size: 0.75rem; font-weight: 400; color: var(--text-dim); }
   
-  /* Section */
   .section { margin-bottom: 2.5rem; }
   .section-title {
     font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em;
@@ -89,7 +87,6 @@
   }
   .section-title .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
   
-  /* Work cards */
   .works-grid { display: flex; flex-direction: column; gap: 1rem; }
   .work-card {
     background: var(--card); border: 1px solid var(--border);
@@ -97,6 +94,8 @@
     border-left: 3px solid var(--accent);
     transition: border-color 0.2s, transform 0.15s;
     cursor: default;
+    text-decoration: none; color: inherit;
+    display: block;
   }
   .work-card:hover { border-color: var(--accent); transform: translateX(4px); }
   .work-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 0.5rem; }
@@ -118,28 +117,31 @@
   .badge-tale { background: rgba(74,222,128,0.12); color: #4ade80; }
   .badge-dark { background: rgba(248,113,113,0.12); color: #f87171; }
   .badge-history { background: rgba(34,211,238,0.12); color: #22d3ee; }
-  .word-count {
-    font-size: 0.72rem; font-family: 'JetBrains Mono', monospace; color: var(--text-dim);
-  }
-  .work-synopsis {
-    font-size: 0.85rem; color: var(--text-sec); line-height: 1.6;
-    margin-bottom: 0.5rem;
-  }
-  .work-link-tag {
-    font-size: 0.72rem; color: var(--accent); opacity: 0.7;
-  }
+  .badge-universe { background: rgba(168,85,247,0.12); color: #c084fc; }
+  .word-count { font-size: 0.72rem; font-family: 'JetBrains Mono', monospace; color: var(--text-dim); }
+  .work-synopsis { font-size: 0.85rem; color: var(--text-sec); line-height: 1.6; margin-bottom: 0.5rem; }
+  .work-link-tag { font-size: 0.72rem; color: var(--accent); opacity: 0.7; }
+  .read-link { font-size: 0.78rem; color: var(--accent); text-decoration: none; }
+  .read-link:hover { text-decoration: underline; }
   
-  /* Relation map */
   .relation-box {
     background: var(--card); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 1.2rem 1.5rem;
-    font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;
-    line-height: 2; color: var(--text-sec);
+    border-radius: var(--radius); padding: 1.4rem 1.5rem;
+    line-height: 2.2;
   }
-  .relation-box .arrow { color: var(--accent); }
-  .relation-box .work-ref { color: var(--text); font-weight: 500; }
+  .relation-box .label {
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-dim); margin-bottom: 0.5rem;
+  }
+  .relation-chain {
+    font-family: 'Noto Serif SC', serif; font-size: 0.92rem;
+    color: var(--text-sec); line-height: 2.4;
+  }
+  .relation-chain .work-ref { color: var(--text); font-weight: 600; }
+  .relation-chain .arrow { color: var(--accent); margin: 0 0.3rem; }
+  .relation-chain .desc { color: var(--text-dim); font-size: 0.8rem; }
+  .relation-chain .order { color: var(--accent); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; }
   
-  /* Footer */
   .footer {
     text-align: center; padding: 2rem; color: var(--text-dim); font-size: 0.75rem;
     border-top: 1px solid var(--border); margin-top: 2rem;
@@ -199,45 +201,84 @@
       <div class="section-title"><div class="dot"></div> 作品目录</div>
       <div class="works-grid">
         
-        <!-- 1. 庭院深深 -->
-        <div class="work-card">
+        <a href="works/xianhe/index.html" class="work-card">
           <div class="work-header">
-            <div class="work-title">庭院深深</div>
-            <div class="word-count">32,503 字</div>
+            <div class="work-title">仙鹤接引</div>
+            <div class="word-count">10,431 字</div>
           </div>
           <div class="work-meta">
-            <span class="badge badge-novel">长篇</span>
+            <span class="badge badge-short">短篇</span>
+            <span class="badge badge-universe">同宇宙 I</span>
           </div>
-          <div class="work-synopsis">女皇用三年织了一张巨网。千万无辜平民深陷网中，成了"燃料、毒瘤、耗材"。在合理的世界中，人只能清醒或不清醒地沉沦吗？</div>
-        </div>
+          <div class="work-synopsis">两名神师在海上危难之际，以圣戈刺入垂死同伴心脏。教廷为平息风暴，创造了仙鹤接引的美丽传说。当谎言成为救赎的桥梁，信仰的根基是否因此动摇？</div>
+          <div class="read-link">阅读全文 →</div>
+        </a>
 
-        <!-- 2. 世事悠悠 -->
-        <div class="work-card">
+        <a href="works/shishi/index.html" class="work-card">
           <div class="work-header">
             <div class="work-title">世事悠悠 (Per Saecula)</div>
             <div class="word-count">35,911 字</div>
           </div>
           <div class="work-meta">
             <span class="badge badge-drama">长篇戏剧</span>
+            <span class="badge badge-universe">同宇宙 II</span>
           </div>
           <div class="work-synopsis">25世纪核战重启后的新人类文明。大南共和国青年路超，在远东求学，两国战争爆发后返乡游击抗敌。功高震主的父亲竟被本国总统诱杀。忠诚与虚无之间，他该何去何从？</div>
-        </div>
+          <div class="read-link">阅读全文 →</div>
+        </a>
 
-        <!-- 3. 依依林影 -->
-        <div class="work-card">
+        <a href="works/yiyi/index.html" class="work-card">
           <div class="work-header">
             <div class="work-title">依依林影</div>
             <div class="word-count">21,189 字</div>
           </div>
           <div class="work-meta">
             <span class="badge badge-novel">中篇</span>
-            <span class="work-link-tag">→ 《世事悠悠》关联</span>
+            <span class="badge badge-universe">同宇宙 III</span>
           </div>
           <div class="work-synopsis">升龙城破后第七天。占领军的配给制下，向阳家阁楼里，林影透过木板缝隙注视着街道。恐惧在慢慢发酵成麻木的味道。</div>
-        </div>
+          <div class="read-link">阅读全文 →</div>
+        </a>
 
-        <!-- 4. 糖果总动员 -->
-        <div class="work-card">
+        <a href="works/fenglin/index.html" class="work-card">
+          <div class="work-header">
+            <div class="work-title">枫林向晚</div>
+            <div class="word-count">4,677 字</div>
+          </div>
+          <div class="work-meta">
+            <span class="badge badge-short">短篇</span>
+            <span class="badge badge-universe">同宇宙 IV</span>
+          </div>
+          <div class="work-synopsis">仙京大学外卖骑手红枫的日常。秋高气爽的天空下，骑电动车穿梭于校园与城市之间。</div>
+          <div class="read-link">阅读全文 →</div>
+        </a>
+
+        <a href="works/tingyuan/index.html" class="work-card">
+          <div class="work-header">
+            <div class="work-title">庭院深深</div>
+            <div class="word-count">32,503 字</div>
+          </div>
+          <div class="work-meta">
+            <span class="badge badge-novel">长篇</span>
+            <span class="badge badge-universe">同宇宙 V</span>
+          </div>
+          <div class="work-synopsis">女皇用三年织了一张巨网。千万无辜平民深陷网中，成了"燃料、毒瘤、耗材"。在合理的世界中，人只能清醒或不清醒地沉沦吗？</div>
+          <div class="read-link">阅读全文 →</div>
+        </a>
+
+        <a href="works/tianshi/index.html" class="work-card">
+          <div class="work-header">
+            <div class="work-title">天使印钞机</div>
+            <div class="word-count">10,150 字</div>
+          </div>
+          <div class="work-meta">
+            <span class="badge badge-tale">童话</span>
+          </div>
+          <div class="work-synopsis">纪律严明的不思议王国之外，逃离的孩子们建立了追求自由的奇妙小镇。然而小镇面临着一系列危机。"天使印钞机"的出现，会改变这一切吗？</div>
+          <div class="read-link">阅读全文 →</div>
+        </a>
+
+        <a href="works/tangguo/index.html" class="work-card">
           <div class="work-header">
             <div class="work-title">糖果总动员</div>
             <div class="word-count">14,580 字</div>
@@ -247,46 +288,10 @@
             <span class="work-link-tag">→ 《天使印钞机》关联</span>
           </div>
           <div class="work-synopsis">不思议王国用"主辅备"原则维持制糖产业的平衡。小明为奇妙小镇设计了"产业推恩令"。人们能反抗命运的暴虐绞索，但能否挣脱温和的轭？</div>
-        </div>
+          <div class="read-link">阅读全文 →</div>
+        </a>
 
-        <!-- 5. 天使印钞机 -->
-        <div class="work-card">
-          <div class="work-header">
-            <div class="work-title">天使印钞机</div>
-            <div class="word-count">10,150 字</div>
-          </div>
-          <div class="work-meta">
-            <span class="badge badge-tale">童话</span>
-          </div>
-          <div class="work-synopsis">纪律严明的不思议王国之外，逃离的孩子们建立了追求自由的奇妙小镇。然而小镇面临着一系列危机。"天使印钞机"的出现，会改变这一切吗？</div>
-        </div>
-
-        <!-- 6. 仙鹤接引 -->
-        <div class="work-card">
-          <div class="work-header">
-            <div class="work-title">仙鹤接引</div>
-            <div class="word-count">10,431 字</div>
-          </div>
-          <div class="work-meta">
-            <span class="badge badge-short">短篇</span>
-          </div>
-          <div class="work-synopsis">两名神师在海上危难之际，以圣戈刺入垂死同伴心脏。教廷为平息风暴，创造了仙鹤接引的美丽传说。当谎言成为救赎的桥梁，信仰的根基是否因此动摇？</div>
-        </div>
-
-        <!-- 7. 枫林向晚 -->
-        <div class="work-card">
-          <div class="work-header">
-            <div class="work-title">枫林向晚</div>
-            <div class="word-count">4,677 字</div>
-          </div>
-          <div class="work-meta">
-            <span class="badge badge-short">短篇</span>
-          </div>
-          <div class="work-synopsis">仙京大学外卖骑手红枫的日常。秋高气爽的天空下，骑电动车穿梭于校园与城市之间。</div>
-        </div>
-
-        <!-- 8. 没有真正的苏格兰人 -->
-        <div class="work-card">
+        <a href="works/sugelan/index.html" class="work-card">
           <div class="work-header">
             <div class="work-title">没有真正的苏格兰人</div>
             <div class="word-count">4,437 字</div>
@@ -295,10 +300,10 @@
             <span class="badge badge-history">英国历史笑话</span>
           </div>
           <div class="work-synopsis">戏剧小品。低地苏格兰人、英格兰人、高地苏格兰人和威尔士酒保之间的身份辩论——谁才是"真正的苏格兰人"？</div>
-        </div>
+          <div class="read-link">阅读全文 →</div>
+        </a>
 
-        <!-- 9. 电梯间 -->
-        <div class="work-card">
+        <a href="works/dianti/index.html" class="work-card">
           <div class="work-header">
             <div class="work-title">电梯间</div>
             <div class="word-count">3,240 字</div>
@@ -307,10 +312,10 @@
             <span class="badge badge-short">短篇</span>
           </div>
           <div class="work-synopsis">京师大学物理楼六楼电梯间。两位物理学博士在等待咖啡的间隙，讨论着时间、空间和人生的荒诞。</div>
-        </div>
+          <div class="read-link">阅读全文 →</div>
+        </a>
 
-        <!-- 10. 请死在996以后 -->
-        <div class="work-card">
+        <a href="works/996/index.html" class="work-card">
           <div class="work-header">
             <div class="work-title">请死在996以后</div>
             <div class="word-count">3,833 字</div>
@@ -319,7 +324,8 @@
             <span class="badge badge-drama">中篇戏剧</span>
           </div>
           <div class="work-synopsis">社畜为全勤奖暴雨冲往公司，当晚21:42猝死。他的"好兄弟"得知消息，第一反应竟不是悲痛……</div>
-        </div>
+          <div class="read-link">阅读全文 →</div>
+        </a>
 
       </div>
     </div>
@@ -328,8 +334,29 @@
     <div class="section">
       <div class="section-title"><div class="dot"></div> 作品关联图谱</div>
       <div class="relation-box">
-        <span class="work-ref">世事悠悠</span> <span class="arrow">──→</span> <span class="work-ref">依依林影</span>（同一世界观：核战后新人类文明）<br>
-        <span class="work-ref">天使印钞机</span> <span class="arrow">──→</span> <span class="work-ref">糖果总动员</span>（同一世界观：不思议王国与奇妙小镇）
+        <div class="label">同一世界观 · 创作时间序</div>
+        <div class="relation-chain">
+          <span class="order">I</span> <span class="work-ref">仙鹤接引</span>
+          <span class="arrow">→</span>
+          <span class="order">II</span> <span class="work-ref">世事悠悠</span>
+          <span class="arrow">→</span>
+          <span class="order">III</span> <span class="work-ref">依依林影</span>
+          <span class="arrow">→</span>
+          <span class="order">IV</span> <span class="work-ref">枫林向晚</span>
+          <span class="arrow">→</span>
+          <span class="order">V</span> <span class="work-ref">庭院深深</span>
+        </div>
+        <div class="desc" style="margin-top:0.5rem; font-size:0.78rem; color:var(--text-dim);">五部作品共享同一架空世界观，按创作时间排列</div>
+        
+        <div style="margin-top:1.2rem; border-top:1px solid var(--border); padding-top:1rem;">
+          <div class="label">独立关联</div>
+          <div class="relation-chain">
+            <span class="work-ref">天使印钞机</span>
+            <span class="arrow">→</span>
+            <span class="work-ref">糖果总动员</span>
+            <span class="desc">（同一世界观：不思议王国与奇妙小镇）</span>
+          </div>
+        </div>
       </div>
     </div>
 
