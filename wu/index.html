@@ -11,6 +11,8 @@
     --bg: #0b0b12; --surface: rgba(16,16,26,0.85); --card: rgba(22,22,36,0.88);
     --border: rgba(60,60,90,0.35); --text: #e8e8f2; --text-sec: #a0a0bc; --text-dim: #6a6a88;
     --accent: #4ade80; --accent-dim: rgba(74,222,128,0.1); --accent-glow: rgba(74,222,128,0.2);
+    --warn: #fb923c; --warn-dim: rgba(251,146,60,0.1);
+    --danger: #f87171; --danger-dim: rgba(248,113,113,0.1);
     --radius: 10px;
   }
   html { scroll-behavior: smooth; }
@@ -29,7 +31,6 @@
   }
   .app { position: relative; z-index: 1; min-height: 100vh; }
   
-  /* Topbar */
   .topbar {
     display: flex; align-items: center; justify-content: space-between;
     padding: 0.8rem 2rem; background: rgba(11,11,18,0.7);
@@ -37,34 +38,26 @@
     position: sticky; top: 0; z-index: 100;
   }
   .topbar-left { display: flex; align-items: center; gap: 1rem; }
-  .back-link {
-    color: var(--text-dim); text-decoration: none; font-size: 0.85rem;
-    transition: color 0.2s;
-  }
+  .back-link { color: var(--text-dim); text-decoration: none; font-size: 0.85rem; transition: color 0.2s; }
   .back-link:hover { color: var(--accent); }
   .realm-mark {
     width: 36px; height: 36px; border-radius: 8px;
     background: linear-gradient(135deg, var(--accent), #22c55e);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.2rem;
-    box-shadow: 0 0 16px var(--accent-glow);
+    font-size: 1.2rem; box-shadow: 0 0 16px var(--accent-glow);
   }
   .topbar-title { font-weight: 700; font-size: 1.05rem; }
   .topbar-title span { color: var(--accent); }
   
   .content { max-width: 1000px; margin: 0 auto; padding: 2rem; }
   
-  /* Hero */
-  .hero {
-    text-align: center; padding: 3rem 0 2rem;
-  }
+  .hero { text-align: center; padding: 3rem 0 2rem; }
   .hero-glyph { font-size: 3.5rem; margin-bottom: 0.8rem; }
   .hero-title { font-size: 2.2rem; font-weight: 700; color: var(--accent); margin-bottom: 0.5rem; }
   .hero-sub { color: var(--text-sec); font-size: 0.95rem; }
   
-  /* KPI */
   .kpi-row {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 1rem; margin-bottom: 2rem;
   }
   .kpi-card {
@@ -74,10 +67,11 @@
   }
   .kpi-card:hover { border-color: var(--accent); }
   .kpi-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 0.4rem; }
-  .kpi-value { font-size: 1.8rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+  .kpi-value { font-size: 1.6rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+  .kpi-value.warn { color: var(--warn); }
+  .kpi-value.danger { color: var(--danger); }
   .kpi-sub { font-size: 0.72rem; color: var(--text-dim); margin-top: 0.25rem; }
   
-  /* Section */
   .section { margin-bottom: 2rem; }
   .section-title {
     font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em;
@@ -86,7 +80,6 @@
   }
   .section-title .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
   
-  /* Module cards */
   .module-grid {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1rem;
@@ -102,28 +95,33 @@
   .module-title { font-weight: 600; margin-bottom: 0.3rem; }
   .module-desc { font-size: 0.82rem; color: var(--text-sec); line-height: 1.5; }
   
-  /* Data table */
   .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
   .data-table th {
     text-align: left; padding: 0.6rem 1rem; font-size: 0.68rem;
     text-transform: uppercase; letter-spacing: 0.06em;
     color: var(--text-dim); border-bottom: 1px solid var(--border); font-weight: 600;
   }
-  .data-table td {
-    padding: 0.7rem 1rem; border-bottom: 1px solid rgba(60,60,90,0.15);
-  }
+  .data-table td { padding: 0.7rem 1rem; border-bottom: 1px solid rgba(60,60,90,0.15); }
   .data-table tr:hover td { background: rgba(74,222,128,0.04); }
   .mono { font-family: 'JetBrains Mono', monospace; }
   
-  /* Status */
   .badge {
     display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px;
     font-size: 0.68rem; font-weight: 600; font-family: 'JetBrains Mono', monospace;
   }
   .badge-active { background: var(--accent-dim); color: var(--accent); }
   .badge-pending { background: rgba(251,146,60,0.1); color: #fb923c; }
-  
-  /* Footer */
+  .badge-warn { background: var(--warn-dim); color: var(--warn); }
+  .badge-danger { background: var(--danger-dim); color: var(--danger); }
+  .badge-ok { background: var(--accent-dim); color: var(--accent); }
+
+  .alert-box {
+    background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.25);
+    border-radius: var(--radius); padding: 1rem 1.3rem; margin-bottom: 1.5rem;
+    font-size: 0.85rem; line-height: 1.6;
+  }
+  .alert-box strong { color: var(--danger); }
+
   .footer {
     text-align: center; padding: 2rem; color: var(--text-dim); font-size: 0.75rem;
     border-top: 1px solid var(--border); margin-top: 2rem;
@@ -149,54 +147,139 @@
       <div class="hero-sub">身体重塑系统 — 数据驱动，科学训练</div>
     </div>
 
-    <!-- Current Body Data -->
+    <!-- Alert: Health Warning -->
+    <div class="alert-box">
+      <strong>⚠️ 健康提醒</strong>：BMI 过大（29.6，肥胖），脂肪率超标（27.5%），内脏脂肪偏多（12级）。
+      存在较高三高及心血管病风险。建议控制油盐及热量摄入，加强运动。
+      <strong>避免跑步、跳绳等冲击下肢关节的运动</strong>。
+    </div>
+
+    <!-- Current KPI Row -->
     <div class="kpi-row">
       <div class="kpi-card">
         <div class="kpi-label">体重</div>
-        <div class="kpi-value">83<span style="font-size:0.9rem; font-weight:400;"> kg</span></div>
-        <div class="kpi-sub">录入于 2026-06-11</div>
+        <div class="kpi-value danger">85.7<span style="font-size:0.9rem; font-weight:400;"> kg</span></div>
+        <div class="kpi-sub">2026-06-12 · BMI 29.6</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">体脂率</div>
-        <div class="kpi-value">27<span style="font-size:0.9rem; font-weight:400;">%</span></div>
-        <div class="kpi-sub">录入于 2026-06-11</div>
+        <div class="kpi-value warn">27.5<span style="font-size:0.9rem; font-weight:400;"> %</span></div>
+        <div class="kpi-sub">过高 · 同龄均值 17.8%</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">项目状态</div>
-        <div class="kpi-value" style="font-size:1rem;"><span class="badge badge-active">DATA READY</span></div>
-        <div class="kpi-sub">基础数据已录入，待制定方案</div>
+        <div class="kpi-label">骨骼肌量</div>
+        <div class="kpi-value">33.5<span style="font-size:0.9rem; font-weight:400;"> kg</span></div>
+        <div class="kpi-sub">标准 · 同龄均值 28.8kg</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">执行周期</div>
-        <div class="kpi-value" style="font-size:1.2rem;">暑假</div>
-        <div class="kpi-sub">2026 暑假期间完成</div>
+        <div class="kpi-label">内脏脂肪</div>
+        <div class="kpi-value warn">12.0<span style="font-size:0.9rem; font-weight:400;"> 级</span></div>
+        <div class="kpi-sub">偏高 · 同龄均值 6.2级</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">基础代谢</div>
+        <div class="kpi-value">1,808<span style="font-size:0.9rem; font-weight:400;"> kcal</span></div>
+        <div class="kpi-sub">偏低</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">身体得分</div>
+        <div class="kpi-value warn">69<span style="font-size:0.9rem; font-weight:400;"> 分</span></div>
+        <div class="kpi-sub">身体年龄 26岁</div>
       </div>
     </div>
 
-    <!-- Body Data Table -->
+    <!-- Body Composition Table -->
     <div class="section">
-      <div class="section-title"><div class="dot"></div> 身体数据追踪</div>
+      <div class="section-title"><div class="dot"></div> 完整体成分数据（2026-06-12 基线）</div>
       <div style="overflow-x:auto;">
         <table class="data-table">
           <thead>
             <tr>
-              <th>日期</th>
-              <th>体重 (kg)</th>
-              <th>体脂率 (%)</th>
-              <th>水分率 (%)</th>
-              <th>肌肉量 (kg)</th>
-              <th>备注</th>
+              <th>指标</th>
+              <th>数值</th>
+              <th>状态</th>
+              <th>同龄均值</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td class="mono">2026-06-11</td>
-              <td class="mono">83</td>
-              <td class="mono">27</td>
+              <td>体重</td>
+              <td class="mono">85.7 kg</td>
+              <td><span class="badge badge-danger">肥胖</span></td>
               <td class="mono">—</td>
-              <td class="mono">—</td>
-              <td>首次录入，后续将上传更多数据</td>
             </tr>
+            <tr>
+              <td>BMI</td>
+              <td class="mono">29.6</td>
+              <td><span class="badge badge-danger">肥胖</span></td>
+              <td class="mono">22.7</td>
+            </tr>
+            <tr>
+              <td>脂肪率</td>
+              <td class="mono">27.5 %</td>
+              <td><span class="badge badge-danger">过高</span></td>
+              <td class="mono">17.8 %</td>
+            </tr>
+            <tr>
+              <td>骨骼肌量</td>
+              <td class="mono">33.5 kg</td>
+              <td><span class="badge badge-ok">标准</span></td>
+              <td class="mono">28.8 kg</td>
+            </tr>
+            <tr>
+              <td>内脏脂肪等级</td>
+              <td class="mono">12.0 级</td>
+              <td><span class="badge badge-warn">偏高</span></td>
+              <td class="mono">6.2 级</td>
+            </tr>
+            <tr>
+              <td>基础代谢率</td>
+              <td class="mono">1,808 kcal/日</td>
+              <td><span class="badge badge-warn">偏低</span></td>
+              <td class="mono">—</td>
+            </tr>
+            <tr>
+              <td>水分率</td>
+              <td class="mono">49.0 %</td>
+              <td><span class="badge badge-ok">标准</span></td>
+              <td class="mono">—</td>
+            </tr>
+            <tr>
+              <td>蛋白质</td>
+              <td class="mono">19.8 %</td>
+              <td><span class="badge badge-ok">标准</span></td>
+              <td class="mono">—</td>
+            </tr>
+            <tr>
+              <td>骨盐量</td>
+              <td class="mono">3.17 kg</td>
+              <td><span class="badge badge-warn">较多</span></td>
+              <td class="mono">—</td>
+            </tr>
+            <tr>
+              <td>去脂体重</td>
+              <td class="mono">62.1 kg</td>
+              <td><span class="badge badge-ok">标准</span></td>
+              <td class="mono">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Weight Composition -->
+    <div class="section">
+      <div class="section-title"><div class="dot"></div> 体重组成（85.7 kg）</div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr><th>成分</th><th>重量</th><th>占比</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>水分</td><td class="mono">42.03 kg</td><td class="mono">49.0%</td></tr>
+            <tr><td>脂肪量</td><td class="mono">23.57 kg</td><td class="mono">27.5%</td></tr>
+            <tr><td>蛋白质</td><td class="mono">16.93 kg</td><td class="mono">19.7%</td></tr>
+            <tr><td>骨盐量</td><td class="mono">3.17 kg</td><td class="mono">3.7%</td></tr>
           </tbody>
         </table>
       </div>
@@ -219,7 +302,8 @@
           <div class="module-title">周期化训练计划</div>
           <div class="module-desc">
             根据目标和数据制定训练方案：增肌/减脂/体能阶段切换。<br>
-            每日安排：动作、组数、次数、重量、休息间隔。
+            每日安排：动作、组数、次数、重量、休息间隔。<br>
+            ⚠️ 当前需避免跑步、跳绳等冲击下肢关节的运动。
           </div>
         </div>
         <div class="module-card">
@@ -233,15 +317,49 @@
       </div>
     </div>
 
+    <!-- Data Tracking History -->
+    <div class="section">
+      <div class="section-title"><div class="dot"></div> 数据录入历史</div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>日期</th>
+              <th>体重 (kg)</th>
+              <th>体脂率 (%)</th>
+              <th>水分率 (%)</th>
+              <th>骨骼肌 (kg)</th>
+              <th>内脏脂肪 (级)</th>
+              <th>基础代谢 (kcal)</th>
+              <th>备注</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="mono">2026-06-12</td>
+              <td class="mono">85.7</td>
+              <td class="mono">27.5</td>
+              <td class="mono">49.0</td>
+              <td class="mono">33.5</td>
+              <td class="mono">12.0</td>
+              <td class="mono">1,808</td>
+              <td>首次完整数据录入（基线）</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- Next Steps -->
     <div class="section">
       <div class="section-title"><div class="dot"></div> 待办</div>
       <div style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem;">
         <div style="font-size:0.85rem; line-height:2;">
-          ☐ 上传更多身体数据（水分率、肌肉量等）<br>
-          ☐ 基于当前数据（83kg / 27%体脂）制定初步训练计划<br>
-          ☐ 制定营养方案<br>
-          ☐ 建立数据追踪表格
+          ☑ 首次身体数据录入 & 基线建立<br>
+          ☐ 基于基线数据制定减脂训练计划（避免下肢冲击运动）<br>
+          ☐ 制定营养方案（目标：控制热量，降低体脂率）<br>
+          ☐ 定期更新身体数据，追踪趋势变化<br>
+          ☐ 建立 GitHub Actions 自动趋势图表
         </div>
       </div>
     </div>
