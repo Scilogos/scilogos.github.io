@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Logos · 四象归元</title>
+<title>Logos · 五域归元</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;600;700&display=swap');
 
@@ -24,6 +24,7 @@
     --green: #4ade80;
     --cyan: #22d3ee;
     --orange: #fb923c;
+    --violet: #a78bfa;
     --red: #f87171;
     --blue: #60a5fa;
     --radius: 12px;
@@ -99,7 +100,7 @@
     font-size: 0.9rem; color: var(--text-dim); font-style: italic;
   }
 
-  /* FOUR REALMS GRID */
+  /* FIVE REALMS GRID */
   .realms {
     max-width: 1100px; margin: 0 auto; padding: 0 2rem 4rem;
     display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;
@@ -125,6 +126,7 @@
   .realm-card[data-realm="li"]::before { background: var(--cyan); }
   .realm-card[data-realm="wu"]::before { background: var(--green); }
   .realm-card[data-realm="cai"]::before { background: var(--orange); }
+  .realm-card[data-realm="wu2"]::before { background: var(--violet); }
 
   .realm-icon { font-size: 2.5rem; margin-bottom: 0.8rem; }
   .realm-name {
@@ -135,6 +137,7 @@
   .realm-card[data-realm="li"] .realm-name { color: var(--cyan); }
   .realm-card[data-realm="wu"] .realm-name { color: var(--green); }
   .realm-card[data-realm="cai"] .realm-name { color: var(--orange); }
+  .realm-card[data-realm="wu2"] .realm-name { color: var(--violet); }
 
   .realm-tagline { font-size: 0.82rem; color: var(--text-sec); margin-bottom: 1rem; }
   .realm-desc { font-size: 0.78rem; color: var(--text-dim); line-height: 1.7; }
@@ -181,7 +184,7 @@
   <div class="topbar">
     <div class="topbar-left">
       <div class="logos-mark">L</div>
-      <div class="topbar-title"><span>Logos</span> · 四象归元</div>
+      <div class="topbar-title"><span>Logos</span> · 五域归元</div>
     </div>
     <div class="topbar-right">
       <div class="status-dot"></div>
@@ -190,8 +193,8 @@
   </div>
 
   <div class="hero">
-    <div class="hero-kanji">文 理 武 财</div>
-    <div class="hero-sub">LOGOS · FOUR REALMS</div>
+    <div class="hero-kanji">文 理 武 财 务</div>
+    <div class="hero-sub">LOGOS · FIVE REALMS</div>
     <div class="hero-motto">「以 Logos 之名，统摄暑假及下学期全部核心任务」</div>
   </div>
 
@@ -259,6 +262,22 @@
         <span class="realm-status-badge badge-pending">待需求输入</span>
       </div>
       <div class="realm-enter">进入财略 →</div>
+    </a>
+
+    <a class="realm-card" data-realm="wu2" href="exam/index.html">
+      <div class="realm-icon">📋</div>
+      <div class="realm-name">务 · 作业与考试</div>
+      <div class="realm-tagline">世俗事务处理站 — 课件、作业、考试，逐个击破</div>
+      <div class="realm-desc">
+        课件上传 & 自动解析归档<br>
+        作业追踪 & 截止日期提醒<br>
+        考试备战 & 复习笔记生成
+      </div>
+      <div class="realm-status">
+        <span class="realm-status-label">Status</span>
+        <span class="realm-status-badge badge-pending">待启动</span>
+      </div>
+      <div class="realm-enter">进入作业与考试 →</div>
     </a>
   </div>
 
