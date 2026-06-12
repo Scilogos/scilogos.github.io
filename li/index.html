@@ -3,132 +3,370 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>理 · 理境 — Logos</title>
+<title>理·理境 — Logos</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;600;700&display=swap');
-  * { margin:0; padding:0; box-sizing:border-box; }
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Inter:wght@300;400;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
   :root {
-    --bg:#0b0b12; --card:rgba(22,22,36,0.88); --border:rgba(60,60,90,0.35);
-    --text:#e8e8f2; --text-sec:#a0a0bc; --text-dim:#6a6a88;
-    --accent:#22d3ee; --accent-dim:rgba(34,211,238,0.12);
-    --green:#4ade80; --blue:#60a5fa; --orange:#fb923c; --purple:#7c6fff;
-    --radius:10px;
-  }
-  body { font-family:'Inter',-apple-system,sans-serif; color:var(--text); min-height:100vh; line-height:1.6; }
-  .bg-layer { position:fixed; inset:0; z-index:0; background:linear-gradient(135deg,#0b0b12,#0d1a24); }
-  .app { position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column; }
-
-  .topbar {
-    display:flex; align-items:center; justify-content:space-between;
-    padding:0.8rem 2rem; background:rgba(11,11,18,0.7); backdrop-filter:blur(20px);
-    border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100;
-  }
-  .topbar-left { display:flex; align-items:center; gap:1rem; }
-  .back-link { color:var(--text-dim); text-decoration:none; font-size:0.82rem; transition:color 0.2s; }
-  .back-link:hover { color:var(--text); }
-  .realm-badge {
-    padding:0.2rem 0.7rem; border-radius:4px; font-size:0.72rem; font-weight:600;
-    background:var(--accent-dim); color:var(--accent);
-    font-family:'JetBrains Mono',monospace;
+    --bg-deep: #0a0e1a;
+    --bg-card: rgba(15, 25, 50, 0.85);
+    --accent: #4fc3f7;
+    --accent-dim: #1565c0;
+    --text: #e0e6ed;
+    --text-muted: #8899aa;
+    --border: rgba(79, 195, 247, 0.15);
   }
 
-  .content { max-width:960px; margin:0 auto; padding:2.5rem 2rem 4rem; }
-  .page-header { margin-bottom:2.5rem; }
-  .page-icon { font-size:3rem; margin-bottom:0.5rem; }
-  .page-title { font-family:'Noto Serif SC',serif; font-size:2rem; font-weight:700; color:var(--accent); }
-  .page-tagline { font-size:0.9rem; color:var(--text-sec); margin-top:0.3rem; }
+  body {
+    background: var(--bg-deep);
+    color: var(--text);
+    font-family: 'Inter', 'Noto Serif SC', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
 
-  .module-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1.2rem; margin-bottom:2rem; }
-  .module-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; transition:border-color 0.2s; }
-  .module-card:hover { border-color:rgba(34,211,238,0.4); }
-  .module-title { font-weight:600; font-size:0.95rem; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.5rem; }
-  .module-desc { font-size:0.78rem; color:var(--text-dim); line-height:1.7; }
+  /* animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(21, 101, 192, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(79, 195, 247, 0.08) 0%, transparent 50%);
+    animation: drift 20s ease-in-out infinite alternate;
+    z-index: -1;
+  }
 
-  .section-title { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-dim); margin-bottom:0.8rem; display:flex; align-items:center; gap:0.5rem; }
-  .section-title .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); }
+  @keyframes drift {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    100% { transform: translate(-3%, 3%) rotate(2deg); }
+  }
 
-  table { width:100%; border-collapse:collapse; font-size:0.82rem; }
-  th { text-align:left; padding:0.6rem 0.8rem; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-dim); border-bottom:1px solid var(--border); font-weight:600; }
-  td { padding:0.7rem 0.8rem; border-bottom:1px solid rgba(60,60,90,0.15); vertical-align:top; }
-  tr:hover td { background:rgba(34,211,238,0.04); }
+  /* header */
+  header {
+    text-align: center;
+    padding: 60px 20px 30px;
+  }
 
-  .badge { display:inline-block; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.68rem; font-weight:600; font-family:'JetBrains Mono',monospace; }
-  .badge-pending { background:rgba(251,146,60,0.1); color:var(--orange); }
-  .badge-wip { background:rgba(96,165,250,0.1); color:var(--blue); }
-  .badge-done { background:rgba(74,222,128,0.1); color:var(--green); }
-  .wo-id { font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--accent); }
+  header .glyph {
+    font-size: 3rem;
+    color: var(--accent);
+    text-shadow: 0 0 30px rgba(79, 195, 247, 0.3);
+    margin-bottom: 10px;
+    font-family: 'Noto Serif SC', serif;
+  }
 
-  .footer { text-align:center; padding:2rem; font-size:0.72rem; color:var(--text-dim); border-top:1px solid var(--border); margin-top:auto; }
+  header h1 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+  }
+
+  header .subtitle {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-top: 8px;
+    font-weight: 300;
+  }
+
+  /* breadcrumb */
+  .breadcrumb {
+    text-align: center;
+    padding: 10px 0 30px;
+    font-size: 0.85rem;
+  }
+
+  .breadcrumb a {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .breadcrumb a:hover { color: var(--accent); }
+  .breadcrumb .sep { color: var(--text-muted); margin: 0 8px; }
+
+  /* course section */
+  .course-section {
+    max-width: 900px;
+    margin: 0 auto 40px;
+    padding: 0 20px;
+  }
+
+  .course-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .course-header .icon {
+    font-size: 2rem;
+  }
+
+  .course-header h2 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1.5rem;
+    color: var(--accent);
+  }
+
+  .course-header .meta {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-left: auto;
+  }
+
+  /* chapter grid */
+  .chapter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .chapter-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: transform 0.2s, border-color 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .chapter-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px; height: 100%;
+    background: linear-gradient(180deg, var(--accent), var(--accent-dim));
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .chapter-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(79, 195, 247, 0.3);
+  }
+
+  .chapter-card:hover::before { opacity: 1; }
+
+  .chapter-num {
+    font-size: 0.75rem;
+    color: var(--accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .chapter-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 8px 0 4px;
+  }
+
+  .chapter-title-en {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    font-weight: 300;
+  }
+
+  .chapter-pages {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 10px;
+    opacity: 0.7;
+  }
+
+  /* knowledge tree */
+  .tree-section {
+    max-width: 900px;
+    margin: 0 auto 60px;
+    padding: 0 20px;
+  }
+
+  .tree-section h3 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1.2rem;
+    color: var(--accent);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tree {
+    font-family: 'Courier New', monospace;
+    font-size: 0.88rem;
+    line-height: 1.8;
+    color: var(--text-muted);
+    padding: 20px;
+    background: rgba(10, 14, 26, 0.6);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  .tree .root { color: var(--accent); font-weight: 600; }
+  .tree .branch { color: #80cbc4; }
+  .tree .leaf { color: var(--text); }
+
+  /* status badge */
+  .status-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .status-active {
+    background: rgba(79, 195, 247, 0.15);
+    color: var(--accent);
+    border: 1px solid rgba(79, 195, 247, 0.3);
+  }
+
+  /* footer */
+  footer {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    border-top: 1px solid var(--border);
+  }
+
+  footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  @media (max-width: 600px) {
+    header h1 { font-size: 1.6rem; }
+    .chapter-grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
-<div class="bg-layer"></div>
-<div class="app">
-  <div class="topbar">
-    <div class="topbar-left">
-      <a class="back-link" href="../index.html">← 返回四象总览</a>
-      <span class="realm-badge">LI · 理境</span>
-    </div>
-  </div>
 
-  <div class="content">
-    <div class="page-header">
-      <div class="page-icon">🔬</div>
-      <div class="page-title">理 · 理境</div>
-      <div class="page-tagline">生信科研阵地 — 多模态融合，从文献到实验</div>
-    </div>
+<header>
+  <div class="glyph">🔬</div>
+  <h1>理 · 理境</h1>
+  <p class="subtitle">生信科研阵地 · Bioinformatics Research</p>
+</header>
 
-    <div class="module-grid">
-      <div class="module-card">
-        <div class="module-title">📄 文献管理</div>
-        <div class="module-desc">
-          上传文献 PDF，Agent 结构化处理：<br>
-          · 结构化摘要（研究问题 / 方法 / 数据集 / 结论 / 局限性）<br>
-          · 方法论横向对比（同一问题不同论文的解法差异）<br>
-          · 引用网络梳理（奠基性工作追踪）
-        </div>
-      </div>
-      <div class="module-card">
-        <div class="module-title">🧪 实验与代码</div>
-        <div class="module-desc">
-          生信代码开发全流程：<br>
-          · 多模态融合 pipeline（特征提取、对齐、融合策略）<br>
-          · 下游任务评估<br>
-          · 代码调试、运行日志记录
-        </div>
-      </div>
-      <div class="module-card">
-        <div class="module-title">📝 论文撰写</div>
-        <div class="module-desc">
-          从 idea 到论文的全流程协作：<br>
-          · idea 讨论 → 实验设计 → 结果分析<br>
-          · 各章节起草与润色<br>
-          · 格式排版与引用管理
-        </div>
-      </div>
-    </div>
-
-    <div class="section-title"><div class="dot"></div> Work Orders</div>
-    <table>
-      <thead><tr><th>WO#</th><th>Title</th><th>Status</th><th>Priority</th><th>Updated</th></tr></thead>
-      <tbody>
-        <tr><td><span class="wo-id">WO-0001</span></td><td>理境模块初始化</td><td><span class="badge badge-done">DONE</span></td><td>P1</td><td>2026-06-11</td></tr>
-        <tr><td><span class="wo-id">WO-0002</span></td><td>文献上传 & 结构化阅读流程启动</td><td><span class="badge badge-pending">PENDING</span></td><td>P2</td><td>—</td></tr>
-      </tbody>
-    </table>
-
-    <div class="section-title" style="margin-top:2rem;"><div class="dot"></div> 产出物</div>
-    <table>
-      <thead><tr><th>Document</th><th>Type</th><th>Status</th><th>Updated</th></tr></thead>
-      <tbody>
-        <tr><td>文献笔记库</td><td>Notes</td><td><span class="badge badge-pending">待创建</span></td><td>—</td></tr>
-        <tr><td>方法论对比表</td><td>Analysis</td><td><span class="badge badge-pending">待创建</span></td><td>—</td></tr>
-        <tr><td>实验代码仓库</td><td>Code</td><td><span class="badge badge-pending">待创建</span></td><td>—</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="footer">Logos · 理境 · Bioinformatics Research</div>
+<div class="breadcrumb">
+  <a href="/">Logos</a>
+  <span class="sep">›</span>
+  <span>理境</span>
 </div>
+
+<!-- Genomics Course -->
+<div class="course-section">
+  <div class="course-header">
+    <div class="icon">🧬</div>
+    <div>
+      <h2>Genomics 基因组学</h2>
+      <span class="status-badge status-active">备考复习中</span>
+    </div>
+    <div class="meta">10 Chapters · 973 Pages</div>
+  </div>
+
+  <div class="chapter-grid">
+    <div class="chapter-card">
+      <div class="chapter-num">Chapter 1</div>
+      <div class="chapter-title">基因组学导论</div>
+      <div class="chapter-title-en">Introduction to Genomics</div>
+      <div class="chapter-pages">83 pages</div>
+    </div>
+    <div class="chapter-card">
+      <div class="chapter-num">Chapter 2</div>
+      <div class="chapter-title">人类基因组计划</div>
+      <div class="chapter-title-en">Human Genome Project (HGP)</div>
+      <div class="chapter-pages">87 pages</div>
+    </div>
+    <div class="chapter-card">
+      <div class="chapter-num">Chapter 3</div>
+      <div class="chapter-title">二代测序</div>
+      <div class="chapter-title-en">2nd Generation Sequencing</div>
+      <div class="chapter-pages">91 pages</div>
+    </div>
+    <div class="chapter-card">
+      <div class="chapter-num">Chapter 4</div>
+      <div class="chapter-title">三代测序</div>
+      <div class="chapter-title-en">3rd Generation Sequencing</div>
+      <div class="chapter-pages">68 pages</div>
+    </div>
+    <div class="chapter-card">
+      <div class="chapter-num">Chapter 5</div>
+      <div class="chapter-title">基因组结构</div>
+      <div class="chapter-title-en">Genome Structure</div>
+      <div class="chapter-pages">84 pages</div>
+    </div>
+    <div class="chapter-card">
+      <div class="chapter-num">Chapter 6</div>
+      <div class="chapter-title">基因组功能元件</div>
+      <div class="chapter-title-en">Functional Elements of Genome</div>
+      <div class="chapter-pages">111 pages</div>
+    </div>
+    <div class="chapter-card">
+      <div class="chapter-num">Chapter 7</div>
+      <div class="chapter-title">ENCODE 项目 I-II</div>
+      <div class="chapter-title-en">The ENCODE Project I-II</div>
+      <div class="chapter-pages">128 pages</div>
+    </div>
+    <div class="chapter-card">
+      <div class="chapter-num">Chapter 8</div>
+      <div class="chapter-title">ENCODE 项目 III-IV</div>
+      <div class="chapter-title-en">The ENCODE Portal (III-IV)</div>
+      <div class="chapter-pages">25 pages</div>
+    </div>
+    <div class="chapter-card">
+      <div class="chapter-num">Chapter 9</div>
+      <div class="chapter-title">染色质状态</div>
+      <div class="chapter-title-en">Chromatin States</div>
+      <div class="chapter-pages">119 pages</div>
+    </div>
+    <div class="chapter-card">
+      <div class="chapter-num">Chapter 10</div>
+      <div class="chapter-title">染色质状态检测技术</div>
+      <div class="chapter-title-en">Detecting Techniques for Chromatin States</div>
+      <div class="chapter-pages">97 pages</div>
+    </div>
+  </div>
+</div>
+
+<!-- Knowledge Tree -->
+<div class="tree-section">
+  <h3>知识结构 Knowledge Map</h3>
+  <div class="tree"><span class="root">基因组学 Genomics</span>
+├── <span class="branch">基础概念 (Ch 1)</span>
+│   └── <span class="leaf">基因组学定义、研究范畴</span>
+├── <span class="branch">人类基因组计划 (Ch 2)</span>
+│   └── <span class="leaf">HGP 历史、成果、意义</span>
+├── <span class="branch">测序技术演进 (Ch 3-4)</span>
+│   ├── <span class="leaf">二代测序 (Illumina 等)</span>
+│   └── <span class="leaf">三代测序 (PacBio, Oxford Nanopore)</span>
+├── <span class="branch">基因组结构与功能 (Ch 5-6)</span>
+│   ├── <span class="leaf">基因组结构特征</span>
+│   └── <span class="leaf">功能元件识别 (Enhancer, Promoter 等)</span>
+├── <span class="branch">功能基因组学 (Ch 7-8)</span>
+│   ├── <span class="leaf">ENCODE 计划 I-II</span>
+│   └── <span class="leaf">ENCODE 数据门户 III-IV</span>
+└── <span class="branch">表观基因组学 (Ch 9-10)</span>
+    ├── <span class="leaf">染色质状态分类</span>
+    └── <span class="leaf">检测技术 (ATAC-seq, ChIP-seq 等)</span></div>
+</div>
+
+<footer>
+  <p>理·理境 — Logos 四象计划</p>
+  <p><a href="/">返回总览</a></p>
+</footer>
+
 </body>
 </html>
