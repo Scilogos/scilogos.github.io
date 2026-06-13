@@ -112,7 +112,24 @@
 
 ## 七、当前进度
 - [x] Ch1 · Introduction to Genomics · 基因组学导论
-- [x] Ch2 · Human Genome Project · 人类基因组计划
-- [x] Ch3 · 2nd Generation Sequencing · 二代测序
-- [ ] ...（共21个章节）
+- [x] Ch2 · Human Genome Project · 人类基因组计划（已补充完善）
+- [x] Ch3 · 2nd Generation Sequencing · 二代测序（已扩增）
+- [ ] Ch4 · 3rd Generation Sequencing · 三代测序
+- [ ] Ch5 · Genome Structure · 基因组结构
+- [ ] Ch6 · Functional Elements · 基因组功能元件
+- [ ] Ch7 · ENCODE I-II
+- [ ] Ch8 · ENCODE III-IV
+- [ ] Ch9 · Chromatin States · 染色质状态
+- [ ] Ch10 · Chromatin State Detection · 染色质状态检测技术
+- [ ] Ch11 · Functional Element Detection · 功能元件检测技术
+- [ ] Ch12 · 3D Genome · 3D基因组
+- [ ] Ch13 · 3D Genome Detection · 3D基因组检测技术
+- [ ] Ch14a · ChIA-PET
+- [ ] Ch14b · ChIA-PET Visualization · ChIA-PET可视化
+- [ ] Ch15 · New 3D Genome · 新一代3D基因组
+- [ ] Ch16-17 · Epigenetics · 表观遗传学
+- [ ] Ch18 · Transcriptome · 转录组
+- [ ] Ch19 · Transcriptome Detection · 转录组检测技术
+- [ ] Ch20-21 · Single-cell Transcriptome · 单细胞转录组
+- [ ] Ch22-23 · Genome & Transcriptome · 基因组与转录组
 
