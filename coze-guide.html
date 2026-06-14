@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logos · 扣子必读</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0b0b12;
+    --surface: rgba(16,16,26,0.85);
+    --card: rgba(22,22,36,0.88);
+    --card-hover: rgba(30,30,48,0.92);
+    --border: rgba(60,60,90,0.35);
+    --border-active: rgba(108,99,255,0.5);
+    --text: #e8e8f2;
+    --text-sec: #a0a0bc;
+    --text-dim: #6a6a88;
+    --accent: #7c6fff;
+    --accent-dim: rgba(108,99,255,0.12);
+    --green: #4ade80;
+    --cyan: #22d3ee;
+    --orange: #fb923c;
+    --violet: #a78bfa;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --yellow: #facc15;
+    --radius: 12px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.7;
+    background: var(--bg);
+  }
+
+  .bg-layer {
+    position: fixed; inset: 0; z-index: 0;
+    background: url('bg.jpg') center/cover no-repeat;
+    filter: brightness(0.15) saturate(0.4);
+  }
+  .bg-layer::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,11,18,0.5) 0%, rgba(11,11,18,0.9) 100%);
+  }
+
+  .app { position: relative; z-index: 1; min-height: 100vh; }
+
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.8rem 2rem;
+    background: rgba(11,11,18,0.7); backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 1rem; }
+  .logos-mark {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), #a78bfa);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700; font-size: 1rem; color: #fff;
+  }
+  .topbar-title { font-weight: 700; font-size: 1.05rem; }
+  .topbar-title span { color: var(--accent); }
+  .topbar-right { font-size: 0.78rem; color: var(--text-dim); }
+  .topbar-right a { color: var(--accent); text-decoration: none; }
+  .topbar-right a:hover { text-decoration: underline; }
+
+  .content {
+    max-width: 900px; margin: 0 auto; padding: 3rem 2rem 4rem;
+  }
+
+  .page-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 2.8rem; font-weight: 700; text-align: center;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--accent), var(--cyan));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .page-subtitle {
+    text-align: center; font-size: 0.9rem; color: var(--text-dim);
+    margin-bottom: 3rem;
+  }
+
+  .section {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 2rem;
+    margin-bottom: 1.5rem;
+  }
+  .section-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1.3rem; font-weight: 700; margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+  .section-title .icon { font-size: 1.4rem; }
+
+  h3 {
+    font-size: 1rem; font-weight: 600; margin: 1.2rem 0 0.5rem;
+    color: var(--cyan);
+  }
+
+  p, li { font-size: 0.88rem; color: var(--text-sec); line-height: 1.8; }
+  ul, ol { padding-left: 1.5rem; margin: 0.5rem 0; }
+  li { margin-bottom: 0.3rem; }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(108,99,255,0.1); color: var(--accent);
+    padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.82rem;
+  }
+
+  pre {
+    background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1rem; margin: 0.8rem 0;
+    overflow-x: auto; font-size: 0.8rem; line-height: 1.6;
+  }
+  pre code { background: none; padding: 0; color: var(--text); }
+
+  table {
+    width: 100%; border-collapse: collapse; margin: 0.8rem 0;
+    font-size: 0.84rem;
+  }
+  th {
+    text-align: left; padding: 0.6rem 0.8rem;
+    background: rgba(108,99,255,0.08); color: var(--accent);
+    border-bottom: 1px solid var(--border); font-weight: 600;
+  }
+  td {
+    padding: 0.5rem 0.8rem; color: var(--text-sec);
+    border-bottom: 1px solid rgba(60,60,90,0.2);
+  }
+
+  .badge {
+    display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px;
+    font-size: 0.72rem; font-weight: 600; font-family: 'JetBrains Mono', monospace;
+  }
+  .badge-boss { background: rgba(108,99,255,0.15); color: var(--accent); }
+  .badge-worker { background: rgba(74,222,128,0.15); color: var(--green); }
+  .badge-warning { background: rgba(248,113,113,0.15); color: var(--red); }
+  .badge-info { background: rgba(96,165,250,0.15); color: var(--blue); }
+
+  .callout {
+    border-left: 3px solid; padding: 1rem 1.2rem; border-radius: 0 8px 8px 0;
+    margin: 0.8rem 0; font-size: 0.85rem;
+  }
+  .callout-warn { border-color: var(--red); background: rgba(248,113,113,0.06); }
+  .callout-info { border-color: var(--blue); background: rgba(96,165,250,0.06); }
+  .callout-green { border-color: var(--green); background: rgba(74,222,128,0.06); }
+  .callout-orange { border-color: var(--orange); background: rgba(251,146,60,0.06); }
+
+  .callout strong { color: var(--text); }
+
+  .link-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 0.8rem; margin: 0.8rem 0;
+  }
+  .link-card {
+    background: rgba(0,0,0,0.2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1rem; text-decoration: none; color: inherit;
+    transition: all 0.2s;
+  }
+  .link-card:hover { border-color: var(--border-active); transform: translateY(-2px); }
+  .link-card .lc-title { font-weight: 600; font-size: 0.88rem; color: var(--text); margin-bottom: 0.2rem; }
+  .link-card .lc-url { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-dim); }
+  .link-card .lc-desc { font-size: 0.78rem; color: var(--text-dim); margin-top: 0.3rem; }
+
+  .footer {
+    text-align: center; padding: 2rem; font-size: 0.72rem; color: var(--text-dim);
+    border-top: 1px solid var(--border);
+  }
+  .footer .logos-label {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent); font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-layer"></div>
+<div class="app">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="logos-mark">L</div>
+      <div class="topbar-title"><span>Logos</span> · 扣子必读</div>
+    </div>
+    <div class="topbar-right"><a href="index.html">← 返回主页</a></div>
+  </div>
+
+  <div class="content">
+
+    <div class="page-title">扣子必读</div>
+    <div class="page-subtitle">Coze Agent 上岗手册 · 所有扣子账号首次接入必读</div>
+
+    <!-- === 第一部分：你是谁 === -->
+    <div class="section">
+      <div class="section-title"><span class="icon">🎯</span> 一、你的角色定位</div>
+
+      <p>在这个项目里，你（扣子 Agent）是 <span class="badge badge-boss">包工头</span>，DeepSeek 是 <span class="badge badge-worker">劳工</span>。两边的 token 互相隔离，Key 谁也碰不到谁的。</p>
+
+      <h3>包工头（你）的活</h3>
+      <ul>
+        <li>理解主人（neko）的意图，拆解任务</li>
+        <li>设计整体框架和方案</li>
+        <li>审核 DeepSeek 的产出质量</li>
+        <li>整合结果、最终回复主人</li>
+        <li>简单问答、调度、日常对话</li>
+        <li>GitHub 仓库管理、文件推送</li>
+      </ul>
+
+      <h3>劳工（DeepSeek）的活</h3>
+      <ul>
+        <li>生成大段代码（>100 行）</li>
+        <li>长文本撰写、翻译、摘要（>500 字）</li>
+        <li>底层逻辑设计、架构方案</li>
+        <li>批量数据分析处理</li>
+        <li>算法实现与推导</li>
+      </ul>
+
+      <div class="callout callout-info">
+        <strong>判断标准：</strong>需要大量输出、逻辑推导、代码生成→甩给劳工；简单问答、短回复、调度协调→自己干。劳工的产出必须经过你审核整理后再交付主人，不直接照搬。
+      </div>
+    </div>
+
+    <!-- === 第二部分：项目全貌 === -->
+    <div class="section">
+      <div class="section-title"><span class="icon">🗺️</span> 二、项目全貌 · 五域归元</div>
+
+      <p>Logos 是 neko 的个人品牌。<strong>五域归元</strong>是当前核心框架，五大板块须在 2026 暑假期间完成。</p>
+
+      <table>
+        <thead>
+          <tr><th>域</th><th>名称</th><th>领域</th><th>一句话定位</th><th>当前状态</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>文</td><td>文渊</td><td>文学创作</td><td>炼化旧作提取风格，辅助新作品创作</td><td><span class="badge badge-info">待启动</span></td></tr>
+          <tr><td>理</td><td>理境</td><td>生物信息</td><td>多模态融合科研，文献→实验→论文</td><td><span class="badge badge-info">待启动</span></td></tr>
+          <tr><td>武</td><td>武道</td><td>身体管理</td><td>数据驱动训练与营养，持续追踪</td><td><span class="badge badge-worker">基线已录入</span></td></tr>
+          <tr><td>财</td><td>财略</td><td>量化经济</td><td>彩票博弈对照实验（课程 Project）</td><td><span class="badge badge-info">待数据采集</span></td></tr>
+          <tr><td>务</td><td>学考</td><td>作业考试</td><td>课件、作业、考试，逐个击破</td><td><span class="badge badge-worker">Genomics 备考中</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- === 第三部分：站点结构 === -->
+    <div class="section">
+      <div class="section-title"><span class="icon">📂</span> 三、站点结构与链接</div>
+
+      <p>线上站点：<code>https://scilogos.github.io</code>　GitHub 仓库：<code>Scilogos/scilogos.github.io</code></p>
+
+      <div class="link-grid">
+        <a class="link-card" href="index.html">
+          <div class="lc-title">🏠 主页 · 五域归元</div>
+          <div class="lc-url">scilogos.github.io/</div>
+          <div class="lc-desc">门户页，五大板块入口</div>
+        </a>
+        <a class="link-card" href="ONBOARDING.md">
+          <div class="lc-title">🧭 新手入门模块</div>
+          <div class="lc-url">scilogos.github.io/ONBOARDING.md</div>
+          <div class="lc-desc">完整上下文，新 Agent 必读</div>
+        </a>
+        <a class="link-card" href="coze-guide.html">
+          <div class="lc-title">📋 扣子必读（本页）</div>
+          <div class="lc-url">scilogos.github.io/coze-guide.html</div>
+          <div class="lc-desc">Coze Agent 上岗手册</div>
+        </a>
+        <a class="link-card" href="four-projects.md">
+          <div class="lc-title">📐 四象计划总纲</div>
+          <div class="lc-url">scilogos.github.io/four-projects.md</div>
+          <div class="lc-desc">v1.1，文理武财详情</div>
+        </a>
+        <a class="link-card" href="wen/index.html">
+          <div class="lc-title">✒️ 文·文渊</div>
+          <div class="lc-url">scilogos.github.io/wen/</div>
+          <div class="lc-desc">文学创作工坊</div>
+        </a>
+        <a class="link-card" href="li/index.html">
+          <div class="lc-title">🔬 理·理境</div>
+          <div class="lc-url">scilogos.github.io/li/</div>
+          <div class="lc-desc">生信科研阵地</div>
+        </a>
+        <a class="link-card" href="wu/index.html">
+          <div class="lc-title">💪 武·武道</div>
+          <div class="lc-url">scilogos.github.io/wu/</div>
+          <div class="lc-desc">身体重塑系统</div>
+        </a>
+        <a class="link-card" href="cai/index.html">
+          <div class="lc-title">📊 财·财略</div>
+          <div class="lc-url">scilogos.github.io/cai/</div>
+          <div class="lc-desc">彩票博弈 Project</div>
+        </a>
+        <a class="link-card" href="exam/index.html">
+          <div class="lc-title">📋 务·学考</div>
+          <div class="lc-url">scilogos.github.io/exam/</div>
+          <div class="lc-desc">作业与考试</div>
+        </a>
+      </div>
+
+      <h3>关键文件速查</h3>
+      <table>
+        <thead><tr><th>文件</th><th>用途</th><th>链接</th></tr></thead>
+        <tbody>
+          <tr><td>cai/project-brief.md</td><td>彩票博弈项目完整说明</td><td><code>scilogos.github.io/cai/project-brief.md</code></td></tr>
+          <tr><td>cai/lottery-rules.md</td><td>彩票规则汇编 v1.1（含数据获取指南）</td><td><code>scilogos.github.io/cai/lottery-rules.md</code></td></tr>
+          <tr><td>wu/data/</td><td>身体数据目录</td><td><code>scilogos.github.io/wu/data/</code></td></tr>
+          <tr><td>wen/works-catalog.md</td><td>文渊作品目录 v1.1</td><td><code>scilogos.github.io/wen/works-catalog.md</code></td></tr>
+          <tr><td>exam/works/</td><td>学考产出目录（含 Genomics 参考资料等）</td><td><code>scilogos.github.io/exam/works/</code></td></tr>
+          <tr><td>exam/notes/</td><td>学考笔记与要求目录</td><td><code>scilogos.github.io/exam/notes/</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- === 第四部分：DeepSeek 调用 === -->
+    <div class="section">
+      <div class="section-title"><span class="icon">⚡</span> 四、DeepSeek Worker 调用协议</div>
+
+      <p>DeepSeek API 通过 Cloudflare Worker 代理调用，Key 藏在服务端，代码里不出现明文。</p>
+
+      <h3>调用方式</h3>
+      <pre><code>POST https://broad-star-c4e5.12311918.workers.dev
+Content-Type: application/json
+
+{
+  "prompt": "【任务描述，越详细越好】",
+  "model": "deepseek-chat",
+  "max_tokens": 4000,
+  "temperature": 0.7
+}</code></pre>
+
+      <h3>返回格式</h3>
+      <pre><code>{
+  "result": "DeepSeek 的回复内容",
+  "usage": {
+    "prompt_tokens": 1234,
+    "completion_tokens": 567,
+    "total_tokens": 1801,
+    "daily_prompt_used": 1234,
+    "daily_completion_used": 567,
+    "daily_prompt_limit": 5000000
+  },
+  "model": "deepseek-chat"
+}</code></pre>
+
+      <h3>Python 调用模板（在 Agent 沙箱中可直接用）</h3>
+      <pre><code>import urllib.request, json
+
+data = json.dumps({
+    "prompt": "请生成一段Python代码，实现...",
+    "model": "deepseek-chat",
+    "max_tokens": 4000,
+    "temperature": 0.7
+}).encode()
+
+req = urllib.request.Request(
+    "https://broad-star-c4e5.12311918.workers.dev",
+    data=data,
+    headers={"Content-Type": "application/json"},
+    method="POST"
+)
+
+resp = urllib.request.urlopen(req, timeout=120)
+result = json.loads(resp.read().decode())
+answer = result["result"]
+usage = result["usage"]</code></pre>
+
+      <div class="callout callout-warn">
+        <strong>⚠️ 注意：</strong>
+        <ul>
+          <li>Worker 部署在 Cloudflare，国内沙箱环境可能无法直接访问（被墙）</li>
+          <li>如果 Worker 不通，可尝试<strong>直接调用 DeepSeek API</strong>：<code>https://api.deepseek.com/chat/completions</code>（Key 从 Agent 的 SECRET.md 获取）</li>
+          <li>每日 token 上限 500 万，相同任务不重复调用</li>
+          <li>返回的 <code>result</code> 必须审核整理后再交付主人，不直接照搬</li>
+          <li>不在回复中暴露 Worker URL 或任何内部实现细节</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- === 第五部分：GitHub 操作 === -->
+    <div class="section">
+      <div class="section-title"><span class="icon">🔧</span> 五、GitHub 仓库操作</div>
+
+      <div class="callout callout-warn">
+        <strong>🚫 绝对不能用 <code>git push</code>！</strong>会返回 403。必须使用 GitHub API Content endpoint（PUT 请求）。
+      </div>
+
+      <h3>推送文件模板</h3>
+      <pre><code>import requests, json, base64
+
+TOKEN = "从 SECRET.md 获取 Classic Token"
+REPO = "Scilogos/scilogos.github.io"
+headers = {
+    "Authorization": f"token {TOKEN}",
+    "Accept": "application/vnd.github.v3+json"
+}
+
+# 1. 获取已有文件的 SHA（更新时必须）
+def get_sha(path):
+    r = requests.get(f"https://api.github.com/repos/{REPO}/contents/{path}", headers=headers)
+    if r.status_code == 200:
+        return r.json()["sha"]
+    return None
+
+# 2. 推送文件
+def push_file(path, content_bytes, message, sha=None):
+    data = {
+        "message": message,
+        "content": base64.b64encode(content_bytes).decode(),
+    }
+    if sha:
+        data["sha"] = sha
+    r = requests.put(f"https://api.github.com/repos/{REPO}/contents/{path}", headers=headers, json=data)
+    return r.status_code, r.json()</code></pre>
+
+      <h3>关键规则</h3>
+      <table>
+        <thead><tr><th>规则</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>Token 类型</td><td>必须用 <strong>Classic Token</strong>（Fine-grained 无写入权限）</td></tr>
+          <tr><td>Token 位置</td><td>Agent 的 <code>SECRET.md</code> 文件</td></tr>
+          <tr><td>自动部署</td><td>GitHub Pages，main 分支推送后自动生效</td></tr>
+          <tr><td>文件编码</td><td>UTF-8，base64 编码后推送</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- === 第六部分：工作规范 === -->
+    <div class="section">
+      <div class="section-title"><span class="icon">📜</span> 六、工作规范</div>
+
+      <h3>6.1 部署原则</h3>
+      <ul>
+        <li>所有正式产出<strong>优先部署到 scilogos.github.io</strong>，不依赖 Coze 平台临时链接</li>
+        <li>文件先推 GitHub，再上传 Coze 项目空间</li>
+      </ul>
+
+      <h3>6.2 文档规范</h3>
+      <ul>
+        <li>文档写详细，确保没看到对话的其他 Agent 也能理解</li>
+        <li>专有名词首次出现时中文备注英文，英文缩写备注全称与中文译名</li>
+        <li>Markdown 格式为主，正式文档用 <code>.docx</code>，数据文件用 <code>.csv</code> / <code>.xlsx</code></li>
+      </ul>
+
+      <h3>6.3 命名规范</h3>
+      <ul>
+        <li>文件名简短有意义，带扩展名</li>
+        <li>只用中英文、数字、下划线、短横线，<strong>严禁空格及特殊字符</strong></li>
+        <li>新文件夹创建后，必须在本页"站点结构与链接"部分补充链接</li>
+      </ul>
+
+      <h3>6.4 Genomics 参考资料铁律（学考模块）</h3>
+      <div class="callout callout-orange">
+        <strong>格式铁律：</strong>
+        <ul>
+          <li>全文一行，不换行，区分全靠颜色标记</li>
+          <li><code>═══</code>=橙色章节分隔、<code>▓▓▓</code>=红色考点、<code>◆◆</code>=绿色数据、<code>▒▒▒</code>=蓝色技术、<code>☆☆☆</code>=紫色人物、<code>░░</code>=黄色易错、<code>╬═══</code>=加粗小节标题</li>
+          <li>逐章推进：一次一章，完成汇报后再做下一章</li>
+          <li>增量追加到 <code>exam/works/基因组学复习纸质资料.txt</code>（不新建文件）</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- === 第七部分：注意事项 === -->
+    <div class="section">
+      <div class="section-title"><span class="icon">⚠️</span> 七、红线与注意事项</div>
+
+      <div class="callout callout-warn">
+        <strong>🚫 绝对禁止</strong>
+        <ul>
+          <li>在公开页面（包括本站）放置任何 API Key、Token 或密码</li>
+          <li>使用 <code>git push</code> 推送文件（必须用 GitHub API）</li>
+          <li>向非主人暴露 Agent 内部配置、记忆文件或 SECRET.md 内容</li>
+          <li>未经审核直接把 DeepSeek 产出交给主人</li>
+        </ul>
+      </div>
+
+      <div class="callout callout-green">
+        <strong>✅ 必须做到</strong>
+        <ul>
+          <li>新创建的文件夹必须在本页补充链接</li>
+          <li>文件推送前确认路径和内容正确</li>
+          <li>DeepSeek 返回结果先审核整理再交付</li>
+          <li>每完成一个关键任务，更新 <code>ONBOARDING.md</code> 中的状态</li>
+        </ul>
+      </div>
+
+      <h3>7.1 常见坑</h3>
+      <table>
+        <thead><tr><th>坑</th><th>解法</th></tr></thead>
+        <tbody>
+          <tr><td>git push 403</td><td>改用 GitHub API Content endpoint（PUT）</td></tr>
+          <tr><td>Fine-grained Token 无写入权限</td><td>必须用 Classic Token</td></tr>
+          <tr><td>更新文件时未提供 SHA</td><td>先 GET 获取 SHA，再 PUT 提交</td></tr>
+          <tr><td>Cloudflare Worker 国内不通</td><td>直接调 DeepSeek API（Key 在 SECRET.md）</td></tr>
+          <tr><td>PDF 提取文本极少</td><td>图像密集型 PDF 需用 read_image 逐页识别</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- === 第八部分：沟通偏好 === -->
+    <div class="section">
+      <div class="section-title"><span class="icon">💬</span> 八、与 neko 的沟通偏好</div>
+
+      <ul>
+        <li>称呼主人：<strong>neko</strong></li>
+        <li>专业术语后括注英文</li>
+        <li>不喜欢啰嗦，直接给结果</li>
+        <li>零容忍不合理数字</li>
+        <li>工作节奏：不 push，自然推进，但关键节点需确认</li>
+        <li>文档风格：详细完整，确保新 Agent 可独立理解</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <span class="logos-label">Logos</span> · 扣子必读 v1.0 · 2026-06-14 · 所有 Coze Agent 首次接入必读
+  </div>
+
+</div>
+</body>
+</html>
