@@ -19,7 +19,6 @@
   body { font-family:'Inter',-apple-system,sans-serif; color:var(--text); min-height:100vh; line-height:1.6; }
   .bg-layer { position:fixed; inset:0; z-index:0; background:linear-gradient(135deg,#0b0b12,#1a140d); }
   .app { position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column; }
-
   .topbar {
     display:flex; align-items:center; justify-content:space-between;
     padding:0.8rem 2rem; background:rgba(11,11,18,0.7); backdrop-filter:blur(20px);
@@ -33,43 +32,36 @@
     background:var(--accent-dim); color:var(--accent);
     font-family:'JetBrains Mono',monospace;
   }
-
   .content { max-width:960px; margin:0 auto; padding:2.5rem 2rem 4rem; }
   .page-header { margin-bottom:2.5rem; }
   .page-icon { font-size:3rem; margin-bottom:0.5rem; }
   .page-title { font-family:'Noto Serif SC',serif; font-size:2rem; font-weight:700; color:var(--accent); }
   .page-tagline { font-size:0.9rem; color:var(--text-sec); margin-top:0.3rem; }
-
   .module-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1.2rem; margin-bottom:2rem; }
   .module-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; transition:border-color 0.2s; }
   .module-card:hover { border-color:rgba(251,146,60,0.4); }
   .module-title { font-weight:600; font-size:0.95rem; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.5rem; }
   .module-desc { font-size:0.78rem; color:var(--text-dim); line-height:1.7; }
-
   .section-title { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-dim); margin-bottom:0.8rem; display:flex; align-items:center; gap:0.5rem; margin-top:2rem; }
   .section-title .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); }
-
   table { width:100%; border-collapse:collapse; font-size:0.82rem; }
   th { text-align:left; padding:0.6rem 0.8rem; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-dim); border-bottom:1px solid var(--border); font-weight:600; }
   td { padding:0.7rem 0.8rem; border-bottom:1px solid rgba(60,60,90,0.15); vertical-align:top; }
   tr:hover td { background:rgba(251,146,60,0.04); }
-
   .badge { display:inline-block; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.68rem; font-weight:600; font-family:'JetBrains Mono',monospace; }
   .badge-pending { background:rgba(251,146,60,0.1); color:var(--accent); }
   .badge-wip { background:var(--blue-dim); color:var(--blue); }
   .badge-done { background:var(--green-dim); color:var(--green); }
+  .badge-new { background:rgba(34,211,238,0.1); color:var(--cyan); }
   .wo-id { font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--accent); }
-
   .highlight-box {
     background:rgba(251,146,60,0.08); border:1px solid rgba(251,146,60,0.25);
     border-radius:var(--radius); padding:1.2rem 1.5rem; margin-bottom:2rem;
   }
   .highlight-box h3 { color:var(--accent); font-size:0.95rem; margin-bottom:0.5rem; }
   .highlight-box p { font-size:0.82rem; color:var(--text-sec); line-height:1.7; }
-
   .doc-link { color:var(--accent); text-decoration:none; font-size:0.82rem; }
   .doc-link:hover { text-decoration:underline; }
-
   .footer { text-align:center; padding:2rem; font-size:0.72rem; color:var(--text-dim); border-top:1px solid var(--border); margin-top:auto; }
 </style>
 </head>
@@ -78,79 +70,89 @@
 <div class="app">
   <div class="topbar">
     <div class="topbar-left">
-      <a class="back-link" href="../index.html">← 返回四象总览</a>
+      <a class="back-link" href="../index.html">← 返回总览</a>
       <span class="realm-badge">CAI · 财略</span>
     </div>
   </div>
-
+  
   <div class="content">
     <div class="page-header">
       <div class="page-icon">📊</div>
       <div class="page-title">财 · 财略</div>
-      <div class="page-tagline">量化经济与行为课程 Project — 彩票博弈</div>
+      <div class="page-tagline">量化经济与行为课程 Project — 彩票博弈：对抗模拟 + 实盘验证</div>
     </div>
-
+    
     <div class="highlight-box">
       <h3>🔬 研究问题</h3>
       <p>验证都市传说：彩票开奖是否倾向于开出购买人数最少的号码？<br>
-      对照实验：深度学习预测 vs 对抗学习（彩民-庄家博弈）预测，检验两组之间是否存在统计学显著差异。</p>
+      实验设计：先在模拟环境炼化庄家-彩民对抗智能体，再将训练策略迁移到真实数据预测；对照组用纯深度学习直接从历史数据学习。检验两组差异是否统计显著。</p>
     </div>
-
+    
     <div class="module-grid">
       <div class="module-card">
-        <div class="module-title">🧠 实验组 A：深度学习</div>
+        <div class="module-title">📋 对照组：纯深度学习</div>
         <div class="module-desc">
-          用 LSTM/Transformer 直接从历史开奖数据学习号码模式<br>
-          输入：历史 N 期开奖序列<br>
+          LSTM / Transformer 直接从历史开奖序列学习<br>
+          输入：历史 N 期开奖号码<br>
           输出：下一期号码概率分布<br>
-          训练：标准监督学习
+          本质：假设完全随机，端到端学习
         </div>
       </div>
       <div class="module-card">
-        <div class="module-title">⚔️ 实验组 B：对抗学习</div>
+        <div class="module-title">⚔️ 实验组：对抗学习模拟</div>
         <div class="module-desc">
-          GAN 框架模拟彩民-庄家博弈<br>
-          Generator（彩民）：生成预测号码<br>
-          Discriminator（庄家）：判断热门号码，倾向避开<br>
-          交替优化，寻找 Nash 均衡
+          模拟彩票生态系统（规则参照排列3/3D）<br>
+          彩民阵营：随机型 60-70% + 策略型 30-40%<br>
+          庄家阵营：观察投注分布，倾向开出冷门号<br>
+          对抗训练至策略收敛，再迁移到实盘
         </div>
       </div>
       <div class="module-card">
         <div class="module-title">📊 统计检验</div>
         <div class="module-desc">
-          相同测试集上比较两组预测准确率<br>
-          配对 t 检验 / 非参数检验<br>
+          相同测试集（真实数据）上比较两组<br>
+          配对 t 检验 / Wilcoxon 检验<br>
           多彩种交叉验证<br>
           若 H₀ 成立（纯随机），两组无显著差异
         </div>
       </div>
     </div>
-
+    
     <div class="section-title"><div class="dot"></div> Work Orders</div>
     <table>
       <thead><tr><th>WO#</th><th>Title</th><th>Status</th><th>Priority</th><th>Updated</th></tr></thead>
       <tbody>
         <tr><td><span class="wo-id">WO-0001</span></td><td>财略模块初始化</td><td><span class="badge badge-done">DONE</span></td><td>P1</td><td>2026-06-11</td></tr>
         <tr><td><span class="wo-id">WO-0002</span></td><td>项目说明 & 规则汇编文档</td><td><span class="badge badge-done">DONE</span></td><td>P1</td><td>2026-06-11</td></tr>
-        <tr><td><span class="wo-id">WO-0003</span></td><td>数据采集：历史开奖数据 + 投注分布代理变量</td><td><span class="badge badge-pending">PENDING</span></td><td>P0</td><td>—</td></tr>
-        <tr><td><span class="wo-id">WO-0004</span></td><td>实验组 A 实现：深度学习预测模型</td><td><span class="badge badge-pending">PENDING</span></td><td>P1</td><td>—</td></tr>
-        <tr><td><span class="wo-id">WO-0005</span></td><td>实验组 B 实现：对抗学习预测模型</td><td><span class="badge badge-pending">PENDING</span></td><td>P1</td><td>—</td></tr>
-        <tr><td><span class="wo-id">WO-0006</span></td><td>统计检验 & 论文撰写</td><td><span class="badge badge-pending">PENDING</span></td><td>P2</td><td>—</td></tr>
+        <tr><td><span class="wo-id">WO-0003</span></td><td>数据采集：官方API批量拉取历史开奖数据</td><td><span class="badge badge-pending">PENDING</span></td><td>P0</td><td>—</td></tr>
+        <tr><td><span class="wo-id">WO-0003.5</span></td><td>EDA：基本统计性质检验（χ²、游程检验、自相关）</td><td><span class="badge badge-new">NEW</span></td><td>P0</td><td>—</td></tr>
+        <tr><td><span class="wo-id">WO-0007</span></td><td>排列3规则引擎：开奖、投注、赔率计算</td><td><span class="badge badge-new">NEW</span></td><td>P0</td><td>—</td></tr>
+        <tr><td><span class="wo-id">WO-0008</span></td><td>模拟框架：Agent通信、轮次管理、收益结算</td><td><span class="badge badge-new">NEW</span></td><td>P0</td><td>—</td></tr>
+        <tr><td><span class="wo-id">WO-0009</span></td><td>彩民智能体：随机型 + 策略型（多流派）</td><td><span class="badge badge-new">NEW</span></td><td>P1</td><td>—</td></tr>
+        <tr><td><span class="wo-id">WO-0010</span></td><td>庄家智能体：偏置采样 / 温度采样 / RL</td><td><span class="badge badge-new">NEW</span></td><td>P1</td><td>—</td></tr>
+        <tr><td><span class="wo-id">WO-0011</span></td><td>对抗训练循环 + 收敛检测 + 可视化</td><td><span class="badge badge-new">NEW</span></td><td>P1</td><td>—</td></tr>
+        <tr><td><span class="wo-id">WO-0012</span></td><td>超参探索：偏置强度β、策略型比例、模拟期数</td><td><span class="badge badge-new">NEW</span></td><td>P2</td><td>—</td></tr>
+        <tr><td><span class="wo-id">WO-0004</span></td><td>DL基线模型：LSTM/Transformer</td><td><span class="badge badge-pending">PENDING</span></td><td>P1</td><td>—</td></tr>
+        <tr><td><span class="wo-id">WO-0013</span></td><td>模拟策略→实盘预测的迁移方案</td><td><span class="badge badge-new">NEW</span></td><td>P1</td><td>—</td></tr>
+        <tr><td><span class="wo-id">WO-0006</span></td><td>统计检验 & 课程报告</td><td><span class="badge badge-pending">PENDING</span></td><td>P2</td><td>—</td></tr>
+        <tr><td><span class="wo-id">WO-0014</span></td><td>论文撰写</td><td><span class="badge badge-new">NEW</span></td><td>P2</td><td>—</td></tr>
+        <tr><td><span class="wo-id">WO-0015</span></td><td>代码整理 & 文档归档</td><td><span class="badge badge-new">NEW</span></td><td>P2</td><td>—</td></tr>
       </tbody>
     </table>
-
+    
     <div class="section-title"><div class="dot"></div> 项目文档</div>
     <table>
       <thead><tr><th>Document</th><th>Type</th><th>Status</th><th>Link</th></tr></thead>
       <tbody>
         <tr><td>项目说明</td><td>Brief</td><td><span class="badge badge-done">DONE</span></td><td><a class="doc-link" href="project-brief.md">project-brief.md</a></td></tr>
         <tr><td>彩票规则汇编</td><td>Reference</td><td><span class="badge badge-done">DONE</span></td><td><a class="doc-link" href="lottery-rules.md">lottery-rules.md</a></td></tr>
+        <tr><td>初步思路大纲</td><td>Roadmap</td><td><span class="badge badge-done">DONE</span></td><td><a class="doc-link" href="roadmap.md">roadmap.md</a></td></tr>
         <tr><td>数据采集脚本</td><td>Code</td><td><span class="badge badge-pending">PENDING</span></td><td>—</td></tr>
         <tr><td>实验代码</td><td>Code</td><td><span class="badge badge-pending">PENDING</span></td><td>—</td></tr>
         <tr><td>课程报告</td><td>Report</td><td><span class="badge badge-pending">PENDING</span></td><td>—</td></tr>
       </tbody>
     </table>
-
+    
     <div class="section-title"><div class="dot"></div> 推荐彩种</div>
     <table>
       <thead><tr><th>彩种</th><th>类型</th><th>推荐理由</th><th>数据特点</th></tr></thead>
@@ -160,24 +162,24 @@
         <tr><td>快乐8</td><td>基诺型</td><td>维度丰富，号码覆盖模式有趣</td><td>80选10，复杂度高</td></tr>
       </tbody>
     </table>
-
+    
     <div class="section-title"><div class="dot"></div> 关键风险</div>
     <div class="module-grid">
       <div class="module-card">
         <div class="module-title">⚠️ 投注分布数据</div>
-        <div class="module-desc">官方不公开各号码具体投注量，只有全国总销量。需寻找代理变量（赔率变化、销量、论坛数据）或设计模拟实验。</div>
+        <div class="module-desc">官方不公开各号码具体投注量，只有全国总销量。本方案走模拟路线：设计典型投注分布假设，在模拟环境中验证方法论的检测能力。</div>
       </div>
       <div class="module-card">
         <div class="module-title">⚠️ Null Result 处理</div>
-        <div class="module-desc">若开奖确为纯随机，两组都无法学到有效模式。需设计好 null result 的报告框架，这本身也是有价值的科学结论。</div>
+        <div class="module-desc">若开奖确为纯随机，两组都无法学到有效模式。需设计好 null result 的报告框架，这本身也是有价值的科学结论。建议加正向对照实验（合成数据）验证方法论。</div>
       </div>
       <div class="module-card">
-        <div class="module-title">⚠️ GAN 训练稳定性</div>
-        <div class="module-desc">对抗学习存在模式坍塌等已知问题，需谨慎设计网络架构和训练策略。</div>
+        <div class="module-title">⚠️ 模拟→实盘迁移</div>
+        <div class="module-desc">模拟环境训练出的策略能否泛化到真实数据是关键挑战。需谨慎设计迁移方案，并评估模拟假设与现实的偏差。</div>
       </div>
     </div>
   </div>
-
+  
   <div class="footer">Logos · 财略 · Quantitative Economics Project</div>
 </div>
 </body>
