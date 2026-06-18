@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-排列3模拟数据生成器
+排列3模拟数据生成器（本地版）
 生成与真实pl3_history.csv格式完全一致的模拟开奖数据
+输出到 data/ 目录, split_info.json 也存 data/
+
+用法:
+  python simulate_pl3.py                      # 默认参数
+  python simulate_pl3.py --clean               # 清空重新生成
+  python simulate_pl3.py --split               # 同时生成分割信息
+  python simulate_pl3.py --start-date 2021-01-01 --end-date 2025-12-31
 """
 
 import argparse
@@ -17,13 +24,18 @@ import pandas as pd
 from scipy.stats import chisquare
 
 
+# ==================== 本地路径配置 ====================
+BASE_DIR = r"C:\Users\HUAWEI\Desktop\Adversarial Learning"
+DATA_DIR = os.path.join(BASE_DIR, "data")
+
+
 def parse_args():
     """解析命令行参数"""
-    parser = argparse.ArgumentParser(description='排列3模拟数据生成器')
+    parser = argparse.ArgumentParser(description='排列3模拟数据生成器（本地版）')
     parser.add_argument('--start-date', default='2020-01-01', help='起始日期 (默认2020-01-01)')
     parser.add_argument('--end-date', default='2025-12-31', help='结束日期 (默认2025-12-31)')
     parser.add_argument('--seed', type=int, default=42, help='随机种子 (默认42)')
-    parser.add_argument('--output', default='pl3_simulated.csv', help='输出文件名 (默认pl3_simulated.csv)')
+    parser.add_argument('--output', default=None, help='输出文件名 (默认data/pl3_simulated.csv)')
     parser.add_argument('--clean', action='store_true', help='清空已有模拟数据重新生成')
     parser.add_argument('--split', action='store_true', help='生成分割信息文件split_info.json')
     return parser.parse_args()
@@ -85,6 +97,9 @@ def generate_data(start_date, end_date, seed, output_file, clean_mode):
                 sales
             ])
         current += timedelta(days=1)
+
+    # 确保目录存在
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
     # 写入CSV
     file_exists = os.path.exists(output_file) and not clean_mode
@@ -155,7 +170,7 @@ def quality_check(file_path):
 
 
 def generate_split_info(file_path, seed):
-    """生成非等间隔的分割信息"""
+    """生成非等间隔的分割信息，保存到 data/split_info.json"""
     random.seed(seed + 1000)  # 使用不同种子避免与数据生成冲突
     df = pd.read_csv(file_path)
     df['日期'] = pd.to_datetime(df['日期'])
@@ -178,7 +193,6 @@ def generate_split_info(file_path, seed):
 
         # 检查是否超出范围
         if test_end > df['日期'].max():
-            # 如果剩余时间不够一个完整测试集,将剩余全部作为训练集
             if current_start <= df['日期'].max():
                 splits.append({
                     'train_start': current_start.strftime('%Y-%m-%d'),
@@ -195,18 +209,23 @@ def generate_split_info(file_path, seed):
             'test_end': test_end.strftime('%Y-%m-%d')
         })
 
-        # 下一个训练集从测试集结束后开始
         current_start = test_end + timedelta(days=1)
 
-    # 保存分割信息
-    with open('split_info.json', 'w', encoding='utf-8') as f:
+    # 保存到data目录
+    split_path = os.path.join(DATA_DIR, 'split_info.json')
+    with open(split_path, 'w', encoding='utf-8') as f:
         json.dump(splits, f, ensure_ascii=False, indent=2)
-    print(f"\n分割信息已保存到 split_info.json ({len(splits)} 个分割块)")
+    print(f"\n分割信息已保存到 {split_path} ({len(splits)} 个分割块)")
 
 
 def main():
     args = parse_args()
-    print(f"排列3模拟数据生成器")
+
+    # 默认输出路径
+    if args.output is None:
+        args.output = os.path.join(DATA_DIR, 'pl3_simulated.csv')
+
+    print(f"排列3模拟数据生成器（本地版）")
     print(f"参数: start={args.start_date}, end={args.end_date}, seed={args.seed}")
 
     # 生成数据
@@ -224,6 +243,48 @@ def main():
     # 生成分割信息
     if args.split:
         generate_split_info(output_file, args.seed)
+
+
+def batch_generate(seeds=None, start_date='2020-01-01', end_date='2025-12-31',
+                   clean=True, run_quality=True):
+    """批量生成多组不同种子的模拟数据
+
+    Args:
+        seeds: 种子列表，默认[42,123,456,789,1024,2048,3141,4096,5555,9999]
+        start_date: 起始日期
+        end_date: 结束日期
+        clean: 是否清空旧数据重新生成
+        run_quality: 是否运行质量校验
+
+    Returns:
+        dict: {seed: output_file_path}
+    """
+    if seeds is None:
+        seeds = [42, 123, 456, 789, 1024, 2048, 3141, 4096, 5555, 9999]
+
+    results = {}
+    print(f"批量生成模式: {len(seeds)}组模拟数据")
+    print(f"参数: start={start_date}, end={end_date}, clean={clean}")
+
+    for i, seed in enumerate(seeds):
+        output = os.path.join(DATA_DIR, f'pl3_sim_seed{seed}.csv')
+        print(f"\n[{i+1}/{len(seeds)}] seed={seed}")
+
+        # 生成数据
+        output_file = generate_data(
+            start_date, end_date, seed, output, clean
+        )
+        results[seed] = output_file
+
+        # 质量校验
+        if run_quality:
+            quality_check(output_file)
+
+    print(f"\n✅ 批量生成完成: {len(results)}组")
+    for seed, path in results.items():
+        print(f"  seed={seed} → {path}")
+
+    return results
 
 
 if __name__ == '__main__':
