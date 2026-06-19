@@ -3565,10 +3565,10 @@ def fetch_single_stock_data(stock_info, start_date, end_date):
             result['code_std'] = code_std
             return result
 
-            # 【P0-4修复】baostock失败时降级到mock数据，不再返回None
-            _bb_print(f'[数据] ⚠ {name}({code}) 真实数据获取失败，使用模拟数据')
-            mock_df = generate_mock_stock_data(code_std, name, start_date, end_date)
-            return mock_df
+        # 【P0-4修复】baostock失败时降级到mock数据，不再返回None
+        _bb_print(f'[数据] ⚠ {name}({code}) 真实数据获取失败，使用模拟数据')
+        mock_df = generate_mock_stock_data(code_std, name, start_date, end_date)
+        return mock_df
 
 
 
