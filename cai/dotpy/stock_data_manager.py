@@ -1032,7 +1032,7 @@ def main():
     parser.add_argument('--sectors', type=str, default=None,
                         help='指定板块(逗号分隔), 如: 半导体,小金属')
     parser.add_argument('--start-date', type=str, default=None,
-                        help='全量下载起始日期(如20200101)')
+                        help='全量下载起始日期(如2020-01-01或20200101)')
     parser.add_argument('--data-dir', type=str, default=None,
                         help='数据存储目录(默认自动检测)')
 
