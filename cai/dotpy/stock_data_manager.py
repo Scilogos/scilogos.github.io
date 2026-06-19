@@ -407,7 +407,7 @@ class StockDataManager:
     MOOTDX_TIMEOUT = 20         # 连接超时
 
     # 默认历史起始日
-    DEFAULT_START_DATE = '20200101'
+    DEFAULT_START_DATE = '2020-01-01'
 
     def __init__(self, data_dir: str = None):
         self.data_dir = data_dir or LOCAL_DATA_DIR
@@ -683,6 +683,11 @@ class StockDataManager:
             print("✗ baostock未安装，无法全量下载！请: pip install baostock")
             return
 
+        # 统一转成 YYYY-MM-DD 格式(baostock要求)
+        if start_date:
+            s = start_date.replace('-', '')
+            if len(s) == 8:
+                start_date = f"{s[:4]}-{s[4:6]}-{s[6:8]}"
         start_date = start_date or self.DEFAULT_START_DATE
         end_date = datetime.datetime.now().strftime('%Y-%m-%d')
 
