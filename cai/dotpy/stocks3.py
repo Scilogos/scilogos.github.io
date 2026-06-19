@@ -3634,8 +3634,11 @@ def fetch_realtime_price(code, name):
         price = MOOTDX_CLIENT.get_realtime_price(code)
         if price is not None and price > 0:
             return price
+        # mootdx连着但取不到价格，直接返回None，不走baostock重连
+        # （阶段1已logout baostock，重连会造成socket错误+延迟）
+        return None
 
-    # 降级：baostock分钟级数据获取（保留原逻辑作为兜底）
+    # 降级：baostock分钟级数据获取（仅mootdx未连接时使用）
     if not DEPENDENCY_STATUS['baostock']:
         return None
 
