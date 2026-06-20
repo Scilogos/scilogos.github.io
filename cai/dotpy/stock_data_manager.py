@@ -1129,176 +1129,192 @@ class StockDataManager:
 
     def _scan_all_stocks(self, min_list_days: int = 365) -> list:
         """
-        扫描全部A股，过滤ST/退市/停牌超1年/上市不足N天的股票
-        策略: query_all_stock()为主(更可靠) → query_stock_basic()补充上市日期
+        扫描全部A股，过滤ST/退市/上市不足N天的股票
+        策略: query_stock_basic()为主(不依赖交易日,最可靠)
+              → query_all_stock()为备(需有效交易日)
+              → 多日期回退防节假日
         Returns: list of {code, code_std, name, industry, list_date}
         """
         stocks = []
         today = datetime.datetime.now()
         cutoff = today - datetime.timedelta(days=min_list_days)
 
-        # ====== Step 1: query_all_stock 获取当日全部在市股票 ======
-        print("  ▸ 方法1: query_all_stock()...")
-        stock_set = set()
+        # ====== 方法1: query_stock_basic (主方法，不依赖交易日) ======
+        print("  ▸ 方法1: query_stock_basic() [主方法]...")
         try:
-            # 用最近一个工作日查询（避免周末/节假日无数据）
-            query_day = today
-            for offset in range(7):
-                test_day = today - datetime.timedelta(days=offset)
-                if test_day.weekday() < 5:  # 周一到周五
-                    query_day = test_day
-                    break
-            day_str = query_day.strftime('%Y-%m-%d')
+            rs = bs.query_stock_basic()
+            print(f"    error_code={rs.error_code}, msg={rs.error_msg}")
+            if hasattr(rs, 'fields'):
+                print(f"    fields: {rs.fields}")
 
-            rs = bs.query_all_stock(day=day_str)
-            print(f"    query_all_stock(day={day_str}): error_code={rs.error_code}, msg={rs.error_msg}")
-
+            # 先打印前几行原始数据，帮助排查
+            sample_rows = []
             row_count = 0
             while rs.next():
                 row = rs.get_row_data()
                 row_count += 1
-                if not row or len(row) < 3:
+
+                if row_count <= 3:
+                    sample_rows.append(str(row)[:120])
+
+                if not row:
                     continue
 
-                code = row[0] if isinstance(row, list) else str(row).split(',')[0].strip()
-                # 只取沪深A股 (sh.6xxxxx, sz.0xxxxx, sz.3xxxxx)
+                # 处理row可能是字符串的情况
+                if isinstance(row, str):
+                    row = row.split(',')
+
+                fields = rs.fields if hasattr(rs, 'fields') else ['code','code_name','ipoDate','outDate','type','status']
+                if len(row) < len(fields):
+                    continue
+
+                row_dict = dict(zip(fields, row))
+
+                code = row_dict.get('code', '')
+                name = row_dict.get('code_name', '')
+                ipo_date = row_dict.get('ipoDate', '')
+                out_date = row_dict.get('outDate', '')
+                stock_type = str(row_dict.get('type', ''))
+                status = str(row_dict.get('status', ''))
+
+                # 只要股票(type=1)，不要指数/基金
+                if stock_type != '1':
+                    continue
+
+                # 过滤已退市
+                if out_date and str(out_date) not in ('', '0'):
+                    continue
+
+                # 只取沪深A股
                 if not (code.startswith('sh.6') or code.startswith('sz.0') or code.startswith('sz.3')):
                     continue
 
-                name = row[2] if len(row) > 2 else ''
-                if isinstance(name, str) and ('ST' in name or 'st' in name):
+                # 过滤ST
+                if 'ST' in name or 'st' in name:
                     continue
+
+                # 过滤上市不足N天
+                if ipo_date and str(ipo_date) not in ('', '0'):
+                    try:
+                        ipo_dt = datetime.datetime.strptime(str(ipo_date), '%Y-%m-%d')
+                        if ipo_dt > cutoff:
+                            continue
+                    except:
+                        pass
 
                 code_std = self._baostock_to_code_std(code)
                 if not code_std:
                     continue
 
-                stock_set.add(code)
                 stocks.append({
                     'code': code,
                     'code_std': code_std,
                     'name': name,
                     'industry': '',
-                    'list_date': '',
+                    'list_date': str(ipo_date),
                 })
 
-            print(f"    query_all_stock返回 {row_count} 行, 筛选后 {len(stocks)} 只A股")
+            for i, sr in enumerate(sample_rows):
+                print(f"    原始样本[{i}]: {sr}")
+            print(f"    query_stock_basic返回 {row_count} 行, 筛选后 {len(stocks)} 只A股")
 
         except Exception as e:
-            print(f"    ✗ query_all_stock失败: {e}")
+            print(f"    ✗ query_stock_basic失败: {e}")
 
-        # ====== Step 1b: 如果query_all_stock返回空，尝试query_stock_basic ======
+        # ====== 方法2: query_all_stock (备选，需有效交易日) ======
         if not stocks:
-            print("  ▸ 方法1失败，尝试方法2: query_stock_basic()...")
+            print("  ▸ 方法1失败，尝试方法2: query_all_stock()...")
             try:
-                rs = bs.query_stock_basic()
-                print(f"    query_stock_basic: error_code={rs.error_code}, msg={rs.error_msg}")
-                if hasattr(rs, 'fields'):
-                    print(f"    fields: {rs.fields}")
+                # 尝试最近多个工作日（最多回退10天）
+                tried_dates = []
+                for offset in range(10):
+                    test_day = today - datetime.timedelta(days=offset)
+                    if test_day.weekday() < 5:  # 周一到周五
+                        day_str = test_day.strftime('%Y-%m-%d')
+                        rs = bs.query_all_stock(day=day_str)
+                        print(f"    query_all_stock(day={day_str}): error_code={rs.error_code}, rows可用={rs.next()}")
+                        tried_dates.append(day_str)
 
-                row_count = 0
-                while rs.next():
-                    row = rs.get_row_data()
-                    row_count += 1
+                        # 重置迭代器
+                        if rs.error_code != '0':
+                            continue
 
-                    if not row:
-                        continue
-
-                    # 处理row可能是字符串的情况
-                    if isinstance(row, str):
-                        row = row.split(',')
-
-                    fields = rs.fields if hasattr(rs, 'fields') else ['code','code_name','ipoDate','outDate','type','status']
-                    if len(row) < len(fields):
-                        continue
-
-                    row_dict = dict(zip(fields, row))
-
-                    code = row_dict.get('code', '')
-                    name = row_dict.get('code_name', '')
-                    ipo_date = row_dict.get('ipoDate', '')
-                    out_date = row_dict.get('outDate', '')
-                    stock_type = str(row_dict.get('type', ''))
-                    status = str(row_dict.get('status', ''))
-
-                    # 只要股票(type=1)，不要指数/基金
-                    if stock_type != '1':
-                        continue
-
-                    # 过滤已退市
-                    if out_date and str(out_date) not in ('', '0'):
-                        continue
-
-                    # 只取沪深A股
-                    if not (code.startswith('sh.6') or code.startswith('sz.0') or code.startswith('sz.3')):
-                        continue
-
-                    # 过滤ST
-                    if 'ST' in name or 'st' in name:
-                        continue
-
-                    # 过滤上市不足N天
-                    if ipo_date and str(ipo_date) not in ('', '0'):
-                        try:
-                            ipo_dt = datetime.datetime.strptime(str(ipo_date), '%Y-%m-%d')
-                            if ipo_dt > cutoff:
+                        row_count = 0
+                        while rs.next():
+                            row = rs.get_row_data()
+                            row_count += 1
+                            if not row or len(row) < 3:
                                 continue
-                        except:
-                            pass
 
-                    code_std = self._baostock_to_code_std(code)
-                    if not code_std:
-                        continue
+                            code = row[0] if isinstance(row, list) else str(row).split(',')[0].strip()
+                            if not (code.startswith('sh.6') or code.startswith('sz.0') or code.startswith('sz.3')):
+                                continue
 
-                    stocks.append({
-                        'code': code,
-                        'code_std': code_std,
-                        'name': name,
-                        'industry': '',
-                        'list_date': str(ipo_date),
-                    })
+                            name = row[2] if len(row) > 2 else ''
+                            if isinstance(name, str) and ('ST' in name or 'st' in name):
+                                continue
 
-                print(f"    query_stock_basic返回 {row_count} 行, 筛选后 {len(stocks)} 只A股")
+                            code_std = self._baostock_to_code_std(code)
+                            if not code_std:
+                                continue
+
+                            stocks.append({
+                                'code': code,
+                                'code_std': code_std,
+                                'name': name,
+                                'industry': '',
+                                'list_date': '',
+                            })
+
+                        print(f"    day={day_str}: 返回{row_count}行, 累计筛选{len(stocks)}只")
+
+                        if stocks:
+                            break  # 找到有效日期就停
+
+                if not tried_dates:
+                    print("    ✗ 未找到有效工作日")
 
             except Exception as e:
-                print(f"    ✗ query_stock_basic也失败: {e}")
+                print(f"    ✗ query_all_stock失败: {e}")
 
         if not stocks:
-            print("  ✗ 两种方法均未扫描到股票")
+            print("  ✗ 两种方法均未扫描到股票，请检查:")
+            print("    1. 网络是否正常（baostock需连外网）")
+            print("    2. baostock服务是否正常（偶发维护）")
+            print("    3. 试试: python -c \"import baostock as bs; lg=bs.login(); print(lg.error_code, lg.error_msg); bs.logout()\"")
             return []
 
-        # ====== Step 2: 过滤上市不足N天的（补充检查） ======
-        # query_all_stock不返回ipoDate，需额外查询
-        # 但为效率，直接用上市日期检查：如果股票在cutoff日期之前不存在，说明上市不足N天
-        # 简化处理：对没有list_date的股票，用query_stock_basic补充查询
-        need_ipo_check = [s for s in stocks if not s.get('list_date')]
+        # ====== Step 2b: 补充上市日期过滤（query_all_stock不返回ipoDate） ======
+        need_ipo_check = [s for s in stocks if not s.get('list_date') or s['list_date'] in ('', '0')]
         if need_ipo_check:
             print(f"  ▸ 补充查询上市日期 ({len(need_ipo_check)}只)...")
             try:
-                rs = bs.query_stock_basic()
+                rs2 = bs.query_stock_basic()
                 ipo_map = {}
-                while rs.next():
-                    row = rs.get_row_data()
+                while rs2.next():
+                    row = rs2.get_row_data()
                     if not row:
                         continue
                     if isinstance(row, str):
                         row = row.split(',')
-                    fields = rs.fields if hasattr(rs, 'fields') else ['code','code_name','ipoDate','outDate','type','status']
-                    if len(row) >= len(fields):
-                        rd = dict(zip(fields, row))
+                    fields2 = rs2.fields if hasattr(rs2, 'fields') else ['code','code_name','ipoDate','outDate','type','status']
+                    if len(row) >= len(fields2):
+                        rd = dict(zip(fields2, row))
                         ipo_map[rd.get('code', '')] = rd.get('ipoDate', '')
 
+                remove_list = []
                 for s in need_ipo_check:
                     s['list_date'] = ipo_map.get(s['code'], '')
-                    # 检查上市天数
                     if s['list_date'] and str(s['list_date']) not in ('', '0'):
                         try:
                             ipo_dt = datetime.datetime.strptime(str(s['list_date']), '%Y-%m-%d')
                             if ipo_dt > cutoff:
-                                stocks.remove(s)
+                                remove_list.append(s)
                         except:
                             pass
-                print(f"    补充完成，剩余 {len(stocks)} 只")
+                for s in remove_list:
+                    stocks.remove(s)
+                print(f"    补充完成，过滤新股{len(remove_list)}只，剩余 {len(stocks)} 只")
             except Exception as e:
                 print(f"    ⚠ 上市日期查询失败: {e}，跳过此过滤")
 
