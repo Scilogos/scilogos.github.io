@@ -1320,32 +1320,58 @@ class StockDataManager:
 
         # ====== Step 3: 获取行业分类 ======
         print(f"  ▸ 获取行业分类 ({len(stocks)}只)...")
-        # 优先用query_stock_industry批量查
+        # 优先用query_stock_industry批量查（带超时+失败跳过）
+        import threading
         industry_fail_count = 0
+        industry_timeout_count = 0
+        INDUSTRY_TIMEOUT_SEC = 10  # 单次查询超时秒数
+
         for idx, stock_info in enumerate(stocks):
             code = stock_info['code']
-            try:
-                rs_ind = bs.query_stock_industry(code=code)
-                while rs_ind.next():
-                    row = rs_ind.get_row_data()
-                    if not row:
-                        continue
-                    if isinstance(row, str):
-                        row = row.split(',')
-                    fields = rs_ind.fields if hasattr(rs_ind, 'fields') else ['code','code_name','industry','industryClassification']
-                    if len(row) >= len(fields):
-                        rd = dict(zip(fields, row))
-                        stock_info['industry'] = rd.get('industry', rd.get('code_name', ''))
-                    break
-            except:
-                industry_fail_count += 1
 
-            # 限速+进度
-            if (idx + 1) % 200 == 0:
-                print(f"    行业分类进度: {idx+1}/{len(stocks)}")
-                time.sleep(1.0)
-            elif (idx + 1) % 50 == 0:
-                time.sleep(0.5)
+            # 带超时的查询：用线程+Timer实现
+            query_result = {'done': False, 'data': None, 'error': None}
+
+            def _do_query(c=code, qr=query_result):
+                try:
+                    rs_ind = bs.query_stock_industry(code=c)
+                    row_data = None
+                    while rs_ind.next():
+                        row = rs_ind.get_row_data()
+                        if not row:
+                            continue
+                        if isinstance(row, str):
+                            row = row.split(',')
+                        fields = rs_ind.fields if hasattr(rs_ind, 'fields') else ['code','code_name','industry','industryClassification']
+                        if len(row) >= len(fields):
+                            rd = dict(zip(fields, row))
+                            row_data = rd.get('industry', rd.get('code_name', ''))
+                        break
+                    qr['data'] = row_data
+                except Exception as e:
+                    qr['error'] = e
+                finally:
+                    qr['done'] = True
+
+            t = threading.Thread(target=_do_query, daemon=True)
+            t.start()
+            t.join(timeout=INDUSTRY_TIMEOUT_SEC)
+
+            if query_result['done']:
+                if query_result['data'] is not None:
+                    stock_info['industry'] = query_result['data']
+                elif query_result['error'] is not None:
+                    industry_fail_count += 1
+            else:
+                # 超时，跳过这只
+                industry_timeout_count += 1
+
+            # 进度：每100只输出一次，每50只限速
+            if (idx + 1) % 100 == 0:
+                fail_str = f", 超时{industry_timeout_count}" if industry_timeout_count else ""
+                print(f"    行业分类进度: {idx+1}/{len(stocks)}{fail_str}")
+            if (idx + 1) % 50 == 0:
+                time.sleep(0.3)
 
         # 未分行业的归入"其他"
         no_industry = sum(1 for s in stocks if not s['industry'])
@@ -1353,7 +1379,8 @@ class StockDataManager:
             if not s['industry']:
                 s['industry'] = '其他'
 
-        print(f"  ✓ 扫描完成: {len(stocks)}只, 行业未知: {no_industry}只(归入'其他')")
+        fail_str = f", 查询失败{industry_fail_count}, 超时{industry_timeout_count}" if (industry_fail_count + industry_timeout_count) else ""
+        print(f"  ✓ 扫描完成: {len(stocks)}只, 行业未知: {no_industry}只(归入'其他'){fail_str}")
         return stocks
 
     @staticmethod
