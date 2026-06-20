@@ -110,7 +110,7 @@ class StockDataset(Dataset):
         return self.data[idx]
 
 
-def load_and_preprocess(data_dir: Path, seq_len: int = 60, step: int = 20) -> np.ndarray:
+def load_and_preprocess(data_dir: Path, seq_len: int = 60, step: int = 20, max_stocks: int = 0) -> np.ndarray:
     """
     加载CSV数据并进行预处理
     
@@ -138,7 +138,9 @@ def load_and_preprocess(data_dir: Path, seq_len: int = 60, step: int = 20) -> np
     
     all_sequences = []
     
-    for csv_file in csv_files[:50]:  # 限制股票数量加速
+    # 限制股票数量（按max_stocks参数，默认0=全部）
+    max_to_load = max_stocks if max_stocks > 0 else len(csv_files)
+    for csv_file in csv_files[:max_to_load]:
         try:
             df = load_single_stock(csv_file, seq_len, step)
             if df is not None and len(df) > 0:
@@ -491,29 +493,51 @@ class TimeGAN(nn.Module):
         h_supervised = self.supervisor(h)
         return h_supervised
     
-    def train_adversarial(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
+    def forward_discriminator(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
         """
-        联合对抗训练前向传播 (Phase C)
+        Phase C: 判别器前向传播
+        生成数据detach，梯度不流向Generator/Supervisor
         """
-        # 真实数据流程
+        # 真实数据
         h_real = self.embedder(x)
         h_real_supervised = self.supervisor(h_real)
         
-        # 生成数据流程
+        # 生成数据（detach! 不让梯度流回G/S）
         z = self._create_noise(x.size(0))
         h_gen = self.generator(z)
         h_gen_supervised = self.supervisor(h_gen)
         
         # 判别
-        d_real = self.discriminator(h_real_supervised)
+        d_real = self.discriminator(h_real_supervised.detach())
         d_fake = self.discriminator(h_gen_supervised.detach())
+        
+        return {
+            'd_real': d_real,
+            'd_fake': d_fake
+        }
+    
+    def forward_generator(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
+        """
+        Phase C: 生成器前向传播
+        生成数据不detach，梯度流经D→S→G，用于更新G/S/E/R
+        """
+        # 真实数据流程（重建+监督损失用）
+        h_real = self.embedder(x)
+        h_real_supervised = self.supervisor(h_real)
+        x_recon = self.recovery(h_real_supervised)
+        
+        # 生成数据流程（不detach! 梯度完整回传）
+        z = self._create_noise(x.size(0))
+        h_gen = self.generator(z)
+        h_gen_supervised = self.supervisor(h_gen)
+        d_fake = self.discriminator(h_gen_supervised)
         
         return {
             'h_real': h_real,
             'h_real_supervised': h_real_supervised,
+            'x_recon': x_recon,
             'h_gen': h_gen,
             'h_gen_supervised': h_gen_supervised,
-            'd_real': d_real,
             'd_fake': d_fake
         }
     
@@ -794,30 +818,30 @@ class TimeGANTrainer:
                 batch = batch.to(self.device)
                 batch_size = batch.size(0)
                 
-                # ===== 训练判别器 =====
-                for _ in range(1):  # 判别器训练次数
-                    results = self.model.train_adversarial(batch)
-                    
-                    d_loss = self.loss_fn.discriminator_loss(
-                        results['d_real'], results['d_fake']
-                    )
-                    
-                    self.opt_discriminator.zero_grad()
-                    d_loss.backward()
-                    self.opt_discriminator.step()
+                # ===== Step 1: 训练判别器 =====
+                d_results = self.model.forward_discriminator(batch)
                 
-                # ===== 训练生成器 =====
-                # 自编码器重建
-                h, x_recon = self.model.train_autoencoder(batch)
-                loss_recon = self.loss_fn.reconstruction_loss(batch, x_recon)
+                d_loss = self.loss_fn.discriminator_loss(
+                    d_results['d_real'], d_results['d_fake']
+                )
                 
-                # Supervisor监督
-                h_supervised = self.model.supervisor(h)
-                loss_supervised = self.loss_fn.supervised_loss(h, h_supervised)
+                self.opt_discriminator.zero_grad()
+                d_loss.backward()
+                self.opt_discriminator.step()
                 
-                # 生成器欺骗判别器
-                results = self.model.train_adversarial(batch)
-                loss_generator = self.loss_fn.generator_loss(results['d_fake'])
+                # ===== Step 2: 训练生成器 (联合更新E/R/G/S) =====
+                g_results = self.model.forward_generator(batch)
+                
+                # 重建损失
+                loss_recon = self.loss_fn.reconstruction_loss(batch, g_results['x_recon'])
+                
+                # 监督损失
+                loss_supervised = self.loss_fn.supervised_loss(
+                    g_results['h_real'], g_results['h_real_supervised']
+                )
+                
+                # 生成器对抗损失（梯度经D→S→G完整回传）
+                loss_generator = self.loss_fn.generator_loss(g_results['d_fake'])
                 
                 # 联合损失
                 g_loss = loss_recon + loss_supervised + loss_generator
@@ -825,10 +849,12 @@ class TimeGANTrainer:
                 self.opt_embedder.zero_grad()
                 self.opt_recovery.zero_grad()
                 self.opt_generator.zero_grad()
+                self.opt_supervisor.zero_grad()
                 g_loss.backward()
                 self.opt_embedder.step()
                 self.opt_recovery.step()
                 self.opt_generator.step()
+                self.opt_supervisor.step()
                 
                 epoch_g_loss += loss_generator.item()
                 epoch_d_loss += d_loss.item()
@@ -1236,7 +1262,7 @@ def train_mode(args):
     # 加载数据
     data_dir = Path(args.data_dir) if args.data_dir else DATA_DIR
     print(f"\n[数据加载] 从 {data_dir}")
-    data = load_and_preprocess(data_dir, seq_len=config.seq_len)
+    data = load_and_preprocess(data_dir, seq_len=config.seq_len, max_stocks=args.max_stocks)
     
     # 训练
     trainer = TimeGANTrainer(config)
@@ -1434,6 +1460,8 @@ def main():
                        help='所有阶段的总轮数 (会覆盖上述参数)')
     parser.add_argument('--resume', action='store_true',
                        help='从检查点恢复训练')
+    parser.add_argument('--max-stocks', type=int, default=0,
+                       help='训练用最大股票数 (0=全部, 默认0)')
     
     # 生成参数
     parser.add_argument('--num-stocks', type=int, default=100,
