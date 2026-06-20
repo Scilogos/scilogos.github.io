@@ -1358,11 +1358,11 @@ class StockDataManager:
 
     @staticmethod
     def _baostock_to_code_std(bs_code: str) -> str:
-        """baostock代码(sh.601857) → code_std(601857.SH)"""
+        """baostock代码(sh.601857) → code_std(601857.SH)
+        注意: split('.')后第1个是市场(sh/sz), 第2个是数字代码
+        """
         if '.' in bs_code:
-            num, mkt = bs_code.split('.')
-            mkt_upper = mkt.upper()
-            # baostock中6/9开头是sh，0/3开头是sz
+            mkt, num = bs_code.split('.')  # sh.601857 → mkt='sh', num='601857'
             if mkt == 'sh':
                 return f'{num}.SH'
             elif mkt == 'sz':
