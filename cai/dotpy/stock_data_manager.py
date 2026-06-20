@@ -975,6 +975,275 @@ class StockDataManager:
                 result[idx_info['code']] = df
         return result
 
+    # -------------------- 全市场扫描与下载 --------------------
+
+    def full_market_download(self, start_date: str = None, min_list_days: int = 365):
+        """
+        全A股市场数据下载（~5400只）
+        使用baostock query_stock_basic()获取全部上市股票，自动分类行业
+        Args:
+            start_date: 起始日期(默认2020-01-01)
+            min_list_days: 上市至少多少天才纳入（过滤新股）
+        """
+        if not DEPS['baostock']:
+            print("✗ baostock未安装，无法全量下载！请: pip install baostock")
+            return
+
+        # 统一转成 YYYY-MM-DD 格式
+        if start_date:
+            s = start_date.replace('-', '')
+            if len(s) == 8:
+                start_date = f"{s[:4]}-{s[4:6]}-{s[6:8]}"
+        start_date = start_date or self.DEFAULT_START_DATE
+
+        self._ensure_dirs()
+        self._stats = {'downloaded': 0, 'updated': 0, 'failed': 0, 'skipped': 0}
+
+        print(f"\n{'━' * 70}")
+        print(f"  全A股市场数据下载 (baostock)")
+        print(f"  日期范围: {start_date} → {datetime.datetime.now().strftime('%Y-%m-%d')}")
+        print(f"  正在扫描全部上市股票...")
+        print(f"{'━' * 70}")
+
+        with self.baostock_session():
+            if not self._bs_logged_in:
+                print("✗ baostock登录失败, 终止下载")
+                return
+
+            # Step 1: 获取全部股票列表
+            print("\n  ▸ Step 1: 扫描全部A股...")
+            all_stocks = self._scan_all_stocks(min_list_days)
+            if not all_stocks:
+                print("✗ 未扫描到任何股票")
+                return
+
+            # 按行业分组
+            sector_map = {}
+            for info in all_stocks:
+                sec = info.get('industry', '未分类')
+                if sec not in sector_map:
+                    sector_map[sec] = []
+                sector_map[sec].append(info)
+
+            total = len(all_stocks)
+            print(f"  ✓ 扫描完成: {total}只 / {len(sector_map)}个行业")
+            print(f"  跳过: ST/退市/停牌超1年/上市不足{min_list_days}天")
+
+            # Step 2: 下载指数（6只）
+            print(f"\n  ▸ Step 2: 下载指数数据 ({len(INDEX_LIST)}只)")
+            for idx_info in INDEX_LIST:
+                code_std = idx_info['code_std']
+                name = idx_info['name']
+                bs_code = code_to_baostock(code_std)
+                print(f"  {name}({code_std})...", end="", flush=True)
+
+                df = self._bs_fetch_kline(bs_code, start_date, datetime.datetime.now().strftime('%Y-%m-%d'))
+                if df is not None and len(df) > 0:
+                    self._write_csv(df, code_std, name, is_index=True)
+                    self.metadata['indices'][code_std] = {
+                        'last_date': df['date'].max().strftime('%Y-%m-%d'),
+                        'rows': len(df),
+                        'source': 'baostock',
+                        'updated': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    }
+                    self._stats['downloaded'] += 1
+                    print(f" ✓ ({len(df)}行)")
+                else:
+                    self._stats['failed'] += 1
+                    print(f" ✗")
+                time.sleep(0.3)
+
+            # Step 3: 分行业下载股票数据
+            print(f"\n  ▸ Step 3: 下载全市场股票数据")
+            task_idx = len(INDEX_LIST)
+            skip_existing = 0
+
+            for sector_name, stocks in sorted(sector_map.items()):
+                print(f"\n  ▸ 行业: {sector_name} ({len(stocks)}只)")
+                for stock_info in stocks:
+                    task_idx += 1
+                    code_std = stock_info['code_std']
+                    name = stock_info['name']
+                    bs_code = stock_info['code']
+
+                    # 检查是否已有数据（断点续传）
+                    csv_path = self._csv_path(code_std, is_index=False)
+                    if os.path.exists(csv_path):
+                        # 已有数据，跳过（增量更新用update模式）
+                        skip_existing += 1
+                        continue
+
+                    if task_idx % 50 == 1:
+                        pct = task_idx / (total + len(INDEX_LIST)) * 100
+                        print(f"  [{task_idx}/{total+len(INDEX_LIST)}] ({pct:.1f}%)", end=" ", flush=True)
+
+                    df = self._bs_fetch_kline(bs_code, start_date, datetime.datetime.now().strftime('%Y-%m-%d'))
+                    if df is not None and len(df) > 0:
+                        self._write_csv(df, code_std, name, is_index=False)
+                        self.metadata['stocks'][code_std] = {
+                            'last_date': df['date'].max().strftime('%Y-%m-%d'),
+                            'rows': len(df),
+                            'sector': sector_name,
+                            'source': 'baostock',
+                            'updated': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        }
+                        self._stats['downloaded'] += 1
+                    else:
+                        self._stats['failed'] += 1
+
+                    # 限速+防断连
+                    if task_idx % 20 == 0:
+                        time.sleep(2.0)
+                        # 检查连接
+                        try:
+                            test_rs = bs.query_history_k_data_plus(
+                                "sh.000001", "date",
+                                start_date=start_date,
+                                end_date=datetime.datetime.now().strftime('%Y-%m-%d'),
+                                frequency="d"
+                            )
+                            if test_rs.error_code != '0':
+                                print(f"\n  ⚠ 连接断开，重连中...")
+                                try: bs.logout()
+                                except: pass
+                                time.sleep(1)
+                                bs.login()
+                        except:
+                            try: bs.logout()
+                            except: pass
+                            time.sleep(1)
+                            bs.login()
+
+            # 保存
+            self.metadata['last_full_download'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            self.metadata['full_market'] = True
+            self._save_metadata()
+            self._save_pool_snapshot()
+
+            # 汇总
+            print(f"\n{'━' * 70}")
+            print(f"  全市场下载完成!")
+            print(f"  成功: {self._stats['downloaded']} | 跳过(已有): {skip_existing} | 失败: {self._stats['failed']}")
+            print(f"  数据目录: {self.data_dir}")
+            print(f"{'━' * 70}")
+
+    def _scan_all_stocks(self, min_list_days: int = 365) -> list:
+        """
+        扫描全部A股，过滤ST/退市/停牌超1年/上市不足N天的股票
+        Returns: list of {code, code_std, name, industry, list_date}
+        """
+        stocks = []
+        today = datetime.datetime.now()
+        cutoff = today - datetime.timedelta(days=min_list_days)
+
+        try:
+            # 获取沪深全部股票
+            rs = bs.query_stock_basic()
+            stock_list = []
+            while (rs.error_code == '0') and rs.next():
+                row = rs.get_row_data()
+                stock_list.append(row)
+
+            if not stock_list:
+                print("  ✗ query_stock_basic返回空")
+                return []
+
+            # rs.fields: code,code_name,ipoDate,outDate,type,status
+            fields = rs.fields if hasattr(rs, 'fields') else ['code','code_name','ipoDate','outDate','type','status']
+
+            for row in stock_list:
+                row_dict = dict(zip(fields, row))
+
+                code = row_dict.get('code', '')
+                name = row_dict.get('code_name', '')
+                ipo_date = row_dict.get('ipoDate', '')
+                out_date = row_dict.get('outDate', '')
+                stock_type = row_dict.get('type', '1')
+                status = row_dict.get('status', '1')
+
+                # 只要股票(type=1)，不要指数/基金
+                if stock_type != '1':
+                    continue
+
+                # 过滤已退市
+                if out_date and out_date != '' and out_date != '0':
+                    continue
+
+                # 过滤ST
+                if 'ST' in name or 'st' in name:
+                    continue
+
+                # 过滤上市不足N天
+                if ipo_date and ipo_date != '' and ipo_date != '0':
+                    try:
+                        ipo_dt = datetime.datetime.strptime(ipo_date, '%Y-%m-%d')
+                        if ipo_dt > cutoff:
+                            continue
+                    except:
+                        pass
+
+                # 转换code格式
+                code_std = self._baostock_to_code_std(code)
+                if not code_std:
+                    continue
+
+                stocks.append({
+                    'code': code,
+                    'code_std': code_std,
+                    'name': name,
+                    'industry': '',  # 行业信息稍后获取
+                    'list_date': ipo_date,
+                })
+
+        except Exception as e:
+            print(f"  ✗ 扫描失败: {e}")
+            return []
+
+        # Step 2: 获取行业分类（分批查询，减少请求）
+        print(f"  扫描到 {len(stocks)} 只候选股票，正在获取行业分类...")
+        industry_cache = {}
+        batch_size = 50
+
+        for i in range(0, len(stocks), batch_size):
+            batch = stocks[i:i+batch_size]
+            for stock_info in batch:
+                code = stock_info['code']
+                try:
+                    rs_ind = bs.query_stock_industry(code=code)
+                    while (rs_ind.error_code == '0') and rs_ind.next():
+                        row = rs_ind.get_row_data()
+                        if hasattr(rs_ind, 'fields'):
+                            row_dict = dict(zip(rs_ind.fields, row))
+                            industry = row_dict.get('industry', row_dict.get('code_name', ''))
+                            stock_info['industry'] = industry
+                        break
+                except:
+                    pass
+                time.sleep(0.1)  # 行业查询限速
+
+            if (i // batch_size) % 5 == 0 and i > 0:
+                print(f"  行业分类进度: {min(i+batch_size, len(stocks))}/{len(stocks)}")
+
+        # 未分行业的归入"其他"
+        for s in stocks:
+            if not s['industry']:
+                s['industry'] = '其他'
+
+        return stocks
+
+    @staticmethod
+    def _baostock_to_code_std(bs_code: str) -> str:
+        """baostock代码(sh.601857) → code_std(601857.SH)"""
+        if '.' in bs_code:
+            num, mkt = bs_code.split('.')
+            mkt_upper = mkt.upper()
+            # baostock中6/9开头是sh，0/3开头是sz
+            if mkt == 'sh':
+                return f'{num}.SH'
+            elif mkt == 'sz':
+                return f'{num}.SZ'
+        return ''
+
     # -------------------- 状态检查 --------------------
 
     def status(self):
@@ -1027,8 +1296,8 @@ class StockDataManager:
 # ============================================================
 def main():
     parser = argparse.ArgumentParser(description='五域归元·财略 数据管理器')
-    parser.add_argument('--mode', choices=['full', 'update', 'status'], default='status',
-                        help='运行模式: full=全量下载, update=增量更新, status=查看状态')
+    parser.add_argument('--mode', choices=['full', 'full-market', 'update', 'status'], default='status',
+                        help='运行模式: full=精选池下载, full-market=全A股下载, update=增量更新, status=查看状态')
     parser.add_argument('--sectors', type=str, default=None,
                         help='指定板块(逗号分隔), 如: 半导体,小金属')
     parser.add_argument('--start-date', type=str, default=None,
@@ -1045,6 +1314,8 @@ def main():
     elif args.mode == 'full':
         sectors = args.sectors.split(',') if args.sectors else None
         mgr.full_download(sectors=sectors, start_date=args.start_date)
+    elif args.mode == 'full-market':
+        mgr.full_market_download(start_date=args.start_date)
     elif args.mode == 'update':
         sectors = args.sectors.split(',') if args.sectors else None
         mgr.incremental_update(sectors=sectors)
