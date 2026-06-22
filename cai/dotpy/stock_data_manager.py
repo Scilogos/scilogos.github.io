@@ -135,13 +135,19 @@ def scan_all_stocks() -> List[Dict]:
     
     all_stocks = []
     stocks_seen = set()
-    
-    # 沪深两市分别查询
-    for trade_date in [DAILY_END, (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")]:
+
+    # 回溯最近7个自然日，找到有数据的交易日（跳过周末和假日）
+    candidate_dates = []
+    for i in range(7):
+        d = datetime.now() - timedelta(days=i)
+        candidate_dates.append(d.strftime("%Y-%m-%d"))
+
+    for trade_date in candidate_dates:
         rs = bs.query_all_stock(day=trade_date)
         if rs.error_code != '0':
             logger.warning(f"查询{trade_date}失败: {rs.error_msg}")
             continue
+        day_count = 0
         while rs.next():
             row = rs.get_row_data()
             code = row[0]  # sh.600000 格式
@@ -156,8 +162,12 @@ def scan_all_stocks() -> List[Dict]:
                 'name': row[1] if len(row) > 1 else '',
                 'trade_date': trade_date,
             })
+            day_count += 1
         if all_stocks:
-            break  # 成功获取就不再尝试前一天
+            logger.info(f"使用交易日 {trade_date} 获取到 {day_count} 只股票")
+            break  # 成功获取就不再尝试更早的日期
+        else:
+            logger.info(f"{trade_date} 无数据（可能非交易日），尝试前一天...")
     
     logger.info(f"扫描完成: {len(all_stocks)} 只A股")
     return all_stocks
