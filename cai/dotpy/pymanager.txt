@@ -1,0 +1,166 @@
+================================================================
+  对抗学习量化系统 v2.0 — PowerShell 命令手册
+  所有命令都在 dotpy 目录下运行
+================================================================
+
+【首次使用】装依赖（只需一次）
+cd "C:\Users\HUAWEI\Desktop\Adversarial Learning\dotpy"
+pip install torch numpy pandas baostock scipy
+
+【重要】文件名带 _dotpy_ 前缀的，需要先改回正常名才能运行：
+  把 _dotpy_stock_config.py  →  stock_config.py
+  把 _dotpy_stock_data_manager.py  →  stock_data_manager.py
+  把 _dotpy_market_generator.py  →  market_generator.py
+  把 _dotpy_adversarial_env.py  →  adversarial_env.py
+  把 _dotpy_stock_interpreter.py  →  stock_interpreter.py
+  把 _dotpy_run_pipeline.py  →  run_pipeline.py
+
+PowerShell批量改名命令：
+Get-ChildItem "_dotpy_*.py" | Rename-Item -NewName { $_.Name -replace '^_dotpy_','' }
+
+================================================================
+  Phase 1：数据采集
+================================================================
+
+扫描全A股列表，生成stock_list.json
+python stock_data_manager.py --mode scan
+
+下载日K线（你已有4908只数据，--resume跳过已有不会重复下）
+python stock_data_manager.py --mode download-daily --resume
+
+只下载200只试试（不传--max-stocks就全部）
+python stock_data_manager.py --mode download-daily --resume --max-stocks 200
+
+下载5分钟线（自动按成交额选Top300重点池）
+python stock_data_manager.py --mode download-min5
+
+给股票打行业标签
+python stock_data_manager.py --mode classify
+
+检查数据有没有坏文件
+python stock_data_manager.py --mode verify
+
+================================================================
+  Phase 2：生成器训练
+================================================================
+
+快速试一下（50只股票，各5轮，几分钟跑完看有没有报错）
+python market_generator.py --mode train --max-stocks 50 --phase-a-epochs 5 --phase-b-epochs 5 --phase-c-epochs 10
+
+正式训练（全部股票，100/100/200轮，比较久）
+python market_generator.py --mode train --max-stocks 0
+
+训练完验证（1=统计 2=+开盘 3=+排列检验，最严格）
+python market_generator.py --mode validate --level 3
+
+生成1000条假数据
+python market_generator.py --mode generate --num-samples 1000
+
+================================================================
+  Phase 3：庄散对抗（核心！）
+================================================================
+
+正式对抗训练（1000轮，带策略进化）
+python adversarial_env.py --mode train --episodes 1000 --evolve
+
+少跑几轮试试（50轮，5分钟出结果）
+python adversarial_env.py --mode train --episodes 50 --evolve
+
+训练完评估效果
+python adversarial_env.py --mode evaluate --episodes 100
+
+快速看个价格走势演示
+python adversarial_env.py --mode demo
+
+================================================================
+  Phase 4：结果解读
+================================================================
+
+分析最近一次模拟结果（统计→博弈→类比→风控，四层全出）
+python stock_interpreter.py --mode analyze
+
+查看上次的分析报告
+python stock_interpreter.py --mode report
+
+================================================================
+  Phase 5：实盘反馈
+================================================================
+
+【反馈文件格式】feedback.txt，每行一条，| 分隔：
+# 日期 | 方向 | 代码 | 价格 | 数量 | 盈亏 | 备注
+# 方向填：买入 或 卖出
+# 盈亏填：卖出时写实际盈亏金额，买入时写0
+# 备注随便写（止损/止盈/追高/抄底 等）
+2026-06-23 | 买入 | 600519.SH | 1800.50 | 100 | 0 | 茅台，系统看多
+2026-06-24 | 卖出 | 600519.SH | 1835.20 | 100 | 3470 | 茅台止盈
+2026-06-25 | 买入 | 000001.SZ | 12.35 | 1000 | 0 | 平安银行
+2026-06-26 | 卖出 | 000001.SZ | 11.80 | 1000 | -550 | 止损出局
+
+生成示例反馈文件（第一次用，先看看格式）
+python feedback_processor.py --mode demo
+
+只解析看看反馈文件内容对不对
+python feedback_processor.py --mode parse
+
+评估信号准确率（胜率/盈亏比/个股表现）
+python feedback_processor.py --mode evaluate
+
+生成校准参数（根据实盘结果调整庄家/散户/奖励参数）
+python feedback_processor.py --mode calibrate
+
+全流程：解析+评估+校准+出报告（推荐用这个）
+python feedback_processor.py --mode full
+
+只出报告（Markdown格式，人可读）
+python feedback_processor.py --mode report
+
+================================================================
+  总管线：一键跑
+================================================================
+
+全流程（数据→生成器→对抗→解读→反馈）
+python run_pipeline.py --phase all
+
+只跑某一段
+python run_pipeline.py --phase data
+python run_pipeline.py --phase generator
+python run_pipeline.py --phase adversarial
+python run_pipeline.py --phase interpret
+python run_pipeline.py --phase feedback
+
+跑Phase 1+2
+python run_pipeline.py --phase 1-2
+
+【推荐先跑这个】快速验证（50只股票+极少epoch，几分钟跑完全管线确认没bug）
+python run_pipeline.py --quick-test
+
+================================================================
+  实盘反馈闭环流程
+================================================================
+
+1. 先跑完对抗训练，得到信号
+   python adversarial_env.py --mode train --episodes 1000 --evolve
+
+2. 跑解读出信号
+   python stock_interpreter.py --mode analyze
+
+3. 按信号操作后，把实际买卖记录写进 feedback.txt
+
+4. 跑反馈处理，自动校准模型参数
+   python feedback_processor.py --mode full
+
+5. 如果校准建议重训 → 重新跑对抗训练（参数已自动调整）
+   python adversarial_env.py --mode train --episodes 2000 --evolve
+
+6. 循环 2~5，系统持续进化
+
+================================================================
+  数据目录
+================================================================
+
+脚本：     C:\Users\HUAWEI\Desktop\Adversarial Learning\dotpy\
+日K线：    C:\Users\HUAWEI\Desktop\Adversarial Learning\stockdata\
+对抗数据： C:\Users\HUAWEI\Desktop\Adversarial Learning\adversarial data\
+对抗模型： C:\Users\HUAWEI\Desktop\Adversarial Learning\adversarial model\
+结果输出： C:\Users\HUAWEI\Desktop\Adversarial Learning\stockresults\
+实盘反馈： C:\Users\HUAWEI\Desktop\Adversarial Learning\dotpy\feedback.txt
