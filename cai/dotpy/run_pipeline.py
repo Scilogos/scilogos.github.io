@@ -2,6 +2,7 @@
 run_pipeline.py - 对抗学习量化系统 总管线
 ==========================================
 串联四阶段: 数据获取 → 生成器对抗 → 庄散对抗 → 结果分析
++ 实盘反馈: feedback.txt → 校准模型 → 重新训练
 
 用法:
   python run_pipeline.py --phase all          # 全流程
@@ -9,6 +10,7 @@ run_pipeline.py - 对抗学习量化系统 总管线
   python run_pipeline.py --phase generator    # 只跑生成器
   python run_pipeline.py --phase adversarial  # 只跑对抗
   python run_pipeline.py --phase interpret    # 只跑解读
+  python run_pipeline.py --phase feedback     # 处理实盘反馈+校准
   python run_pipeline.py --phase 1-2          # 跑阶段1+2
   python run_pipeline.py --quick-test         # 快速验证(小数据量)
 """
@@ -202,6 +204,49 @@ def phase_interpret(args):
     return ok
 
 # ============================================================
+# Phase 5: 实盘反馈
+# ============================================================
+def phase_feedback(args):
+    """实盘反馈处理 + 模型校准"""
+    logger.info("\n" + "█" * 60)
+    logger.info("  Phase 5: 实盘反馈校准")
+    logger.info("█" * 60)
+    
+    feedback_file = SCRIPT_DIR / "feedback.txt"
+    
+    if not feedback_file.exists():
+        logger.warning("feedback.txt 不存在，先生成示例文件...")
+        demo_cmd = (
+            f'cd {SCRIPTS_DIR} && {PYTHON_EXE} feedback_processor.py --mode demo '
+            f'--feedback-file "{feedback_file}"'
+        )
+        run_cmd(demo_cmd, "5.0 生成示例反馈文件")
+        logger.info("请编辑 feedback.txt 填入真实交易记录后重新运行")
+        return False
+    
+    # 全流程: 解析+评估+校准+报告
+    cmd = (
+        f'cd {SCRIPTS_DIR} && {PYTHON_EXE} feedback_processor.py --mode full '
+        f'--feedback-file "{feedback_file}" '
+        f'--results-dir "{RESULTS_DIR}"'
+    )
+    
+    ok = run_cmd(cmd, "5.1 实盘反馈全流程")
+    
+    if ok:
+        # 检查是否需要重训
+        cal_file = RESULTS_DIR / "calibration_params.json"
+        if cal_file.exists():
+            with open(cal_file, 'r', encoding='utf-8') as f:
+                cal = json.load(f)
+            if cal.get('need_retrain'):
+                logger.warning("\n⚠️ 校准结果建议重训对抗模型！")
+                logger.warning(f"原因: {cal.get('retrain_reason', '')}")
+                logger.warning("运行: python run_pipeline.py --phase adversarial --evolve")
+    
+    return ok
+
+# ============================================================
 # 快速验证
 # ============================================================
 def quick_test(args):
@@ -273,7 +318,7 @@ def main():
     if args.quick_test or args.phase == "quick-test":
         quick_test(args)
     elif args.phase == "all":
-        for fn in [phase_data, phase_generator, phase_adversarial, phase_interpret]:
+        for fn in [phase_data, phase_generator, phase_adversarial, phase_interpret, phase_feedback]:
             if not fn(args):
                 break
     elif args.phase == "data":
@@ -284,10 +329,13 @@ def main():
         phase_adversarial(args)
     elif args.phase == "interpret":
         phase_interpret(args)
+    elif args.phase == "feedback":
+        phase_feedback(args)
     elif "-" in args.phase:
         # 多阶段: "1-2" = phase 1+2
         phase_map = {"1": phase_data, "2": phase_generator,
-                    "3": phase_adversarial, "4": phase_interpret}
+                    "3": phase_adversarial, "4": phase_interpret,
+                    "5": phase_feedback}
         phases = args.phase.split("-")
         for p in phases:
             if p in phase_map:
