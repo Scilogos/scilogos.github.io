@@ -1,0 +1,111 @@
+================================================================
+  对抗学习量化系统 v2.0 操作手册
+  数据获取 → 生成器对抗 → 庄散对抗 → 结果分析
+================================================================
+
+【目录结构】
+本地: C:\Users\HUAWEI\Desktop\Adversarial Learning\
+  dotpy\           ← 脚本放这里（从GitHub下载）
+  stockdata\       ← 日K线数据
+  adversarial data\← 对抗训练数据
+  adversarial model\← 对抗模型
+  stockresults\    ← 结果输出
+
+【脚本清单】v2.0 从头重建
+  stock_config.py          共享配置与工具函数
+  stock_data_manager.py    Phase1: 数据采集与管理
+  market_generator.py      Phase2: C-TimeGAN条件化生成器
+  adversarial_env.py       Phase3: 庄散对抗环境(核心)
+  stock_interpreter.py     Phase4: 结果解读器
+  run_pipeline.py          总管线编排
+
+【Phase 1: 数据获取】
+
+# 全市场扫描
+python stock_data_manager.py --mode scan
+
+# 下载日K线(断点续传)
+python stock_data_manager.py --mode download-daily --resume
+
+# 5分钟线(重点池, 按成交额Top300)
+python stock_data_manager.py --mode download-min5
+
+# 行业分类
+python stock_data_manager.py --mode classify
+
+# 数据校验
+python stock_data_manager.py --mode verify
+
+【Phase 2: 生成器对抗】
+
+# 快速验证(50只股票, 少epoch)
+python market_generator.py --mode train --max-stocks 50 \
+  --phase-a-epochs 5 --phase-b-epochs 5 --phase-c-epochs 10
+
+# 正式训练
+python market_generator.py --mode train --max-stocks 0 \
+  --phase-a-epochs 100 --phase-b-epochs 100 --phase-c-epochs 200
+
+# 三级验证
+python market_generator.py --mode validate --level 3
+
+# 生成样本
+python market_generator.py --mode generate --num-samples 1000
+
+【Phase 3: 庄散对抗(核心)】
+
+# 对抗训练(带进化)
+python adversarial_env.py --mode train --episodes 1000 --evolve
+
+# 评估
+python adversarial_env.py --mode evaluate --episodes 100
+
+# 快速演示
+python adversarial_env.py --mode demo
+
+【Phase 4: 结果解读】
+
+# 分析最新模拟结果
+python stock_interpreter.py --mode analyze
+
+# 查看报告
+python stock_interpreter.py --mode report
+
+【总管线: 一键运行】
+
+# 全流程
+python run_pipeline.py --phase all
+
+# 只跑某阶段
+python run_pipeline.py --phase data
+python run_pipeline.py --phase generator
+python run_pipeline.py --phase adversarial
+python run_pipeline.py --phase interpret
+
+# 多阶段
+python run_pipeline.py --phase 1-2
+
+# 快速验证(小数据量跑完全管线)
+python run_pipeline.py --quick-test
+
+【关键修复记录 v2.0】
+1. stock_data_manager: mkt/num赋值反了 → 已修正
+2. stock_data_manager: 行业分类无超时 → threading.Timer 10s
+3. market_generator: Phase C梯度链断裂 → 拆forward_discriminator + forward_generator
+4. market_generator: Supervisor优化器遗漏 → 补全zero_grad()+step()
+5. market_generator: 训练数据量硬编码50 → --max-stocks参数
+
+【新架构特性 v2.0】
+- C-TimeGAN三层条件化: 宏观→板块→个股
+- 庄家"防共四策": 思想防散/民众防散/政治防散/武力防散
+- 散户五类型: 跟风/价值/技术/头羊/被动
+- 游资打板: 快进快出+止损止盈
+- 双进化: 拉马克(经验遗传)+达尔文(随机变异)
+- 防摆烂四方案: 多样性奖励+最低行动+惩罚恒定+注入噪声
+- 四层解读: 统计→博弈→类比→风控
+- 排列检验: 迁移性门禁
+
+【Python环境】
+  Python 3.12
+  必需包: torch, numpy, pandas, baostock, scipy
+  安装: pip install torch numpy pandas baostock scipy
