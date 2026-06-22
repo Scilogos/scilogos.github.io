@@ -36,7 +36,7 @@ from torch.distributions import Categorical
 
 sys.path.insert(0, str(Path(__file__).parent))
 from stock_config import (
-    ADV_MODEL_DIR, ADV_DATA_DIR, RESULTS_DIR,
+    ADV_MODEL_DIR, ADV_DATA_DIR, RESULTS_DIR, SCRIPT_DIR,
     AdversarialConfig, setup_logger,
 )
 
@@ -756,6 +756,63 @@ class AdversarialTrainer:
         
         # 训练记录
         self.episode_log = []
+        
+        # ── 实盘校准窗口 ──
+        self._cal_reward_weight = 0.0   # 校准附加奖励权重
+        self._load_calibration()          # 自动加载上次校准参数
+    
+    def _load_calibration(self):
+        """
+        加载 calibration_params.json (由 feedback_processor.py 生成)
+        将实盘反馈校准参数应用到当前训练器
+        """
+        cal_file = RESULTS_DIR / "calibration_params.json"
+        if not cal_file.exists():
+            return
+        
+        try:
+            with open(cal_file, 'r', encoding='utf-8') as f:
+                cal = json.load(f)
+            
+            adj = cal.get('adjustments', {})
+            
+            # 庄家参数
+            if 'dealer' in adj:
+                d = adj['dealer']
+                if 'info_power_delta' in d:
+                    self.dealer.info_power = max(0.1, min(1.0,
+                        self.dealer.info_power + d['info_power_delta']))
+                if 'shake_intensity_delta' in d:
+                    self.dealer.shake_intensity = max(0.01, min(0.2,
+                        self.dealer.shake_intensity + d['shake_intensity_delta']))
+                if 'puppet_ratio_delta' in d:
+                    self.dealer.puppet_capital *= (1 + d['puppet_ratio_delta'])
+                logger.info(f"  庄家校准: info_power={self.dealer.info_power:.2f}, "
+                           f"shake={self.dealer.shake_intensity:.3f}")
+            
+            # 散户参数 (影响下一轮重建)
+            if 'retailer' in adj:
+                r = adj['retailer']
+                # 动态调整散户类型概率
+                if 'herd_prob_delta' in r:
+                    logger.info(f"  散户校准: herd+{r['herd_prob_delta']:.2f}")
+            
+            # 奖励权重
+            if 'reward' in adj:
+                rw = adj['reward']
+                self._cal_reward_weight = rw.get('reward_shaping_weight_delta', 0)
+                logger.info(f"  奖励校准: shaping_weight +{self._cal_reward_weight:.2f}")
+            
+            # 风控参数 (影响解读器)
+            if 'risk' in adj:
+                rk = adj['risk']
+                logger.info(f"  风控校准: drawdown{rk.get('max_drawdown_delta',0):+.2f}, "
+                           f"conf{rk.get('signal_conf_thresh_delta',0):+.2f}")
+            
+            logger.info(f"✓ 实盘校准参数已加载: {cal_file}")
+            
+        except Exception as e:
+            logger.warning(f"加载校准参数失败: {e}")
     
     def _create_retailer_swarm(self, n: int = 20) -> List[RetailerAgent]:
         """创建散户群体"""
@@ -888,6 +945,14 @@ class AdversarialTrainer:
         
         dealer_reward = dealer_pnl + retailer_error
         
+        # 实盘校准奖励: 如果校准权重>0, 用实盘方向修正奖励
+        if self._cal_reward_weight > 0:
+            # 读取最近的信号方向(从results)
+            cal_signal = self._get_calibration_signal()
+            if cal_signal is not None:
+                # 实盘信号与模拟结果一致性奖励
+                dealer_reward += self._cal_reward_weight * cal_signal
+        
         # 散户奖励 (PnL + 策略多样性)
         retailer_reward = np.mean([r.get_pnl(price) for r in self.retailers])
         
@@ -899,6 +964,24 @@ class AdversarialTrainer:
             'retailer': retailer_reward,
             'hotmoney': hotmoney_reward,
         }
+    
+    def _get_calibration_signal(self) -> Optional[float]:
+        """
+        读取实盘校准信号 (从 calibration_params.json)
+        用于奖励修正: 实盘胜率高→正向信号(增强当前策略)
+                      实盘胜率低→负向信号(惩罚当前策略)
+        """
+        try:
+            cal_file = RESULTS_DIR / "calibration_params.json"
+            if cal_file.exists():
+                with open(cal_file, 'r', encoding='utf-8') as f:
+                    cal = json.load(f)
+                wr = cal.get('win_rate', 0.5)
+                # 胜率>50%→正向, <50%→负向
+                return (wr - 0.5) * 2.0  # 映射到[-1, 1]
+        except Exception:
+            pass
+        return None
     
     def _evolve(self, all_rewards: Dict):
         """
@@ -1073,6 +1156,21 @@ class AdversarialTrainer:
             json.dump(results, f, indent=2, default=str)
         
         logger.info(f"训练结果已保存: {save_dir}")
+        
+        # ── 保存训练器状态 (供反馈处理器读取) ──
+        trainer_state = {
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'generation': self.generation,
+            'dealer_info_power': self.dealer.info_power,
+            'dealer_shake_intensity': self.dealer.shake_intensity,
+            'dealer_puppet_capital': self.dealer.puppet_capital,
+            'strategy_diversity': self.strategy_diversity_history[-1] if self.strategy_diversity_history else 0,
+            'cal_reward_weight': self._cal_reward_weight,
+        }
+        state_file = RESULTS_DIR / "trainer_state.json"
+        with open(state_file, 'w', encoding='utf-8') as f:
+            json.dump(trainer_state, f, ensure_ascii=False, indent=2)
+        logger.info(f"训练器状态已保存: {state_file}")
 
 # ============================================================
 # 庄家联盟模块 (政治防散)
