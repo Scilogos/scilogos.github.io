@@ -16,14 +16,21 @@ from datetime import datetime
 # 路径配置 (本地Windows环境)
 # ============================================================
 BASE_DIR = Path(r"C:\Users\HUAWEI\Desktop\Adversarial Learning")
-DATA_DIR = BASE_DIR / "stockdata"
-ADV_DATA_DIR = BASE_DIR / "adversarial data"
-ADV_MODEL_DIR = BASE_DIR / "adversarial model"
-RESULTS_DIR = BASE_DIR / "stockresults"
-PYTHON_EXE = r"C:\Users\HUAWEI\AppData\Local\Programs\Python\Python312\python.exe"
+SCRIPT_DIR = BASE_DIR / "dotpy"            # 脚本所在目录
+DATA_DIR = BASE_DIR / "stockdata"           # 日K线数据
+ADV_DATA_DIR = BASE_DIR / "adversarial data" # 对抗训练数据
+ADV_MODEL_DIR = BASE_DIR / "adversarial model" # 对抗模型
+RESULTS_DIR = BASE_DIR / "stockresults"     # 结果输出
+FEEDBACK_FILE = SCRIPT_DIR / "feedback.txt" # 实盘反馈文件
+PYMANAGER_FILE = SCRIPT_DIR / "pymanager.txt" # 命令手册
 
 for d in [DATA_DIR, ADV_DATA_DIR, ADV_MODEL_DIR, RESULTS_DIR]:
     d.mkdir(parents=True, exist_ok=True)
+
+# ============================================================
+# Python解释器
+# ============================================================
+PYTHON_EXE = r"C:\Users\HUAWEI\AppData\Local\Programs\Python\Python312\python.exe"
 
 # ============================================================
 # Baostock 数据源配置
@@ -124,6 +131,20 @@ class InterpreterConfig:
     perm_samples: int = 1000
     significance: float = 0.05
     signal_conf_thresh: float = 0.6
+
+# ============================================================
+# 实盘反馈配置
+# ============================================================
+@dataclass
+class FeedbackConfig:
+    feedback_file: str = str(FEEDBACK_FILE)
+    results_dir: str = str(RESULTS_DIR)
+    model_dir: str = str(ADV_MODEL_DIR)
+    # 校准参数
+    calibration_window: int = 20       # 最近N笔交易用于校准
+    signal_accuracy_thresh: float = 0.55  # 信号准确率低于此值触发重训
+    max_position_adjust: float = 0.1   # 校准后仓位最大调整幅度
+    reward_shaping_weight: float = 0.3  # 实盘反馈对reward的权重
 
 # ============================================================
 # DeepSeek API
