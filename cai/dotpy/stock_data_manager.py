@@ -23,7 +23,7 @@ Bug修复记录(v2.0):
   python stock_data_manager.py --mode adapter-demo
 """
 
-import os, sys, time, json, threading, argparse, traceback
+import os, sys, time, json, re, threading, argparse, traceback
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple, Any
@@ -385,14 +385,19 @@ def build_focus_pool(data_dir: Path, pool_size: int = FOCUS_POOL_SIZE) -> List[s
 def classify_industries(bs_conn, stock_list: List[Dict],
                         data_dir: Path) -> Dict[str, List[str]]:
     """
-    查询申万行业分类
+    查询行业分类（支持申万+证监会）
     返回: {行业名: [std_code, ...]}
     带断点续传: 已分类的股票跳过
 
-    baostock query_stock_industry 返回字段:
-      [0] code, [1] code_name, [2] industry, [3] industryClassification
-    其中 industryClassification = "申万" 或 "证监会"
-    industry 直接是行业名称(如"银行","房地产开发")
+    ★★★ Baostock query_stock_industry 实际返回字段 ★★★
+      [0] updateDate     日期 (如 "2026-06-22")
+      [1] code           股票代码 (如 "sh.600000")
+      [2] code_name      股票名称 (如 "浦发银行")
+      [3] industry       行业编码+名称 (如 "J66货币金融服务")
+      [4] industryClassification  分类标准 (如 "证监会行业分类")
+
+    注意: 实测2026年6月只有"证监会行业分类"，没有"申万"分类。
+    因此优先取申万，没有申万则用证监会行业名称（去掉编码前缀）。
     """
     bs = bs_conn.bs
     industry_map = defaultdict(list)
@@ -429,22 +434,36 @@ def classify_industries(bs_conn, stock_list: List[Dict],
         try:
             rs = bs.query_stock_industry(code=bs_code)
             industry_name = "未知"
-            if rs.error_code == '0':
-                # baostock可能返回多行(申万+证监会)，取申万
+            # ★ 兼容字符串和整数error_code
+            if str(rs.error_code) == '0':
+                # baostock可能返回多行(申万+证监会)，优先取申万
                 while rs.next():
                     row = rs.get_row_data()
                     # 前几只打印原始数据方便调试
                     if debug_logged < 3:
                         logger.info(f"  调试 {bs_code}: {row}")
                         debug_logged += 1
-                    # row[2] = industry名称, row[3] = 分类标准
-                    if len(row) >= 4:
-                        ind = row[2].strip()
-                        cls = row[3].strip() if len(row) > 3 else ""
-                        if ind and cls == "申万":
-                            industry_name = ind
-                        elif ind and industry_name == "未知":
-                            industry_name = ind  # 没有申万就用证监会的
+                    # ★★★ 正确字段映射 ★★★
+                    # row[3] = 行业编码+名称 (如 "J66货币金融服务")
+                    # row[4] = 分类标准 (如 "证监会行业分类" / "申万行业分类")
+                    if len(row) >= 5:
+                        raw_industry = row[3].strip()   # "J66货币金融服务"
+                        cls = row[4].strip()              # "证监会行业分类"
+                        # 去掉行业编码前缀 (如 "J66" → 取"货币金融服务")
+                        clean_ind = re.sub(r'^[A-Z]\d+', '', raw_industry).strip()
+                        if not clean_ind:
+                            clean_ind = raw_industry  # 去不掉就用原始的
+                        # 优先申万
+                        if '申万' in cls and clean_ind:
+                            industry_name = clean_ind
+                        elif clean_ind and industry_name == "未知":
+                            industry_name = clean_ind  # 退而求其次用证监会的
+                    elif len(row) >= 4:
+                        # 兼容4字段的情况(旧版Baostock?)
+                        raw_industry = row[3].strip()
+                        clean_ind = re.sub(r'^[A-Z]\d+', '', raw_industry).strip()
+                        if clean_ind and industry_name == "未知":
+                            industry_name = clean_ind
             else:
                 timeout_count += 1
 
