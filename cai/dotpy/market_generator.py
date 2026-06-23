@@ -194,20 +194,27 @@ class ConditionEncoder(nn.Module):
         macro_feat: (B, macro_dim) 或 None
         sector_feat: (B, sector_dim) 或 None
         """
-        h = torch.zeros(macro_feat.shape[0], self.sector_enc[0].in_features - (self.macro_enc[-1].out_features if macro_feat is not None else 0), device=macro_feat.device if macro_feat is not None else 'cpu')
+        # 确定batch size
+        if macro_feat is not None:
+            B = macro_feat.shape[0]
+            device = macro_feat.device
+        elif sector_feat is not None:
+            B = sector_feat.shape[0]
+            device = sector_feat.device
+        else:
+            B = 1
+            device = 'cpu'
         
         if macro_feat is not None:
             macro_h = self.macro_enc(macro_feat)
         else:
-            macro_h = torch.zeros(sector_feat.shape[0] if sector_feat is not None else 1,
-                                   self.macro_enc[-1].out_features,
-                                   device=macro_feat.device if macro_feat is not None else 'cpu')
+            macro_h = torch.zeros(B, self.macro_enc[-1].out_features, device=device)
         
         if sector_feat is not None:
             sector_inp = torch.cat([sector_feat, macro_h], dim=-1)
             sector_h = self.sector_enc(sector_inp)
         else:
-            sector_h = torch.zeros_like(macro_h)
+            sector_h = torch.zeros(B, self.sector_enc[-1].out_features, device=device)
         
         # 最终条件 = macro + sector
         condition = self.stock_enc(torch.cat([macro_h, sector_h], dim=-1))
