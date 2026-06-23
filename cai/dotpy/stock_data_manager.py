@@ -415,9 +415,12 @@ def classify_industries(bs_conn, stock_list: List[Dict],
                 saved = json.load(f)
             for ind, codes in saved.items():
                 industry_map[ind].extend(codes)
-                for c in codes:
-                    classified.add(c)
-            logger.info(f"已有分类记录: {len(classified)}只，跳过")
+                # ★ "未知"的不算已分类，重跑时需要重新查询
+                if ind != "未知":
+                    for c in codes:
+                        classified.add(c)
+            n_unknown = len(saved.get("未知", []))
+            logger.info(f"已有分类记录: {len(classified)}只(跳过), 未知{len(classified) if n_unknown==0 else n_unknown}只(待重查)")
         except Exception:
             pass
 
@@ -473,7 +476,8 @@ def classify_industries(bs_conn, stock_list: List[Dict],
         except Exception as e:
             timeout_count += 1
             industry_map["未知"].append(std_code)
-            classified.add(std_code)
+            # ★ "未知"的不加入classified，下次重跑会重查
+            # classified.add(std_code)  ← 故意不加
             if timeout_count % 50 == 1:
                 logger.warning(f"分类异常 {std_code}: {e}，重连...")
                 try:
