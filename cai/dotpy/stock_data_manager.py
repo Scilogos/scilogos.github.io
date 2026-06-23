@@ -54,6 +54,10 @@ class BaostockConnection:
         self._bs = None
 
     def __enter__(self):
+        self._login()
+        return self
+
+    def _login(self):
         import baostock as bs
         for attempt in range(self.max_retries):
             try:
@@ -61,7 +65,7 @@ class BaostockConnection:
                 if lg.error_code == '0':
                     self._bs = bs
                     logger.info(f"Baostock登录成功 (attempt {attempt+1})")
-                    return self
+                    return
                 else:
                     logger.warning(f"登录失败: {lg.error_msg}, 重试...")
                     time.sleep(self.retry_delay)
@@ -69,6 +73,17 @@ class BaostockConnection:
                 logger.warning(f"连接异常: {e}, 重试...")
                 time.sleep(self.retry_delay)
         raise RuntimeError("Baostock登录失败，已达最大重试次数")
+
+    def reconnect(self):
+        """断线重连"""
+        logger.warning("连接异常，尝试重连...")
+        try:
+            self._bs.logout()
+        except Exception:
+            pass
+        time.sleep(self.retry_delay)
+        self._login()
+        logger.info("重连成功")
 
     def __exit__(self, *args):
         if self._bs:
@@ -212,37 +227,70 @@ def download_daily_data(bs_conn, stock_list: List[Dict],
             continue
         
         bs_code = stk['code']
-        try:
-            rs = bs.query_history_k_data_plus(
-                bs_code,
-                ",".join(BS_FIELDS_DAILY),
-                start_date=DAILY_START,
-                end_date=DAILY_END,
-                frequency="d",
-                adjustflag="2"  # 前复权
-            )
-            
-            rows = []
-            while rs.next():
-                rows.append(rs.get_row_data())
-            
-            if rows:
-                df = pd.DataFrame(rows, columns=BS_FIELDS_DAILY)
-                # 数值列转换
-                for col in ['open', 'high', 'low', 'close', 'preclose',
-                            'volume', 'amount', 'turn', 'pctChg']:
-                    df[col] = pd.to_numeric(df[col], errors='coerce')
-                df.to_csv(out_path, index=False, encoding='utf-8')
-                success += 1
-            else:
-                # 无数据不算失败，可能是新上市或退市
-                skip += 1
-                
-        except Exception as e:
-            fail += 1
-            details.append({'code': std_code, 'error': str(e)})
-            if fail <= 5:
-                logger.warning(f"下载失败 {std_code}: {e}")
+        retry_count = 0
+        max_retries_per_stock = 3
+        while retry_count <= max_retries_per_stock:
+            try:
+                # 用线程超时防止卡死
+                result_holder = {}
+                def _do_query():
+                    rs = bs.query_history_k_data_plus(
+                        bs_code,
+                        ",".join(BS_FIELDS_DAILY),
+                        start_date=DAILY_START,
+                        end_date=DAILY_END,
+                        frequency="d",
+                        adjustflag="2"
+                    )
+                    rows = []
+                    while rs.next():
+                        rows.append(rs.get_row_data())
+                    result_holder['rows'] = rows
+                    result_holder['error'] = rs.error_code
+
+                t = threading.Thread(target=_do_query, daemon=True)
+                t.start()
+                t.join(timeout=30)  # 单只股票最多等30秒
+
+                if t.is_alive():
+                    # 超时，线程仍在跑，重连
+                    logger.warning(f"下载超时 {std_code} (30s)，重连...")
+                    bs_conn.reconnect()
+                    bs = bs_conn.bs
+                    retry_count += 1
+                    continue
+
+                if result_holder.get('error') != '0':
+                    raise Exception(f"baostock error: {result_holder.get('error')}")
+
+                rows = result_holder.get('rows', [])
+
+                if rows:
+                    df = pd.DataFrame(rows, columns=BS_FIELDS_DAILY)
+                    for col in ['open', 'high', 'low', 'close', 'preclose',
+                                'volume', 'amount', 'turn', 'pctChg']:
+                        df[col] = pd.to_numeric(df[col], errors='coerce')
+                    df.to_csv(out_path, index=False, encoding='utf-8')
+                    success += 1
+                else:
+                    skip += 1
+                break  # 成功，跳出重试循环
+
+            except Exception as e:
+                retry_count += 1
+                if retry_count <= max_retries_per_stock:
+                    logger.warning(f"下载失败 {std_code} (第{retry_count}次): {e}，重连重试...")
+                    try:
+                        bs_conn.reconnect()
+                        bs = bs_conn.bs
+                    except Exception:
+                        pass
+                    time.sleep(2)
+                else:
+                    fail += 1
+                    details.append({'code': std_code, 'error': str(e)})
+                    if fail <= 5:
+                        logger.warning(f"下载失败 {std_code}: {e} (已重试{max_retries_per_stock}次)")
         
         # 进度输出
         if (i + 1) % 100 == 0 or (i + 1) == total:
