@@ -132,8 +132,12 @@ class Generator(nn.Module):
         outputs = []
         for t in range(T):
             inp = z[:, t, :]
+            # ★ 修复: condition=None时补零让维度匹配(Generator第一层input_size含condition_dim)
             if condition is not None:
                 inp = torch.cat([inp, condition], dim=-1)
+            elif self.condition_dim > 0:
+                zero_cond = z.new_zeros(B, self.condition_dim)
+                inp = torch.cat([inp, zero_cond], dim=-1)
             for layer in self.rnn:
                 h = layer(inp if layer == self.rnn[0] else h, h)
             outputs.append(h.unsqueeze(1))
