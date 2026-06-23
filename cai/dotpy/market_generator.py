@@ -377,7 +377,8 @@ class CTimeGAN:
             avg_loss = epoch_loss / max(n_batches, 1)
             history['phase_a'].append(avg_loss)
             
-            if (epoch + 1) % 10 == 0:
+            log_every = max(1, self.cfg.phase_a_epochs // 10)
+            if (epoch + 1) % log_every == 0 or epoch == 0:
                 logger.info(f"  [A] Epoch {epoch+1}/{self.cfg.phase_a_epochs} | "
                            f"Loss: {avg_loss:.6f}")
     
@@ -417,7 +418,8 @@ class CTimeGAN:
             avg_loss = epoch_loss / max(n_batches, 1)
             history['phase_b'].append(avg_loss)
             
-            if (epoch + 1) % 10 == 0:
+            log_every = max(1, self.cfg.phase_b_epochs // 10)
+            if (epoch + 1) % log_every == 0 or epoch == 0:
                 logger.info(f"  [B] Epoch {epoch+1}/{self.cfg.phase_b_epochs} | "
                            f"Loss: {avg_loss:.6f}")
     
@@ -512,7 +514,8 @@ class CTimeGAN:
             avg_g = np.mean(g_losses)
             history['phase_c'].append({'d_loss': avg_d, 'g_loss': avg_g})
             
-            if (epoch + 1) % 10 == 0:
+            log_every = max(1, self.cfg.phase_c_epochs // 10)
+            if (epoch + 1) % log_every == 0 or epoch == 0:
                 logger.info(f"  [C] Epoch {epoch+1}/{self.cfg.phase_c_epochs} | "
                            f"D: {avg_d:.4f} | G: {avg_g:.4f}")
                 
