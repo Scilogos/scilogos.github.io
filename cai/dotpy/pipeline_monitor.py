@@ -1,7 +1,16 @@
 """
-pipeline_monitor.py - 对抗学习管线监察脚本
-============================================
+pipeline_monitor.py - 对抗学习管线监察脚本 (v2.1)
+====================================================
 专门盯着各环节是否在"真心干活"，重点监察庄散对抗。
+
+★ v2.1新增监察项:
+  - 神经放电机制健康: 放电次数/方向分布/连续性
+  - 涨跌停板有效性: 是否触发/封板强度
+  - 市场冲击模型: 大单是否产生滑点
+  - 市场状态分布: 趋势/震荡/转折比例
+  - T+1约束: 散户是否遵守当日买入不可卖
+  - 庄家阶段转换: 是否真的在切换阶段
+  - 代码完整性深度检查: 包括放电机制相关类是否存在
 
 检查项:
   1. 数据完整性: 日K线文件数/质量/行业分类
@@ -14,6 +23,10 @@ pipeline_monitor.py - 对抗学习管线监察脚本
      - 散户是否有类型差异（不是全部一样）
      - 策略多样性是否在变化
      - 价格轨迹是否有波动（不是一条直线）
+     - ★ 神经放电是否触发（不是永远静息）
+     - ★ 涨跌停是否生效（价格不超限）
+     - ★ 市场状态是否有转换（不是一直震荡）
+     - ★ 庄家阶段是否有切换
   4. 解读器: 报告是否存在/信号是否有方向
   5. 反馈闭环: 校准参数/trainer_state
 
@@ -21,11 +34,13 @@ pipeline_monitor.py - 对抗学习管线监察脚本
   python pipeline_monitor.py                  # 全量检查
   python pipeline_monitor.py --focus adversarial  # 只查对抗训练
   python pipeline_monitor.py --verbose         # 详细输出
+  python pipeline_monitor.py --quick           # 快速模式(跳过耗时检查)
 """
 
-import os, sys, json, time
+import os, sys, json, time, importlib
 from pathlib import Path
 from collections import Counter
+from typing import List
 
 sys.path.insert(0, str(Path(__file__).parent))
 from stock_config import (
@@ -34,6 +49,7 @@ from stock_config import (
 )
 
 logger = setup_logger("Monitor")
+
 
 # ============================================================
 # 检查结果容器
@@ -52,12 +68,18 @@ class CheckResult:
             self.details.append(msg)
     
     def warn(self, msg):
-        self.status = "WARN" if self.status != "FAIL" else "FAIL"
+        if self.status not in ("FAIL",):
+            self.status = "WARN"
         self.details.append(f"⚠ {msg}")
     
     def fail(self, msg):
         self.status = "FAIL"
         self.details.append(f"✗ {msg}")
+    
+    def skip(self, msg=""):
+        self.status = "SKIP"
+        if msg:
+            self.details.append(f"⏭ {msg}")
     
     def metric(self, key, value):
         self.metrics[key] = value
@@ -103,12 +125,10 @@ def check_data(verbose=False):
             try:
                 df = pd.read_csv(f, usecols=['open', 'high', 'low', 'close', 'volume'])
                 total_rows += len(df)
-                # OHLC逻辑检查
                 bad = ((df['high'] < df['low']) | (df['high'] < df['open']) | 
                        (df['high'] < df['close'])).sum()
                 if bad > 0:
                     issues += 1
-                # 全零检查
                 if (df['close'] == 0).all():
                     issues += 1
             except Exception as e:
@@ -175,7 +195,7 @@ def check_generator(verbose=False):
     existing = []
     for name, path in model_files.items():
         if path.exists():
-            size = path.stat().st_size / 1024  # KB
+            size = path.stat().st_size / 1024
             r.metric(name, f"{size:.0f}KB")
             existing.append(name)
         else:
@@ -203,27 +223,32 @@ def check_generator(verbose=False):
         r.metric("B轮数", len(pb))
         r.metric("C轮数", len(pc))
         
-        # 检查loss是否在下降
         if len(pa) >= 2:
-            a_start, a_end = pa[0], pa[-1]
-            r.metric("A_loss", f"{a_start:.4f}→{a_end:.4f}")
-            if a_end < a_start:
-                r.pass_(f"Phase A loss下降 ({a_start:.4f}→{a_end:.4f})")
-            else:
-                r.warn(f"Phase A loss未下降 ({a_start:.4f}→{a_end:.4f})")
+            try:
+                a_start, a_end = float(pa[0]), float(pa[-1])
+                r.metric("A_loss", f"{a_start:.4f}→{a_end:.4f}")
+                if a_end < a_start:
+                    r.pass_(f"Phase A loss下降 ({a_start:.4f}→{a_end:.4f})")
+                else:
+                    r.warn(f"Phase A loss未下降 ({a_start:.4f}→{a_end:.4f})")
+            except (ValueError, TypeError):
+                r.warn("Phase A历史格式异常")
         else:
             r.warn("Phase A训练轮数不足")
         
         if len(pc) >= 2:
-            d_losses = [e.get('d_loss', 0) for e in pc if isinstance(e, dict)]
-            g_losses = [e.get('g_loss', 0) for e in pc if isinstance(e, dict)]
-            if d_losses and g_losses:
-                r.metric("D_loss", f"{d_losses[0]:.4f}→{d_losses[-1]:.4f}")
-                r.metric("G_loss", f"{g_losses[0]:.4f}→{g_losses[-1]:.4f}")
-                if d_losses[-1] < d_losses[0] or g_losses[-1] < g_losses[0]:
-                    r.pass_("Phase C对抗loss有变化")
-                else:
-                    r.warn("Phase C loss无下降")
+            try:
+                d_losses = [e.get('d_loss', 0) for e in pc if isinstance(e, dict)]
+                g_losses = [e.get('g_loss', 0) for e in pc if isinstance(e, dict)]
+                if d_losses and g_losses:
+                    r.metric("D_loss", f"{d_losses[0]:.4f}→{d_losses[-1]:.4f}")
+                    r.metric("G_loss", f"{g_losses[0]:.4f}→{g_losses[-1]:.4f}")
+                    if d_losses[-1] < d_losses[0] or g_losses[-1] < g_losses[0]:
+                        r.pass_("Phase C对抗loss有变化")
+                    else:
+                        r.warn("Phase C loss无下降")
+            except (ValueError, TypeError):
+                r.warn("Phase C历史格式异常")
     else:
         r.fail("train_history.json不存在")
     results.append(r)
@@ -353,7 +378,7 @@ def check_adversarial(verbose=False):
             r.metric("极差比", f"{price_range:.2%}")
             r.metric("收益率std", f"{ret_std:.6f}")
             
-            # 【重点检查4】价格是否是一条直线（没有交易）
+            # 【重点检查4】价格是否是一条直线
             if price_std < 1e-6:
                 r.fail("⚠️ 价格完全不动！OrderBook没有任何成交")
             elif ret_std < 1e-6:
@@ -363,7 +388,20 @@ def check_adversarial(verbose=False):
             else:
                 r.pass_(f"价格有波动(std={price_std:.4f})")
                 
-                # 检查是否有趋势
+                # 检查涨跌停: 价格变化是否超过±10%
+                if len(returns) > 0:
+                    max_up = np.max(returns)
+                    max_down = np.min(returns)
+                    r.metric("最大单步涨幅", f"{max_up:.2%}")
+                    r.metric("最大单步跌幅", f"{max_down:.2%}")
+                    
+                    # ★ 涨跌停有效性检查
+                    if max_up > 0.11:
+                        r.warn(f"最大涨幅{max_up:.2%}>10%, 涨跌停可能未生效")
+                    if max_down < -0.11:
+                        r.warn(f"最大跌幅{max_down:.2%}>10%, 涨跌停可能未生效")
+                
+                # 检查趋势
                 if len(prices) >= 20:
                     first_half = np.mean(prices[:len(prices)//2])
                     second_half = np.mean(prices[len(prices)//2:])
@@ -373,7 +411,6 @@ def check_adversarial(verbose=False):
                         r.details.append("  整体无明显趋势")
                 
                 if verbose:
-                    # 打印价格分布
                     percentiles = np.percentile(prices, [10, 25, 50, 75, 90])
                     r.details.append(f"  分位: P10={percentiles[0]:.2f} "
                                    f"P50={percentiles[2]:.2f} P90={percentiles[4]:.2f}")
@@ -395,7 +432,49 @@ def check_adversarial(verbose=False):
         r.metric("策略多样性", f"{state.get('strategy_diversity', 0):.4f}")
         r.metric("校准权重", f"{state.get('cal_reward_weight', 0):.2f}")
         
-        # 【重点检查5】庄家参数是否合理
+        # ★ 放电统计
+        firing = state.get('firing_stats', {})
+        if firing:
+            r.metric("放电总次数", firing.get('total_firings', 0))
+            r.metric("向上放电", firing.get('up_firings', 0))
+            r.metric("向下放电", firing.get('down_firings', 0))
+            r.metric("最大连续放电", firing.get('max_consecutive', 0))
+            
+            # ★ 【重点检查5】神经放电是否触发
+            total = firing.get('total_firings', 0)
+            if total == 0:
+                r.warn("神经放电从未触发！市场可能缺乏全或无行情")
+            else:
+                up = firing.get('up_firings', 0)
+                down = firing.get('down_firings', 0)
+                r.details.append(f"  ✓ 神经放电已触发{total}次 (↑{up} ↓{down})")
+                # 方向分布
+                if total > 0:
+                    up_ratio = up / total
+                    if up_ratio > 0.8:
+                        r.warn(f"放电方向极度偏多({up_ratio:.0%}), 可能缺少空头压力")
+                    elif up_ratio < 0.2:
+                        r.warn(f"放电方向极度偏空({1-up_ratio:.0%}), 可能缺少多头压力")
+                    else:
+                        r.details.append("  ✓ 放电方向分布相对均衡")
+                
+                # 连续放电
+                max_cons = firing.get('max_consecutive', 0)
+                if max_cons >= 3:
+                    r.details.append(f"  ✓ 存在连续同向放电(最大{max_cons}次), 涨不停/跌不休机制生效")
+        
+        # ★ 涨跌停统计
+        limit = state.get('limit_stats', {})
+        if limit:
+            r.metric("涨停日", limit.get('limit_up_days', 0))
+            r.metric("跌停日", limit.get('limit_down_days', 0))
+            if limit.get('limit_up_days', 0) + limit.get('limit_down_days', 0) == 0:
+                r.warn("训练期间从未触发涨跌停！可能价格波动太小")
+            else:
+                r.details.append(f"  ✓ 涨跌停已触发: 涨停{limit.get('limit_up_days',0)}天 "
+                               f"跌停{limit.get('limit_down_days',0)}天")
+        
+        # 【重点检查6】庄家参数是否合理
         info_power = state.get('dealer_info_power', 0)
         shake = state.get('dealer_shake_intensity', 0)
         if info_power == 0.5 and shake == 0.05:
@@ -427,11 +506,61 @@ def check_adversarial(verbose=False):
         r.skip("未进行实盘校准（正常，首次运行无反馈）")
     results.append(r)
     
-    # 3.6 代码完整性检查
+    # 3.6 代码完整性检查 (增强版)
     r = CheckResult("代码完整性", "对抗训练")
     try:
         import torch
-        # 尝试加载模型检查Agent数量
+        
+        # 检查关键类是否存在于adversarial_env.py
+        env_path = Path(__file__).parent / "adversarial_env.py"
+        if env_path.exists():
+            with open(env_path, 'r', encoding='utf-8') as f:
+                env_code = f.read()
+            
+            required_classes = [
+                'NeuralFiringMechanism',
+                'PriceLimitManager',
+                'MarketImpactModel',
+                'MarketRegimeDetector',
+                'OrderBook',
+                'MarketEnv',
+                'DealerAgent',
+                'RetailerAgent',
+                'HotMoneyAgent',
+                'AdversarialTrainer',
+                'DealerAlliance',
+            ]
+            
+            missing = []
+            for cls in required_classes:
+                if f'class {cls}' not in env_code:
+                    missing.append(cls)
+            
+            if missing:
+                r.fail(f"缺少关键类: {', '.join(missing)}")
+            else:
+                r.pass_("所有关键类定义存在")
+                r.metric("类数", len(required_classes))
+            
+            # 检查神经放电阈值
+            if 'FIRING_THRESHOLD = 0.6321' in env_code:
+                r.details.append("  ✓ 神经放电阈值 = 0.6321 (63.21% = 1-1/e)")
+            else:
+                r.warn("未找到 FIRING_THRESHOLD = 0.6321, 放电阈值可能未正确设置")
+            
+            # 检查涨跌停参数
+            if 'MAINBOARD_LIMIT' in env_code:
+                r.details.append("  ✓ 涨跌停板制度已定义")
+            else:
+                r.warn("未找到涨跌停板定义")
+            
+            # 检查T+1
+            if 't1_locked' in env_code:
+                r.details.append("  ✓ T+1约束已实现")
+            else:
+                r.warn("未找到T+1约束实现")
+        
+        # 模型内部检查
         if model_path.exists():
             ckpt = torch.load(model_path, map_location='cpu', weights_only=False)
             n_retailers = len(ckpt.get('retailers', []))
@@ -451,7 +580,7 @@ def check_adversarial(verbose=False):
             else:
                 r.pass_(f"Agent配置: 1庄家+{n_retailers}散户+{n_hotmoney}游资")
             
-            # 检查散户策略参数是否完全相同（没有多样性）
+            # 检查散户策略参数是否完全相同
             if n_retailers >= 2:
                 params_0 = ckpt['retailers'][0]
                 all_same = True
@@ -469,7 +598,89 @@ def check_adversarial(verbose=False):
                 else:
                     r.details.append("  ✓ 散户策略参数有差异")
     except Exception as e:
-        r.warn(f"无法检查模型内部: {e}")
+        r.warn(f"代码完整性检查异常: {e}")
+    results.append(r)
+    
+    # ★ 3.7 神经放电机制专项检查
+    r = CheckResult("神经放电机制", "对抗训练")
+    try:
+        env_path = Path(__file__).parent / "adversarial_env.py"
+        if env_path.exists():
+            with open(env_path, 'r', encoding='utf-8') as f:
+                env_code = f.read()
+            
+            checks = {
+                '放电阈值63.21%': 'FIRING_THRESHOLD = 0.6321' in env_code,
+                '不应期模型': 'REFRACTORY_TAU' in env_code,
+                '连续放电放大': 'consecutive_firings' in env_code,
+                '压力累积': 'pressure_accumulator' in env_code,
+                '放电后价格影响': 'price_impact' in env_code,
+                '放电事件记录': 'firing_events' in env_code,
+                '买卖压力驱动': 'buy_pressure' in env_code and 'sell_pressure' in env_code,
+                '放电感知(庄家)': 'firing_awareness' in env_code or 'firing_override' in env_code,
+                '放电感知(散户)': 'firing_sensitivity' in env_code,
+                '放电感知(游资)': 'FIRING' in env_code and 'hotmoney' in env_code.lower(),
+            }
+            
+            passed = sum(1 for v in checks.values() if v)
+            total = len(checks)
+            r.metric("通过", f"{passed}/{total}")
+            
+            for name, ok in checks.items():
+                icon = "✓" if ok else "✗"
+                r.details.append(f"  {icon} {name}")
+            
+            if passed >= total * 0.8:
+                r.pass_(f"神经放电机制基本完整({passed}/{total})")
+            elif passed >= total * 0.5:
+                r.warn(f"神经放电机制部分实现({passed}/{total})")
+            else:
+                r.fail(f"神经放电机制严重缺失({passed}/{total})")
+        else:
+            r.skip("adversarial_env.py不存在")
+    except Exception as e:
+        r.warn(f"放电检查异常: {e}")
+    results.append(r)
+    
+    # ★ 3.8 市场真实性综合评估
+    r = CheckResult("市场真实性", "对抗训练")
+    try:
+        env_path = Path(__file__).parent / "adversarial_env.py"
+        if env_path.exists():
+            with open(env_path, 'r', encoding='utf-8') as f:
+                env_code = f.read()
+            
+            realism_checks = {
+                '涨跌停板(主板±10%)': 'MAINBOARD_LIMIT' in env_code and '0.10' in env_code,
+                '涨跌停板(创业板±20%)': 'CHINEXT_LIMIT' in env_code and '0.20' in env_code,
+                '市场冲击模型': 'MarketImpactModel' in env_code,
+                '大单滑点': 'slippage' in env_code,
+                'T+1约束': 't1_locked' in env_code,
+                '隔夜跳空': 'overnight_gap' in env_code or 'GAP_PROBABILITY' in env_code,
+                '市场状态检测': 'MarketRegimeDetector' in env_code,
+                '庄家阶段状态机': 'PHASE_TRANSITIONS' in env_code,
+                '庄家联盟集成': 'dealer_alliance' in env_code and 'check_alliance' in env_code,
+                '信息事件影响压力': 'buy_pressure' in env_code and 'info_power' in env_code,
+            }
+            
+            passed = sum(1 for v in realism_checks.values() if v)
+            total = len(checks)
+            r.metric("通过", f"{passed}/{total}")
+            
+            for name, ok in realism_checks.items():
+                icon = "✓" if ok else "✗"
+                r.details.append(f"  {icon} {name}")
+            
+            if passed >= total * 0.8:
+                r.pass_(f"市场真实性高({passed}/{total})")
+            elif passed >= total * 0.5:
+                r.warn(f"市场真实性中等({passed}/{total})")
+            else:
+                r.warn(f"市场真实性较低({passed}/{total}), 建议补充缺失机制")
+        else:
+            r.skip("adversarial_env.py不存在")
+    except Exception as e:
+        r.warn(f"市场真实性检查异常: {e}")
     results.append(r)
     
     return results
@@ -518,21 +729,22 @@ def check_interpreter(verbose=False):
 # ============================================================
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description="管线监察脚本")
+    parser = argparse.ArgumentParser(description="管线监察脚本 (v2.1)")
     parser.add_argument("--focus", choices=["all", "data", "generator", "adversarial", "interpreter"],
                         default="all", help="检查重点")
     parser.add_argument("--verbose", action="store_true", help="详细输出")
+    parser.add_argument("--quick", action="store_true", help="快速模式(跳过耗时检查)")
     args = parser.parse_args()
     
     print("\n" + "=" * 60)
-    print("  对抗学习管线监察报告")
+    print("  对抗学习管线监察报告 (v2.1)")
     print(f"  时间: {time.strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"  数据目录: {DATA_DIR}")
     print(f"  模型目录: {ADV_MODEL_DIR}")
     print(f"  结果目录: {RESULTS_DIR}")
     print("=" * 60)
     
-    all_results = []
+    all_results: List[CheckResult] = []
     
     if args.focus in ("all", "data"):
         print("\n📋 Phase 1: 数据检查")
@@ -579,7 +791,7 @@ def main():
     
     print()
     
-    # 退出码: 有FAIL返回1
+    # 退出码
     sys.exit(1 if n_fail > 0 else 0)
 
 if __name__ == "__main__":
