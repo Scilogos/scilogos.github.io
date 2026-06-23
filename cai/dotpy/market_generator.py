@@ -442,12 +442,17 @@ class CTimeGAN:
         opt_r = optim.Adam(self.recovery.parameters(), lr=lr)
         opt_s = optim.Adam(self.supervisor.parameters(), lr=lr)  # ← 关键：必须独立
         opt_g = optim.Adam(self.generator.parameters(), lr=lr)
-        opt_d = optim.Adam(self.discriminator.parameters(), lr=lr * 0.5)
+        opt_d = optim.Adam(self.discriminator.parameters(), lr=lr * 0.1)  # ★ Bug#17修复: D学习率大幅降低(0.5→0.1)防碾压
         
         all_params = (list(self.embedder.parameters()) + 
                      list(self.recovery.parameters()) +
                      list(self.supervisor.parameters()) +
                      list(self.generator.parameters()))
+        
+        # ★ Bug#17修复: 标签平滑 + G多步更新
+        label_smooth_real = 0.9   # 真样本标签: 1.0→0.9
+        label_smooth_fake = 0.1   # 假样本标签: 0.0→0.1
+        g_steps_per_d = 2         # 每次D更新后G更新2次
         
         for epoch in range(self.cfg.phase_c_epochs):
             d_losses, g_losses = [], []
@@ -457,15 +462,15 @@ class CTimeGAN:
                 x = batch[0].to(self.device).float()
                 B = x.shape[0]
                 
-                # 噪声
+                # ── 判别器步 ──
                 z = torch.randn(B, self.cfg.seq_len, self.cfg.hidden_dim,
                                device=self.device)
                 
-                # ── 判别器步 ──
                 d_real, d_fake, _, _ = self.forward_discriminator(x, z)
                 
-                d_loss_real = self._bce(d_real, torch.ones_like(d_real))
-                d_loss_fake = self._bce(d_fake, torch.zeros_like(d_fake))
+                # ★ Bug#17修复: 标签平滑防D过强
+                d_loss_real = self._bce(d_real, torch.ones_like(d_real) * label_smooth_real)
+                d_loss_fake = self._bce(d_fake, torch.ones_like(d_fake) * label_smooth_fake)
                 d_loss = d_loss_real + d_loss_fake
                 
                 opt_d.zero_grad()
@@ -473,38 +478,39 @@ class CTimeGAN:
                 torch.nn.utils.clip_grad_norm_(self.discriminator.parameters(), max_norm=5.0)
                 opt_d.step()
                 
-                # ── 生成器步 (含 E+R+S+G) ──
-                z2 = torch.randn(B, self.cfg.seq_len, self.cfg.hidden_dim,
-                                device=self.device)
-                
-                d_real2, d_fake2, h_real, h_fake, h_sup, x_hat = \
-                    self.forward_generator(x, z2)
-                
-                # G对抗损失
-                g_loss_adv = self._bce(d_fake2, torch.ones_like(d_fake2))
-                
-                # 有监督损失
-                s_loss = self._mse(h_sup, h_real[:, 1:, :])
-                
-                # 重建损失
-                r_loss = self._mse(x_hat, x)
-                
-                # 总生成器损失 (权重: 对抗1.0 + 监督1.0 + 重建0.5)
-                g_loss = g_loss_adv + s_loss + 0.5 * r_loss
-                
-                # 【关键修复】必须清零所有参与网络的梯度
-                opt_e.zero_grad()
-                opt_r.zero_grad()
-                opt_s.zero_grad()   # ← v1.x遗漏了这一步
-                opt_g.zero_grad()
-                
-                g_loss.backward()
-                torch.nn.utils.clip_grad_norm_(all_params, max_norm=5.0)
-                
-                opt_e.step()
-                opt_r.step()
-                opt_s.step()        # ← v1.x遗漏了这一步
-                opt_g.step()
+                # ── 生成器步 (含 E+R+S+G) ── ★ Bug#17修复: G多步更新
+                for _g_step in range(g_steps_per_d):
+                    z2 = torch.randn(B, self.cfg.seq_len, self.cfg.hidden_dim,
+                                    device=self.device)
+                    
+                    d_real2, d_fake2, h_real, h_fake, h_sup, x_hat = \
+                        self.forward_generator(x, z2)
+                    
+                    # G对抗损失 (标签平滑: G想骗D, 目标标签用0.9而非1.0)
+                    g_loss_adv = self._bce(d_fake2, torch.ones_like(d_fake2) * label_smooth_real)
+                    
+                    # 有监督损失
+                    s_loss = self._mse(h_sup, h_real[:, 1:, :])
+                    
+                    # 重建损失
+                    r_loss = self._mse(x_hat, x)
+                    
+                    # 总生成器损失 (权重: 对抗1.0 + 监督1.0 + 重建0.5)
+                    g_loss = g_loss_adv + s_loss + 0.5 * r_loss
+                    
+                    # 【关键修复】必须清零所有参与网络的梯度
+                    opt_e.zero_grad()
+                    opt_r.zero_grad()
+                    opt_s.zero_grad()   # ← v1.x遗漏了这一步
+                    opt_g.zero_grad()
+                    
+                    g_loss.backward()
+                    torch.nn.utils.clip_grad_norm_(all_params, max_norm=5.0)
+                    
+                    opt_e.step()
+                    opt_r.step()
+                    opt_s.step()        # ← v1.x遗漏了这一步
+                    opt_g.step()
                 
                 d_losses.append(d_loss.item())
                 g_losses.append(g_loss.item())
