@@ -388,12 +388,18 @@ def classify_industries(bs_conn, stock_list: List[Dict],
     查询申万行业分类
     返回: {行业名: [std_code, ...]}
     带断点续传: 已分类的股票跳过
+
+    baostock query_stock_industry 返回字段:
+      [0] code, [1] code_name, [2] industry, [3] industryClassification
+    其中 industryClassification = "申万" 或 "证监会"
+    industry 直接是行业名称(如"银行","房地产开发")
     """
     bs = bs_conn.bs
     industry_map = defaultdict(list)
     total = len(stock_list)
     timeout_count = 0
     success_count = 0
+    debug_logged = 0
 
     # 断点续传: 加载已有分类结果
     out_path = data_dir / "industry_classification.json"
@@ -422,18 +428,33 @@ def classify_industries(bs_conn, stock_list: List[Dict],
 
         try:
             rs = bs.query_stock_industry(code=bs_code)
-            if rs.error_code == '0' and rs.next():
-                result = rs.get_row_data()
-                industry_code = result[1] if len(result) > 1 else ""
-                industry_name = SW_INDUSTRY_MAP.get(industry_code, "未知")
+            industry_name = "未知"
+            if rs.error_code == '0':
+                # baostock可能返回多行(申万+证监会)，取申万
+                while rs.next():
+                    row = rs.get_row_data()
+                    # 前几只打印原始数据方便调试
+                    if debug_logged < 3:
+                        logger.info(f"  调试 {bs_code}: {row}")
+                        debug_logged += 1
+                    # row[2] = industry名称, row[3] = 分类标准
+                    if len(row) >= 4:
+                        ind = row[2].strip()
+                        cls = row[3].strip() if len(row) > 3 else ""
+                        if ind and cls == "申万":
+                            industry_name = ind
+                        elif ind and industry_name == "未知":
+                            industry_name = ind  # 没有申万就用证监会的
             else:
-                industry_name = "未知"
                 timeout_count += 1
+
             industry_map[industry_name].append(std_code)
             success_count += 1
             classified.add(std_code)
         except Exception as e:
             timeout_count += 1
+            industry_map["未知"].append(std_code)
+            classified.add(std_code)
             if timeout_count % 50 == 1:
                 logger.warning(f"分类异常 {std_code}: {e}，重连...")
                 try:
