@@ -261,22 +261,30 @@ class MarketAgent(ABC):
         """决策: 返回 {side, volume, price, order_type}"""
         pass
     
-    def update_portfolio(self, fill_result: Dict):
-        """更新持仓"""
+    def update_portfolio(self, fill_result: Dict, side: str):
+        """更新持仓 (需要传入买卖方向)"""
         filled = fill_result['filled']
         avg_price = fill_result['avg_price']
         
-        if fill_result.get('side', 'buy') == 'buy' or filled > 0:
-            # 判断是买还是卖需要从history看
-            if self.holdings >= 0 and filled > 0:
-                # 可能是买入
-                cost = filled * avg_price
-                if cost <= self.capital:
-                    old_holdings = self.holdings
-                    self.holdings += filled
-                    if self.holdings > 0:
-                        self.avg_cost = (self.avg_cost * old_holdings + avg_price * filled) / self.holdings
-                    self.capital -= cost
+        if filled <= 0:
+            return
+        
+        if side == 'buy':
+            cost = filled * avg_price
+            if cost <= self.capital:
+                old_holdings = self.holdings
+                self.holdings += filled
+                if self.holdings > 0:
+                    self.avg_cost = (self.avg_cost * old_holdings + avg_price * filled) / self.holdings
+                self.capital -= cost
+        elif side == 'sell':
+            sell_vol = min(filled, self.holdings)
+            if sell_vol > 0:
+                self.capital += sell_vol * avg_price
+                self.holdings -= sell_vol
+                if self.holdings <= 0:
+                    self.holdings = 0
+                    self.avg_cost = 0
     
     def get_pnl(self, current_price: float) -> float:
         """当前盈亏"""
@@ -888,6 +896,26 @@ class AdversarialTrainer:
                 # 执行
                 result = self.env.step(actions)
                 state = result['state']
+                
+                # 【关键修复】更新各Agent持仓
+                for agent_id, action in actions.items():
+                    fill = result['results'].get(agent_id, {})
+                    side = action.get('side', 'buy')
+                    # 找到对应的agent对象
+                    if agent_id == self.dealer.agent_id:
+                        self.dealer.update_portfolio(fill, side)
+                        self.dealer.history.append(action)
+                    else:
+                        for r in self.retailers:
+                            if r.agent_id == agent_id:
+                                r.update_portfolio(fill, side)
+                                r.history.append(action)
+                                break
+                        for h in self.hotmoney_agents:
+                            if h.agent_id == agent_id:
+                                h.update_portfolio(fill, side)
+                                h.history.append(action)
+                                break
                 
                 # 计算奖励
                 rewards = self._compute_rewards(state)
