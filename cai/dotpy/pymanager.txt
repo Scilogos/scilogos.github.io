@@ -1,5 +1,5 @@
 ================================================================
-  对抗学习量化系统 v2.0 — PowerShell 命令手册
+  对抗学习量化系统 v2.1 — PowerShell 命令手册
   所有命令都在 dotpy 目录下运行
 ================================================================
 
@@ -14,6 +14,8 @@ pip install torch numpy pandas baostock scipy
   把 _dotpy_adversarial_env.py  →  adversarial_env.py
   把 _dotpy_stock_interpreter.py  →  stock_interpreter.py
   把 _dotpy_run_pipeline.py  →  run_pipeline.py
+  把 _dotpy_feedback_processor.py  →  feedback_processor.py
+  把 _dotpy_pipeline_monitor.py  →  pipeline_monitor.py
 
 PowerShell批量改名命令：
 Get-ChildItem "_dotpy_*.py" | Rename-Item -NewName { $_.Name -replace '^_dotpy_','' }
@@ -25,7 +27,7 @@ Get-ChildItem "_dotpy_*.py" | Rename-Item -NewName { $_.Name -replace '^_dotpy_'
 扫描全A股列表，生成stock_list.json
 python stock_data_manager.py --mode scan
 
-下载日K线（你已有4908只数据，--resume跳过已有不会重复下）
+下载日K线（--resume跳过已有不会重复下）
 python stock_data_manager.py --mode download-daily --resume
 
 只下载200只试试（不传--max-stocks就全部）
@@ -34,7 +36,7 @@ python stock_data_manager.py --mode download-daily --resume --max-stocks 200
 下载5分钟线（自动按成交额选Top300重点池）
 python stock_data_manager.py --mode download-min5
 
-给股票打行业标签
+给股票打行业标签（带断点续传，每100只自动存一次）
 python stock_data_manager.py --mode classify
 
 检查数据有没有坏文件
@@ -57,7 +59,7 @@ python market_generator.py --mode validate --level 3
 python market_generator.py --mode generate --num-samples 1000
 
 ================================================================
-  Phase 3：庄散对抗（核心！）
+  Phase 3：庄散对抗（核心！★ v2.1 神经放电版）
 ================================================================
 
 正式对抗训练（1000轮，带策略进化）
@@ -71,6 +73,16 @@ python adversarial_env.py --mode evaluate --episodes 100
 
 快速看个价格走势演示
 python adversarial_env.py --mode demo
+
+【v2.1新增机制】训练时自动包含：
+  ★ 神经元放电: 63.21%(1-1/e)阈值全或无行情
+  ★ 涨跌停板: 主板±10%/创业板±20%/ST±5%/北交所±30%
+  ★ 市场冲击模型: 大单滑点+永久性冲击(Almgren-Chriss)
+  ★ T+1约束: 散户当日买入不可卖出
+  ★ 隔夜跳空: 模拟集合竞价缺口
+  ★ 庄家阶段状态机: 吸筹↔拉抬↔震仓↔派发
+  ★ 市场状态检测: 趋势/震荡/转折三态
+  ★ 放电感知: 庄家/散户/游资各有感知强度
 
 ================================================================
   Phase 4：结果解读
@@ -115,6 +127,57 @@ python feedback_processor.py --mode full
 python feedback_processor.py --mode report
 
 ================================================================
+  ★ 管线监察脚本（v2.1）
+================================================================
+
+全量检查（数据+生成器+对抗+解读+反馈，逐项过）
+python pipeline_monitor.py
+
+只查对抗训练（重点！检查reward/价格/放电/涨跌停/策略多样性）
+python pipeline_monitor.py --focus adversarial
+
+只查数据层
+python pipeline_monitor.py --focus data
+
+只查生成器
+python pipeline_monitor.py --focus generator
+
+只查解读器
+python pipeline_monitor.py --focus interpreter
+
+详细输出（显示每个检查项的细节）
+python pipeline_monitor.py --verbose
+
+快速模式（跳过耗时检查）
+python pipeline_monitor.py --quick
+
+对抗训练+详细输出（最常用的组合）
+python pipeline_monitor.py --focus adversarial --verbose
+
+【监察脚本会检查的项目】
+  数据层: 文件数/质量/行业分类
+  生成器: 模型文件/训练历史/loss下降
+  对抗训练(重点):
+    - 模型是否存盘
+    - Agent持仓是否在变(不是空转)
+    - 奖励是否非零(有学习信号)
+    - 庄家是否真的执行防共四策
+    - 散户是否有类型差异(不是全部一样)
+    - 策略多样性是否在变化
+    - 价格轨迹是否有波动(不是一条直线)
+    ★ 神经放电是否触发(不是永远静息)
+    ★ 涨跌停是否生效(价格不超限)
+    ★ 市场状态是否有转换
+    ★ 庄家阶段是否有切换
+    ★ 代码完整性: 关键类/阈值/T+1等是否齐全
+    ★ 市场真实性: 涨跌停/冲击模型/跳空/阶段机
+  解读器: 报告/信号/排列检验
+  反馈闭环: 校准参数/trainer_state
+
+退出码: 0=全部通过, 1=有失败项
+  可在PowerShell中判断: if ($LASTEXITCODE -eq 0) { "健康" } else { "有问题" }
+
+================================================================
   总管线：一键跑
 ================================================================
 
@@ -155,6 +218,79 @@ python run_pipeline.py --quick-test
 6. 循环 2~5，系统持续进化
 
 ================================================================
+  ★ 常见问题排查
+================================================================
+
+【Baostock连接中断/WinError】
+  症状: 下载到一半卡住，报WinError或连接中断
+  原因: Baostock长连接1.5小时后断线
+  修复: v2.0已加入30秒超时+断线重连+3次重试
+  手动恢复: 重新跑同一命令，--resume会跳过已下载的
+
+【周末/假日查不到数据】
+  症状: scan返回0只股票
+  原因: 日期落在周末/假日，Baostock无数据
+  修复: v2.0已改为回溯7天逐个尝试找交易日
+
+【行业分类全部分到"未知"】
+  症状: classify跑完只有1个"未知"行业
+  原因: 旧版代码读错字段(把股票名当行业名)
+  修复: v2.0已改为直接读row[2]+优先取申万分类
+  断点续传: 每100只自动存，重跑自动跳过已分类的
+  如需重来: 先删除 stockdata/industry_classification.json
+
+【行业分类卡住/超时】
+  症状: classify到某只卡住不动
+  修复: v2.0已去掉线程超时(会破坏Baostock连接)，改用同步+断点续传
+
+【对抗训练reward全零/价格不动】
+  症状: 庄散对抗看起来在跑但没有学习
+  排查: python pipeline_monitor.py --focus adversarial --verbose
+  常见原因:
+    - update_portfolio没被调用 → v2.1已修复(每步调用)
+    - OrderBook死锁(买卖单都不动) → v2.1防摆烂五方案
+    - 散户策略全部退化成一样的 → v2.1多样性检查+噪声注入
+    - 神经放电永远不触发 → 检查买卖压力是否正常累积
+
+【文件名_dotpy_前缀】
+  从项目下载的文件会带_dotpy_前缀，需改名才能import
+  批量改名: Get-ChildItem "_dotpy_*.py" | Rename-Item -NewName { $_.Name -replace '^_dotpy_','' }
+
+================================================================
+  ★ 当前进度 & 下一步操作
+================================================================
+
+【已完成】
+  ✅ Phase 1 数据采集: 4452只日K线全部下载成功(0失败)
+  ✅ 行业分类: 修复版已推送(断点续传+读正确字段)
+  ✅ 数据校验: python stock_data_manager.py --mode verify
+  ✅ Bug修复1~14: 全部已修复并推送
+  ✅ adversarial_env.py v2.1神经放电版: 8大市场真实性机制
+  ✅ pipeline_monitor.py v2.1: 含放电/涨跌停/市场真实性专项检查
+
+【你现在需要做的】
+  Step 1: 确认行业分类结果
+    如果classify已跑完，检查stockdata/industry_classification.json
+    应该能看到多个行业(银行/电子/医药等)，不只是"未知"
+
+  Step 2: 数据校验
+    python stock_data_manager.py --mode verify
+
+  Step 3: 用监察脚本检查当前状态
+    python pipeline_monitor.py --focus data --verbose
+
+  Step 4: Phase 2 生成器训练(小量先试)
+    python market_generator.py --mode train --max-stocks 50 --phase-a-epochs 5 --phase-b-epochs 5 --phase-c-epochs 10
+
+  Step 5: 确认生成器没问题后，Phase 3 对抗训练
+    python adversarial_env.py --mode train --episodes 50 --evolve
+    (先50轮试水，没问题再1000轮)
+
+  Step 6: 用监察脚本验证对抗训练效果
+    python pipeline_monitor.py --focus adversarial --verbose
+    重点看: reward非零/价格有波动/放电有触发/涨跌停生效/散户策略有多样性
+
+================================================================
   数据目录
 ================================================================
 
@@ -164,3 +300,22 @@ python run_pipeline.py --quick-test
 对抗模型： C:\Users\HUAWEI\Desktop\Adversarial Learning\adversarial model\
 结果输出： C:\Users\HUAWEI\Desktop\Adversarial Learning\stockresults\
 实盘反馈： C:\Users\HUAWEI\Desktop\Adversarial Learning\dotpy\feedback.txt
+校准参数： C:\Users\HUAWEI\Desktop\Adversarial Learning\stockresults\calibration_params.json
+训练器状态：C:\Users\HUAWEI\Desktop\Adversarial Learning\stockresults\trainer_state.json
+
+================================================================
+  关键参数速查
+================================================================
+
+神经放电阈值:     63.21% (1-1/e)
+不应期时间常数:   15 ticks
+基础放电幅度:     1.5%
+最大放电幅度:     6%
+涨跌停-主板:      ±10%
+涨跌停-创业板:    ±20%
+涨跌停-ST:        ±5%
+涨跌停-北交所:    ±30%
+隔夜跳空概率:     40%
+庄家放电感知:     0.3
+散户跟风型感知:   0.9 (最强)
+游资感知:         0.6
