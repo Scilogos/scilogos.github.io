@@ -21,7 +21,7 @@ from datetime import datetime
 
 sys.path.insert(0, str(Path(__file__).parent))
 from stock_config import (
-    DATA_DIR, ADV_MODEL_DIR, ADV_DATA_DIR, RESULTS_DIR,
+    DATA_DIR, ADV_MODEL_DIR, ADV_DATA_DIR, RESULTS_DIR, SCRIPT_DIR,
     setup_logger, PYTHON_EXE,
 )
 
