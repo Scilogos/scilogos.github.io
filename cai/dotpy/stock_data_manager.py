@@ -387,52 +387,72 @@ def classify_industries(bs_conn, stock_list: List[Dict],
     """
     查询申万行业分类
     返回: {行业名: [std_code, ...]}
+    带断点续传: 已分类的股票跳过
     """
     bs = bs_conn.bs
     industry_map = defaultdict(list)
     total = len(stock_list)
     timeout_count = 0
-    
-    logger.info(f"开始行业分类: {total}只")
-    
+    success_count = 0
+
+    # 断点续传: 加载已有分类结果
+    out_path = data_dir / "industry_classification.json"
+    classified = set()
+    if out_path.exists():
+        try:
+            with open(out_path, 'r', encoding='utf-8') as f:
+                saved = json.load(f)
+            for ind, codes in saved.items():
+                industry_map[ind].extend(codes)
+                for c in codes:
+                    classified.add(c)
+            logger.info(f"已有分类记录: {len(classified)}只，跳过")
+        except Exception:
+            pass
+
+    logger.info(f"开始行业分类: {total}只, 待查询{total - len(classified)}只")
+
     for i, stk in enumerate(stock_list):
         bs_code = stk['code']
         std_code = stk['std_code']
-        
-        result = None
-        
-        def _query():
-            nonlocal result
+
+        # 断点续传: 跳过已分类的
+        if std_code in classified:
+            continue
+
+        try:
             rs = bs.query_stock_industry(code=bs_code)
             if rs.error_code == '0' and rs.next():
                 result = rs.get_row_data()
-        
-        # 超时控制: 10秒
-        t = threading.Thread(target=_query)
-        t.start()
-        t.join(timeout=10)
-        
-        if t.is_alive() or result is None:
-            timeout_count += 1
-            # 超时无法join线程，但baostock连接可能已损坏
-            # 不做额外处理，让后续查询自然失败/重连
-        else:
-            try:
                 industry_code = result[1] if len(result) > 1 else ""
                 industry_name = SW_INDUSTRY_MAP.get(industry_code, "未知")
-            except Exception:
+            else:
                 industry_name = "未知"
+                timeout_count += 1
             industry_map[industry_name].append(std_code)
-        
+            success_count += 1
+            classified.add(std_code)
+        except Exception as e:
+            timeout_count += 1
+            if timeout_count % 50 == 1:
+                logger.warning(f"分类异常 {std_code}: {e}，重连...")
+                try:
+                    bs_conn.reconnect()
+                    bs = bs_conn.bs
+                except Exception:
+                    pass
+
+        # 每100只保存一次（断点续传）
         if (i + 1) % 100 == 0:
-            logger.info(f"分类进度: {i+1}/{total} (超时{timeout_count})")
-    
-    # 保存分类结果
-    out_path = data_dir / "industry_classification.json"
+            logger.info(f"分类进度: {i+1}/{total} | 成功{success_count} 超时{timeout_count}")
+            with open(out_path, 'w', encoding='utf-8') as f:
+                json.dump(dict(industry_map), f, ensure_ascii=False, indent=2)
+
+    # 最终保存
     with open(out_path, 'w', encoding='utf-8') as f:
         json.dump(dict(industry_map), f, ensure_ascii=False, indent=2)
-    
-    logger.info(f"行业分类完成: {len(industry_map)}个行业, 超时{timeout_count}")
+
+    logger.info(f"行业分类完成: {len(industry_map)}个行业, 成功{success_count}, 超时/失败{timeout_count}")
     return dict(industry_map)
 
 # ============================================================
