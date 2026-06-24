@@ -157,3 +157,107 @@ Q: 某个组合表现很差怎么办？
 A: 可能是参数不适合你的数据，可以调整 CombinationProfile 中的参数后重试
 
 ================================================================
+
+================================================================
+  日更反馈系统 (★ v2.0 feedback_processor.py)
+================================================================
+
+### 核心概念
+
+日更反馈 = 晚上一条龙 + 早上自动恢复
+
+晚上维护时做：
+  1. 增量数据更新 (baostock拉最新交易日数据)
+  2. 解析反馈 (feedback.txt里的实盘交易)
+  3. 评估信号 (对比系统信号vs实际盈亏)
+  4. 校准参数 (调整庄散参数)
+  5. 更新基准线 (最新实盘价格序列)
+  6. 保存检查点 (模型权重+状态+校准参数)
+  7. 生成早间恢复计划 (morning_resume.json)
+
+早上恢复时做：
+  1. 读取检查点 (模型权重)
+  2. 应用校准参数
+  3. 加载新基准线
+  4. 快速热身 (50~100 episodes)
+  5. 模型就绪，正常使用
+
+================================================================
+  日常命令
+================================================================
+
+### 晚上一条龙 (推荐)
+python feedback_processor.py --mode daily
+
+### 跳过数据更新 (只做反馈+校准+检查点)
+python feedback_processor.py --mode daily --skip-data-update
+
+### 跳过反馈 (只做数据更新+基准线+检查点)
+python feedback_processor.py --mode daily --skip-feedback
+
+### 早上恢复
+python adversarial_env.py --mode resume
+
+### 只增量更新数据
+python feedback_processor.py --mode update-data
+
+### 只更新基准线
+python feedback_processor.py --mode update-benchmark
+
+### 只保存检查点
+python feedback_processor.py --mode checkpoint-save
+
+### 只加载检查点看信息
+python feedback_processor.py --mode checkpoint-load
+
+### 监察反馈系统
+python pipeline_monitor.py --focus feedback
+
+================================================================
+  反馈文件写法 (feedback.txt)
+================================================================
+
+格式: 日期 | 方向 | 代码 | 价格 | 数量 | 盈亏 | 备注
+
+# 开头为注释
+方向: 买入 / 卖出
+盈亏: 卖出填实际盈亏金额，买入填0
+备注: 自由文字(止损/止盈/追高/抄底等)
+
+示例:
+2026-06-23 | 买入 | 600519.SH | 1800.50 | 100 | 0 | 茅台，系统看多
+2026-06-24 | 卖出 | 600519.SH | 1835.20 | 100 | 3470 | 茅台止盈
+
+### 生成示例反馈文件
+python feedback_processor.py --mode demo
+
+================================================================
+  数据流图
+================================================================
+
+  feedback.txt ──→ 解析 → 配对 → 评估 → 校准
+                                              ↓
+  stockdata/  ──→ 增量更新 ──────────→ calibration_params.json
+                    ↓                         ↓
+              benchmark更新 ──→ 检查点保存 ←───┘
+                                    ↓
+                           morning_resume.json
+                                    ↓
+              adversarial_env.py --mode resume
+                    ↓
+              加载检查点 → 应用校准 → 热身 → 就绪
+
+================================================================
+  关键文件位置
+================================================================
+
+- feedback.txt: 反馈文件 (手动编辑)
+- stockdata/incremental_update_log.json: 增量更新日志
+- adversarial data/price_benchmark.npy: 价格基准线
+- adversarial model/checkpoint/: 检查点目录
+- results/calibration_params.json: 校准参数
+- results/morning_resume.json: 早间恢复计划
+- results/daily_routine_log.json: 日更日志
+- results/trainer_state.json: 训练器状态
+
+================================================================
