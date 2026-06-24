@@ -449,10 +449,11 @@ class CTimeGAN:
                      list(self.supervisor.parameters()) +
                      list(self.generator.parameters()))
         
-        # ★ Bug#17修复: 标签平滑 + G多步更新
-        label_smooth_real = 0.9   # 真样本标签: 1.0→0.9
-        label_smooth_fake = 0.1   # 假样本标签: 0.0→0.1
-        g_steps_per_d = 2         # 每次D更新后G更新2次
+        # ★ Bug#18修复: D训练频率控制 + 自适应G步数
+        # 核心策略: D不是每批都训练，给G更多成长空间
+        d_train_freq = 3          # 每隔3个batch才训练1次D (StyleGAN2同款策略)
+        g_steps_per_d = 3         # D训练时G走3步; D不训练时G走1步
+        d_warmup_epochs = 2       # Phase C前2个epoch不训练D, 让E+R+S+G先热身
         
         for epoch in range(self.cfg.phase_c_epochs):
             d_losses, g_losses = [], []
@@ -462,46 +463,48 @@ class CTimeGAN:
                 x = batch[0].to(self.device).float()
                 B = x.shape[0]
                 
-                # ── 判别器步 ──
-                z = torch.randn(B, self.cfg.seq_len, self.cfg.hidden_dim,
-                               device=self.device)
+                # ── 判别器步 (隔d_train_freq批训练1次, 预热期跳过) ──
+                train_d = (epoch >= d_warmup_epochs) and (n_batches % d_train_freq == 0)
                 
-                d_real, d_fake, _, _ = self.forward_discriminator(x, z)
+                if train_d:
+                    z = torch.randn(B, self.cfg.seq_len, self.cfg.hidden_dim,
+                                   device=self.device)
+                    d_real, d_fake, _, _ = self.forward_discriminator(x, z)
+                    
+                    d_loss_real = self._bce(d_real, torch.ones_like(d_real) * 0.9)
+                    d_loss_fake = self._bce(d_fake, torch.ones_like(d_fake) * 0.1)
+                    d_loss = d_loss_real + d_loss_fake
+                    
+                    opt_d.zero_grad()
+                    d_loss.backward()
+                    torch.nn.utils.clip_grad_norm_(self.discriminator.parameters(), max_norm=5.0)
+                    opt_d.step()
+                    d_losses.append(d_loss.item())
+                else:
+                    d_losses.append(-1)  # 占位, 表示本批D未训练
                 
-                # ★ Bug#17修复: 标签平滑防D过强
-                d_loss_real = self._bce(d_real, torch.ones_like(d_real) * label_smooth_real)
-                d_loss_fake = self._bce(d_fake, torch.ones_like(d_fake) * label_smooth_fake)
-                d_loss = d_loss_real + d_loss_fake
+                # ── 生成器步 ──
+                n_g = g_steps_per_d if train_d else 1  # D训练时G多走几步追赶
                 
-                opt_d.zero_grad()
-                d_loss.backward()
-                torch.nn.utils.clip_grad_norm_(self.discriminator.parameters(), max_norm=5.0)
-                opt_d.step()
-                
-                # ── 生成器步 (含 E+R+S+G) ── ★ Bug#17修复: G多步更新
-                for _g_step in range(g_steps_per_d):
+                for _g_step in range(n_g):
                     z2 = torch.randn(B, self.cfg.seq_len, self.cfg.hidden_dim,
                                     device=self.device)
                     
                     d_real2, d_fake2, h_real, h_fake, h_sup, x_hat = \
                         self.forward_generator(x, z2)
                     
-                    # G对抗损失 (标签平滑: G想骗D, 目标标签用0.9而非1.0)
-                    g_loss_adv = self._bce(d_fake2, torch.ones_like(d_fake2) * label_smooth_real)
-                    
+                    # G对抗损失
+                    g_loss_adv = self._bce(d_fake2, torch.ones_like(d_fake2) * 0.9)
                     # 有监督损失
                     s_loss = self._mse(h_sup, h_real[:, 1:, :])
-                    
                     # 重建损失
                     r_loss = self._mse(x_hat, x)
-                    
-                    # 总生成器损失 (权重: 对抗1.0 + 监督1.0 + 重建0.5)
+                    # 总生成器损失
                     g_loss = g_loss_adv + s_loss + 0.5 * r_loss
                     
-                    # 【关键修复】必须清零所有参与网络的梯度
                     opt_e.zero_grad()
                     opt_r.zero_grad()
-                    opt_s.zero_grad()   # ← v1.x遗漏了这一步
+                    opt_s.zero_grad()
                     opt_g.zero_grad()
                     
                     g_loss.backward()
@@ -509,26 +512,29 @@ class CTimeGAN:
                     
                     opt_e.step()
                     opt_r.step()
-                    opt_s.step()        # ← v1.x遗漏了这一步
+                    opt_s.step()
                     opt_g.step()
                 
-                d_losses.append(d_loss.item())
                 g_losses.append(g_loss.item())
                 n_batches += 1
             
-            avg_d = np.mean(d_losses)
+            # ★ Bug#18: 过滤D未训练的占位(-1)
+            valid_d = [d for d in d_losses if d >= 0]
+            avg_d = np.mean(valid_d) if valid_d else -1
             avg_g = np.mean(g_losses)
+            d_train_ratio = len(valid_d) / max(len(d_losses), 1)
             history['phase_c'].append({'d_loss': avg_d, 'g_loss': avg_g})
             
             log_every = max(1, self.cfg.phase_c_epochs // 10)
             if (epoch + 1) % log_every == 0 or epoch == 0:
+                d_str = f"{avg_d:.4f}" if avg_d >= 0 else "warmup"
                 logger.info(f"  [C] Epoch {epoch+1}/{self.cfg.phase_c_epochs} | "
-                           f"D: {avg_d:.4f} | G: {avg_g:.4f}")
+                           f"D: {d_str} | G: {avg_g:.4f} | D训练比: {d_train_ratio:.0%}")
                 
                 # 梯度健康检查
                 if avg_g > 50:
                     logger.warning(f"  ⚠ G_loss={avg_g:.2f} 异常偏高，可能梯度爆炸")
-                if avg_d < 0.01:
+                if avg_d >= 0 and avg_d < 0.01:
                     logger.warning(f"  ⚠ D_loss={avg_d:.4f} 过低，判别器可能过强")
     
     # ── 生成 ──
