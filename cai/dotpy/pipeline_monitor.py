@@ -687,6 +687,225 @@ def check_adversarial(verbose=False):
 
 
 # ============================================================
+#  ★ v3.0: 多组合竞技场检查
+# ============================================================
+def check_arena(verbose=False):
+    """检查多组合竞技场状态"""
+    results = []
+    
+    # ★ 检查1: 组合模型目录
+    r = CheckResult("组合模型目录", "竞技场")
+    combo_dir = ADV_MODEL_DIR / "combinations"
+    if combo_dir.exists():
+        combo_files = list(combo_dir.glob("*.pt"))
+        r.metric("组合数", len(combo_files))
+        if len(combo_files) >= 8:
+            r.pass_(f"8个预设组合全部训练完成")
+        elif len(combo_files) > 0:
+            r.warn(f"仅{len(combo_files)}个组合训练完成")
+        else:
+            r.fail("组合目录为空，未执行竞技场训练")
+    else:
+        r.fail("组合模型目录不存在，请运行 --mode arena")
+    results.append(r)
+    
+    # ★ 检查2: 竞技场结果文件
+    r = CheckResult("竞技场结果", "竞技场")
+    arena_file = RESULTS_DIR / "arena_results.json"
+    if arena_file.exists():
+        try:
+            with open(arena_file, 'r', encoding='utf-8') as f:
+                arena_data = json.load(f)
+            
+            n_combos = arena_data.get('n_combinations', 0)
+            profiles = arena_data.get('profiles', [])
+            rankings = arena_data.get('specialist_ranking', {})
+            recommendation = arena_data.get('ensemble_recommendation', {})
+            
+            r.metric("组合数", n_combos)
+            r.metric("维度数", len(rankings))
+            
+            # 检查各维度专家选拔
+            valid_dims = [k for k, v in rankings.items() if v]
+            r.metric("已选拔维度", len(valid_dims))
+            
+            if len(valid_dims) >= 8:
+                r.pass_(f"8个维度专家全部选拔完成")
+            elif len(valid_dims) > 0:
+                r.warn(f"仅{len(valid_dims)}个维度完成选拔")
+            else:
+                r.fail("无维度完成选拔")
+            
+            # 检查集成推荐
+            specialists = recommendation.get('specialists', {})
+            if specialists:
+                r.metric("集成专家", len(specialists))
+                r.details.append(f"  ✓ 集成推荐已生成")
+            else:
+                r.warn("集成推荐未生成")
+            
+            # 检查时间戳
+            ts = arena_data.get('timestamp', 'N/A')
+            r.details.append(f"  生成时间: {ts}")
+            
+        except Exception as e:
+            r.fail(f"读取竞技场结果失败: {e}")
+    else:
+        r.fail("arena_results.json不存在，请运行 --mode arena")
+    results.append(r)
+    
+    # ★ 检查3: 专家选拔详情
+    r = CheckResult("专家选拔", "竞技场")
+    if arena_file.exists():
+        try:
+            with open(arena_file, 'r', encoding='utf-8') as f:
+                arena_data = json.load(f)
+            
+            rankings = arena_data.get('specialist_ranking', {})
+            
+            # 各维度第一名
+            dim_cn = {
+                'direction_1d': '1日方向',
+                'direction_3d': '3日方向',
+                'direction_5d': '5日方向',
+                'direction_up': '上涨预测',
+                'direction_down': '下跌预测',
+                'volatility_match': '波动率匹配',
+                'stability': '稳定性',
+                'composite': '综合',
+            }
+            
+            for dim in ['direction_1d', 'direction_3d', 'direction_5d', 'composite']:
+                if dim in rankings and rankings[dim]:
+                    best = rankings[dim][0]
+                    dim_name = dim_cn.get(dim, dim)
+                    r.details.append(f"  {dim_name} → {best.get('name', 'N/A')} (score={best.get('score', 0):.3f})")
+            
+            # 检查v3.0新类
+            env_path = Path(__file__).parent / "adversarial_env.py"
+            if env_path.exists():
+                with open(env_path, 'r', encoding='utf-8') as f:
+                    env_code = f.read()
+                
+                v3_classes = [
+                    'CombinationProfile',
+                    'PRESET_PROFILES',
+                    'PredictionEvaluator',
+                    'CombinationTrainer',
+                    'MultiCombinationArena',
+                ]
+                
+                missing_v3 = [c for c in v3_classes if f'class {c}' not in env_code and c not in env_code]
+                if not missing_v3:
+                    r.details.append("  ✓ v3.0新类全部存在")
+                else:
+                    r.warn(f"v3.0类缺失: {', '.join(missing_v3)}")
+            
+            if r.details:
+                r.pass_("专家选拔结果已记录")
+            else:
+                r.fail("无专家选拔数据")
+                
+        except Exception as e:
+            r.fail(f"读取专家选拔失败: {e}")
+    else:
+        r.skip("无竞技场结果文件")
+    results.append(r)
+    
+    # ★ 检查4: 竞技场报告 (如果有)
+    r = CheckResult("竞技场报告", "竞技场")
+    report_file = RESULTS_DIR / "arena_report.txt"
+    if report_file.exists():
+        r.pass_("竞技场报告已生成")
+        try:
+            with open(report_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+            r.metric("报告大小", f"{len(content)}字节")
+        except Exception:
+            pass
+    else:
+        r.skip("未生成竞技场报告 (可运行 stock_interpreter.py --mode arena-report)")
+    results.append(r)
+    
+    # ★ 检查5: v3.0代码完整性
+    r = CheckResult("v3.0代码完整性", "竞技场")
+    try:
+        env_path = Path(__file__).parent / "adversarial_env.py"
+        if env_path.exists():
+            with open(env_path, 'r', encoding='utf-8') as f:
+                env_code = f.read()
+            
+            # 检查关键类和常量
+            checks = {
+                'CombinationProfile类': 'class CombinationProfile' in env_code,
+                'PRESET_PROFILES': 'PRESET_PROFILES' in env_code,
+                'PredictionEvaluator类': 'class PredictionEvaluator' in env_code,
+                'CombinationTrainer类': 'class CombinationTrainer' in env_code,
+                'MultiCombinationArena类': 'class MultiCombinationArena' in env_code,
+                '8种组合定义': '"短线追涨"' in env_code and '"长线价值"' in env_code,
+                'arena模式支持': 'args.mode == "arena"' in env_code,
+                '方向准确率评估': 'direction_accuracy' in env_code,
+                '波动率匹配评估': 'volatility_match' in env_code,
+                'DTW距离评估': 'evaluate_dtw' in env_code,
+            }
+            
+            passed = sum(1 for v in checks.values() if v)
+            total = len(checks)
+            r.metric("通过", f"{passed}/{total}")
+            
+            for name, ok in checks.items():
+                icon = "✓" if ok else "✗"
+                if verbose or not ok:
+                    r.details.append(f"  {icon} {name}")
+            
+            if passed >= total * 0.8:
+                r.pass_(f"v3.0代码基本完整({passed}/{total})")
+            else:
+                r.fail(f"v3.0代码严重缺失({passed}/{total})")
+        else:
+            r.skip("adversarial_env.py不存在")
+    except Exception as e:
+        r.warn(f"代码完整性检查异常: {e}")
+    results.append(r)
+    
+    # ★ 检查6: 解读器v3.0支持
+    r = CheckResult("解读器v3.0支持", "竞技场")
+    try:
+        interp_path = Path(__file__).parent / "stock_interpreter.py"
+        if interp_path.exists():
+            with open(interp_path, 'r', encoding='utf-8') as f:
+                interp_code = f.read()
+            
+            checks = {
+                'MultiCombinationInterpreter类': 'class MultiCombinationInterpreter' in interp_code,
+                'arena-report模式': 'args.mode == "arena-report"' in interp_code,
+                '专家选拔报告': 'generate_specialist_report' in interp_code,
+                '庄家行动预测': 'generate_action_forecast' in interp_code,
+                '完整报告生成': 'generate_full_arena_report' in interp_code,
+            }
+            
+            passed = sum(1 for v in checks.values() if v)
+            total = len(checks)
+            r.metric("通过", f"{passed}/{total}")
+            
+            for name, ok in checks.items():
+                icon = "✓" if ok else "✗"
+                r.details.append(f"  {icon} {name}")
+            
+            if passed >= total * 0.8:
+                r.pass_(f"解读器v3.0基本完整({passed}/{total})")
+            else:
+                r.warn(f"解读器v3.0部分缺失({passed}/{total})")
+        else:
+            r.skip("stock_interpreter.py不存在")
+    except Exception as e:
+        r.warn(f"解读器检查异常: {e}")
+    results.append(r)
+    
+    return results
+
+
+# ============================================================
 # Phase 4: 解读器检查
 # ============================================================
 def check_interpreter(verbose=False):
@@ -729,15 +948,15 @@ def check_interpreter(verbose=False):
 # ============================================================
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description="管线监察脚本 (v2.1)")
-    parser.add_argument("--focus", choices=["all", "data", "generator", "adversarial", "interpreter"],
+    parser = argparse.ArgumentParser(description="管线监察脚本 (v3.0)")
+    parser.add_argument("--focus", choices=["all", "data", "generator", "adversarial", "interpreter", "arena"],
                         default="all", help="检查重点")
     parser.add_argument("--verbose", action="store_true", help="详细输出")
     parser.add_argument("--quick", action="store_true", help="快速模式(跳过耗时检查)")
     args = parser.parse_args()
     
     print("\n" + "=" * 60)
-    print("  对抗学习管线监察报告 (v2.1)")
+    print("  对抗学习管线监察报告 (v3.0 多组合竞技场)")
     print(f"  时间: {time.strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"  数据目录: {DATA_DIR}")
     print(f"  模型目录: {ADV_MODEL_DIR}")
@@ -761,6 +980,10 @@ def main():
     if args.focus in ("all", "interpreter"):
         print("\n📋 Phase 4: 解读器检查")
         all_results.extend(check_interpreter(args.verbose))
+    
+    if args.focus in ("all", "arena"):
+        print("\n📋 Phase 5: 多组合竞技场检查 (★ v3.0)")
+        all_results.extend(check_arena(args.verbose))
     
     # 输出结果
     print()
