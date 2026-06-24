@@ -887,6 +887,10 @@ class MarketEnv:
       9:30-11:30  = tick 0~119  (上午盘)
       11:30-13:00 = 午休 (不交易)
       13:00-15:00 = tick 120~239 (下午盘)
+    
+    ★ v2.2 价格基准线: 支持从假数据/实盘数据加载价格序列作为市场走势锚点
+      - 有基准线时: Agent订单只影响偏离度, 大趋势跟随基准线
+      - 无基准线时: 退回纯模拟模式(兼容旧逻辑)
     """
     
     # 隔夜跳空参数
@@ -894,12 +898,34 @@ class MarketEnv:
     GAP_MEAN = 0.005          # 跳空均值 0.5%
     GAP_STD = 0.015           # 跳空标准差 1.5%
     
-    def __init__(self, cfg: AdversarialConfig, stock_code: str = ""):
+    # ★ v2.2 基准线参数
+    BENCHMARK_BLEND = 0.85     # 基准线权重: 85%跟随基准 + 15%Agent订单影响
+    
+    def __init__(self, cfg: AdversarialConfig, stock_code: str = "",
+                 price_benchmark: np.ndarray = None):
+        """
+        price_benchmark: (num_days, T, F) 或 (num_days, T) numpy数组
+          - 若3D: 取第0列(close)作为基准价格序列
+          - 若2D: 直接作为基准价格序列 (num_days个交易日, 每日T个tick的价格)
+          - 若None: 纯模拟模式
+        """
         self.cfg = cfg
         self.stock_code = stock_code
-        self.orderbook = OrderBook(cfg.initial_price, stock_code)
+        
+        # ★ v2.2 价格基准线
+        self._setup_benchmark(price_benchmark)
+        
+        # 用基准线首个价格作为初始价(如果有)
+        init_price = cfg.initial_price
+        if self.benchmark_prices is not None and len(self.benchmark_prices) > 0:
+            init_price = float(self.benchmark_prices[0][0])
+            logger.info(f"  ★ 价格基准线已加载: {len(self.benchmark_prices)}个交易日, "
+                       f"基准价={init_price:.2f}, 融合比={self.BENCHMARK_BLEND}")
+        
+        self.orderbook = OrderBook(init_price, stock_code)
         self.tick = 0
         self.episode_length = cfg.episode_length
+        self._current_day_idx = 0  # ★ v2.2: 当前基准线日索引
         
         # 市场事件
         self.info_events = []
@@ -910,13 +936,62 @@ class MarketEnv:
         self.intraday_low = cfg.initial_price
         self.day_count = 0
     
+    def _setup_benchmark(self, price_benchmark):
+        """★ v2.2: 设置价格基准线, 将生成数据/实盘数据转为每tick价格序列"""
+        self.benchmark_prices = None  # list of arrays, 每个array是该日的240个tick价格
+        
+        if price_benchmark is None:
+            return
+        
+        try:
+            data = np.array(price_benchmark)
+            if data.ndim == 3:
+                # (num_days, T, F) → 取close列(第0列, 因为normalize后close在第0位)
+                # normalize_ohlcv的输出: [close_pct, high_pct, low_pct, open_pct, volume_pct]
+                self.benchmark_prices = []
+                for day_idx in range(data.shape[0]):
+                    day_prices = data[day_idx, :, 0]  # 取第0列(close_pct)
+                    # 从百分比变化重建绝对价格序列
+                    # 假设normalize后close_pct是收益率, 需要累积乘积
+                    # 但更简单: 直接用pct的累积和 * base_price
+                    abs_prices = np.cumprod(1 + day_prices) * self.cfg.initial_price
+                    # 插值到240个tick (如果T≠240)
+                    if len(abs_prices) != 240:
+                        from scipy.interpolate import interp1d
+                        x_old = np.linspace(0, 239, len(abs_prices))
+                        f = interp1d(x_old, abs_prices, kind='linear')
+                        abs_prices = f(np.arange(240))
+                    self.benchmark_prices.append(abs_prices)
+                    
+            elif data.ndim == 2:
+                # (num_days, T) → 直接作为价格
+                self.benchmark_prices = []
+                for day_idx in range(data.shape[0]):
+                    day_prices = data[day_idx]
+                    if len(day_prices) != 240:
+                        from scipy.interpolate import interp1d
+                        x_old = np.linspace(0, 239, len(day_prices))
+                        f = interp1d(x_old, day_prices, kind='linear')
+                        day_prices = f(np.arange(240))
+                    self.benchmark_prices.append(day_prices)
+            
+            logger.info(f"  ★ 基准线已解析: {len(self.benchmark_prices)}个交易日")
+        except Exception as e:
+            logger.warning(f"  ★ 基准线解析失败, 退回纯模拟: {e}")
+            self.benchmark_prices = None
+    
     def reset(self):
-        self.orderbook.reset(self.cfg.initial_price)
+        # ★ v2.2: 用基准线开盘价reset(如果有)
+        init_price = self.cfg.initial_price
+        if self.benchmark_prices is not None and self._current_day_idx < len(self.benchmark_prices):
+            init_price = float(self.benchmark_prices[self._current_day_idx][0])
+        
+        self.orderbook.reset(init_price)
         self.tick = 0
         self.info_events = []
         self.shock_events = []
-        self.intraday_high = self.cfg.initial_price
-        self.intraday_low = self.cfg.initial_price
+        self.intraday_high = init_price
+        self.intraday_low = init_price
         self.day_count = 0
         return self.orderbook.get_state()
     
@@ -924,6 +999,8 @@ class MarketEnv:
         """
         执行一步: 各agent提交订单
         actions: {agent_id: {side, volume, price, order_type}}
+        
+        ★ v2.2: 如果有价格基准线, 每个tick的价格 = 基准线价格 * BLEND + Agent订单价格 * (1-BLEND)
         """
         self.tick += 1
         self.orderbook.tick = self.tick
@@ -941,6 +1018,9 @@ class MarketEnv:
         
         # ★ 更新神经放电机制
         self.orderbook.update_firing(self.tick)
+        
+        # ★ v2.2: 价格基准线融合
+        self._apply_benchmark()
         
         # 更新日内高低
         self.intraday_high = max(self.intraday_high, self.orderbook.mid_price)
@@ -969,12 +1049,42 @@ class MarketEnv:
             self.orderbook.bid_price = self.orderbook.mid_price * (1 - self.orderbook.spread / 2)
             self.orderbook.ask_price = self.orderbook.mid_price * (1 + self.orderbook.spread / 2)
         
+        # ★ v2.2: episode结束切到下一个基准线日
+        if self.tick >= self.episode_length:
+            self._current_day_idx += 1
+            if self.benchmark_prices is not None:
+                self._current_day_idx %= len(self.benchmark_prices)  # 循环使用
+        
         return {
             'state': self.orderbook.get_state(),
             'results': results,
             'done': self.tick >= self.episode_length,
             'overnight_gap': overnight_gap,
         }
+    
+    def _apply_benchmark(self):
+        """★ v2.2: 将当前tick价格向基准线融合"""
+        if self.benchmark_prices is None:
+            return
+        
+        day_idx = self._current_day_idx % len(self.benchmark_prices)
+        tick_idx = min(self.tick, 239)
+        
+        if tick_idx >= len(self.benchmark_prices[day_idx]):
+            return
+        
+        target_price = float(self.benchmark_prices[day_idx][tick_idx])
+        current_price = self.orderbook.mid_price
+        
+        # 融合: 基准线 * BLEND + Agent市场 * (1-BLEND)
+        blended = target_price * self.BENCHMARK_BLEND + current_price * (1 - self.BENCHMARK_BLEND)
+        
+        # 涨跌停限制
+        blended = self.orderbook.price_limit.clamp_price(blended)
+        
+        self.orderbook.mid_price = blended
+        self.orderbook.bid_price = blended * (1 - self.orderbook.spread / 2)
+        self.orderbook.ask_price = blended * (1 + self.orderbook.spread / 2)
     
     def start_new_day(self):
         """
@@ -1797,7 +1907,7 @@ class DealerAlliance:
 # ============================================================
 class AdversarialTrainer:
     """
-    对抗训练主控 (v2.1 神经放电版)
+    对抗训练主控 (v2.2 基准线版)
     
     增强点:
       1. 神经放电机制: 63.21%阈值全或无行情
@@ -1809,11 +1919,22 @@ class AdversarialTrainer:
       7. 庄家联盟: 集成到训练循环
       8. 五方案防摆烂
       9. 增强监察: 记录放电/涨跌停等关键事件
+     10. ★ v2.2: 价格基准线 — 先用假数据练兵, 再上实盘
     """
     
-    def __init__(self, cfg: AdversarialConfig = None):
+    def __init__(self, cfg: AdversarialConfig = None,
+                 price_benchmark: np.ndarray = None,
+                 benchmark_source: str = ""):
+        """
+        price_benchmark: 价格基准线数据 (假数据或实盘)
+          - None: 纯模拟模式 (v2.1兼容)
+          - numpy数组: 传入MarketEnv作为价格锚点
+        
+        benchmark_source: 标注来源, 如 "fake" / "real", 仅用于日志
+        """
         self.cfg = cfg or AdversarialConfig()
-        self.env = MarketEnv(self.cfg)
+        self.benchmark_source = benchmark_source
+        self.env = MarketEnv(self.cfg, price_benchmark=price_benchmark)
         
         # 创建Agent群体
         self.dealer = DealerAgent("dealer",
@@ -2320,19 +2441,38 @@ class AdversarialTrainer:
 #  命令行入口
 # ============================================================
 def main():
-    parser = argparse.ArgumentParser(description="庄散对抗环境 (v2.1 神经放电版)")
+    parser = argparse.ArgumentParser(description="庄散对抗环境 (v2.2 基准线版)")
     parser.add_argument("--mode", required=True,
                         choices=["train", "evaluate", "demo"])
     parser.add_argument("--episodes", type=int, default=1000)
     parser.add_argument("--evolve", action="store_true")
     parser.add_argument("--model-path", type=str,
                         default=str(ADV_MODEL_DIR / "adversarial_model.pt"))
+    # ★ v2.2: 价格基准线
+    parser.add_argument("--price-data", type=str, default="",
+                        help="价格基准线文件路径(.npy), 假数据或实盘数据; 不传则纯模拟")
+    parser.add_argument("--benchmark-source", type=str, default="",
+                        help="基准线来源标注: fake/real, 仅日志用")
     
     args = parser.parse_args()
     cfg = AdversarialConfig(num_episodes=args.episodes)
     
+    # ★ v2.2: 加载价格基准线
+    price_benchmark = None
+    if args.price_data:
+        data_path = Path(args.price_data)
+        if not data_path.exists():
+            # 尝试在adversarial data目录下找
+            data_path = ADV_DATA_DIR / args.price_data
+        if data_path.exists():
+            price_benchmark = np.load(str(data_path))
+            logger.info(f"★ 加载价格基准线: {data_path} | 形状={price_benchmark.shape} | 来源={args.benchmark_source or '未标注'}")
+        else:
+            logger.warning(f"★ 价格基准线文件不存在: {args.price_data}, 退回纯模拟模式")
+    
     if args.mode == "train":
-        trainer = AdversarialTrainer(cfg)
+        trainer = AdversarialTrainer(cfg, price_benchmark=price_benchmark,
+                                      benchmark_source=args.benchmark_source)
         trainer.train(num_episodes=args.episodes, evolve=args.evolve)
     
     elif args.mode == "evaluate":
