@@ -1,5 +1,5 @@
 """
-adversarial_env.py - 庄散对抗学习环境 (v2.1 神经放电版)
+adversarial_env.py - 庄散对抗学习环境 (v3.0 多组合进化竞技场)
 ======================================================
 Phase 3: 庄散对抗（核心）
 
@@ -23,10 +23,17 @@ Phase 3: 庄散对抗（核心）
 
 防摆烂: 五方案保证散户不会退化到无策略
 
+★ v3.0 多组合进化竞技场:
+  - 8种预定义庄散组合，各有专长
+  - 多维度评估: 1日/3日/5日预测准确率, 涨跌方向准确率, 波动率匹配
+  - 多元化选拔: 谁在哪里干得好就选拔那个
+  - 集成推荐: 按场景调用不同专家组合
+
 用法:
   python adversarial_env.py --mode train [--episodes 1000] [--evolve]
   python adversarial_env.py --mode evaluate [--model-path ...]
   python adversarial_env.py --mode demo
+  python adversarial_env.py --mode arena [--arena-combos 4] [--real-eval-data ...]
 """
 
 import os, sys, argparse, json, time, copy, warnings
@@ -2438,12 +2445,784 @@ class AdversarialTrainer:
 
 
 # ============================================================
+#  ★ v3.0: 多组合进化竞技场
+# ============================================================
+
+@dataclass
+class CombinationProfile:
+    """庄散组合参数画像 - 定义一种庄散对抗的参数配置"""
+    name: str                     # 组合名称(中文)
+    name_en: str                  # 英文标识
+    prediction_horizon: int        # 预测天数: 1, 3, 5
+    specialty: str                # 专长: 'up'/'down'/'volatile'/'stable'/'allround'
+    
+    # 庄家参数
+    dealer_info_power: float = 0.5
+    dealer_shake_intensity: float = 0.05
+    dealer_puppet_ratio: float = 0.2
+    dealer_firing_awareness: float = 0.3
+    dealer_phase_speed: float = 1.0     # 阶段转换速度倍率
+    
+    # 散户类型权重 (归一化后使用)
+    retailer_herd_weight: float = 0.35
+    retailer_value_weight: float = 0.15
+    retailer_technical_weight: float = 0.20
+    retailer_leader_weight: float = 0.10
+    retailer_passive_weight: float = 0.20
+    
+    # 进化参数
+    lamarck_rate: float = 0.1
+    darwin_rate: float = 0.05
+    evolution_interval: int = 50
+    
+    # 对抗训练参数
+    episodes: int = 200
+    episode_length: int = 240
+    
+    # 基准线融合强度 (0=纯模拟, 1=完全跟随基准线)
+    benchmark_blend: float = 0.85
+
+
+# 预定义的8种组合画像
+PRESET_PROFILES = [
+    CombinationProfile("短线追涨", "short_momentum", 1, "up",
+        dealer_info_power=0.7, dealer_shake_intensity=0.03, dealer_firing_awareness=0.8,
+        dealer_phase_speed=2.0, retailer_herd_weight=0.50, retailer_value_weight=0.05,
+        retailer_technical_weight=0.25, retailer_leader_weight=0.15, retailer_passive_weight=0.05,
+        lamarck_rate=0.15, darwin_rate=0.08, evolution_interval=30, episodes=200),
+    
+    CombinationProfile("短线杀跌", "short_panic", 1, "down",
+        dealer_info_power=0.6, dealer_shake_intensity=0.12, dealer_firing_awareness=0.7,
+        dealer_phase_speed=2.0, retailer_herd_weight=0.50, retailer_value_weight=0.05,
+        retailer_technical_weight=0.15, retailer_leader_weight=0.10, retailer_passive_weight=0.20,
+        lamarck_rate=0.12, darwin_rate=0.10, evolution_interval=30, episodes=200),
+    
+    CombinationProfile("中线吸筹", "mid_accumulate", 3, "stable",
+        dealer_info_power=0.3, dealer_shake_intensity=0.02, dealer_firing_awareness=0.4,
+        dealer_phase_speed=0.5, retailer_herd_weight=0.15, retailer_value_weight=0.40,
+        retailer_technical_weight=0.15, retailer_leader_weight=0.05, retailer_passive_weight=0.25,
+        lamarck_rate=0.08, darwin_rate=0.03, evolution_interval=50, episodes=300),
+    
+    CombinationProfile("中线拉抬", "mid_pump", 3, "up",
+        dealer_info_power=0.8, dealer_shake_intensity=0.04, dealer_firing_awareness=0.6,
+        dealer_phase_speed=1.5, retailer_herd_weight=0.30, retailer_value_weight=0.10,
+        retailer_technical_weight=0.25, retailer_leader_weight=0.25, retailer_passive_weight=0.10,
+        lamarck_rate=0.10, darwin_rate=0.05, evolution_interval=40, episodes=300),
+    
+    CombinationProfile("长线价值", "long_value", 5, "allround",
+        dealer_info_power=0.2, dealer_shake_intensity=0.01, dealer_firing_awareness=0.2,
+        dealer_phase_speed=0.3, retailer_herd_weight=0.05, retailer_value_weight=0.45,
+        retailer_technical_weight=0.10, retailer_leader_weight=0.05, retailer_passive_weight=0.35,
+        lamarck_rate=0.05, darwin_rate=0.02, evolution_interval=80, episodes=400),
+    
+    CombinationProfile("技术波段", "tech_swing", 3, "volatile",
+        dealer_info_power=0.4, dealer_shake_intensity=0.06, dealer_firing_awareness=0.5,
+        dealer_phase_speed=1.0, retailer_herd_weight=0.15, retailer_value_weight=0.10,
+        retailer_technical_weight=0.50, retailer_leader_weight=0.10, retailer_passive_weight=0.15,
+        lamarck_rate=0.10, darwin_rate=0.05, evolution_interval=40, episodes=300),
+    
+    CombinationProfile("暴力震仓", "aggressive_shake", 1, "down",
+        dealer_info_power=0.9, dealer_shake_intensity=0.20, dealer_firing_awareness=0.9,
+        dealer_phase_speed=3.0, retailer_herd_weight=0.55, retailer_value_weight=0.05,
+        retailer_technical_weight=0.10, retailer_leader_weight=0.05, retailer_passive_weight=0.25,
+        lamarck_rate=0.15, darwin_rate=0.12, evolution_interval=25, episodes=150),
+    
+    CombinationProfile("均衡全能", "balanced", 5, "allround",
+        dealer_info_power=0.5, dealer_shake_intensity=0.05, dealer_firing_awareness=0.3,
+        dealer_phase_speed=1.0, retailer_herd_weight=0.35, retailer_value_weight=0.15,
+        retailer_technical_weight=0.20, retailer_leader_weight=0.10, retailer_passive_weight=0.20,
+        lamarck_rate=0.10, darwin_rate=0.05, evolution_interval=50, episodes=300),
+]
+
+
+class PredictionEvaluator:
+    """
+    多维度预测评估器: 评估庄散组合在不同方面的预测能力
+    
+    核心思想:
+      - 不同组合有不同的预测专长
+      - 不是平均评分, 而是多维度独立评估
+      - 1日/3日/5日 预测准确率
+      - 上涨/下跌 方向预测准确率
+      - 波动率匹配度
+      - 价格轨迹DTW距离
+    """
+    
+    def __init__(self):
+        """初始化评估器"""
+        pass
+    
+    def evaluate(self, simulated_prices: np.ndarray, 
+                 real_prices: np.ndarray,
+                 horizon: int = 1) -> Dict:
+        """
+        评估模拟价格对实盘的预测效果
+        
+        Args:
+            simulated_prices: 模拟价格序列 (T,)
+            real_prices: 实盘价格序列 (T,)
+            horizon: 预测天数
+            
+        Returns:
+            多维度评估结果
+        """
+        if len(simulated_prices) < horizon + 1 or len(real_prices) < horizon + 1:
+            return {
+                'direction_accuracy': 0.0,
+                'magnitude_corr': 0.0,
+                'volatility_match': 0.0,
+                'dtw_distance': float('inf'),
+                'composite': 0.0,
+            }
+        
+        # 计算预测回报
+        sim_returns = np.diff(simulated_prices) / (simulated_prices[:-1] + 1e-8)
+        real_returns = np.diff(real_prices) / (real_prices[:-1] + 1e-8)
+        
+        # 对齐长度
+        min_len = min(len(sim_returns), len(real_returns))
+        sim_returns = sim_returns[:min_len]
+        real_returns = real_returns[:min_len]
+        
+        # 方向准确率
+        direction_result = self.evaluate_direction_accuracy(
+            simulated_prices[:min_len+1], 
+            real_prices[:min_len+1], 
+            horizon
+        )
+        
+        # 涨跌幅度相关性
+        magnitude_result = self.evaluate_magnitude(
+            simulated_prices[:min_len+1], 
+            real_prices[:min_len+1], 
+            horizon
+        )
+        
+        # 波动率匹配度
+        volatility_result = self.evaluate_volatility_match(
+            simulated_prices[:min_len+1], 
+            real_prices[:min_len+1]
+        )
+        
+        # DTW距离
+        dtw_result = self.evaluate_dtw(
+            simulated_prices[:min_len+1], 
+            real_prices[:min_len+1]
+        )
+        
+        return {
+            'direction_accuracy': direction_result.get('accuracy', 0.0),
+            'direction_up_accuracy': direction_result.get('up_accuracy', 0.0),
+            'direction_down_accuracy': direction_result.get('down_accuracy', 0.0),
+            'magnitude_corr': magnitude_result.get('correlation', 0.0),
+            'magnitude_rmse': magnitude_result.get('rmse', float('inf')),
+            'volatility_match': volatility_result.get('match_ratio', 0.0),
+            'volatility_sim': volatility_result.get('sim_vol', 0.0),
+            'volatility_real': volatility_result.get('real_vol', 0.0),
+            'dtw_distance': dtw_result.get('distance', float('inf')),
+            'dtw_normalized': dtw_result.get('normalized', float('inf')),
+        }
+    
+    def evaluate_direction_accuracy(self, sim: np.ndarray, real: np.ndarray,
+                                      horizon: int) -> Dict:
+        """
+        方向预测准确率: 1d/3d/5d分开评
+        
+        计算未来horizon天的价格变动方向是否与实盘一致
+        """
+        if len(sim) < horizon + 1 or len(real) < horizon + 1:
+            return {'accuracy': 0.0, 'up_accuracy': 0.0, 'down_accuracy': 0.0}
+        
+        # 计算horizon期收益
+        sim_future_ret = (sim[horizon:] - sim[:-horizon]) / (sim[:-horizon] + 1e-8)
+        real_future_ret = (real[horizon:] - real[:-horizon]) / (real[:-horizon] + 1e-8)
+        
+        min_len = min(len(sim_future_ret), len(real_future_ret))
+        if min_len == 0:
+            return {'accuracy': 0.0, 'up_accuracy': 0.0, 'down_accuracy': 0.0}
+        
+        sim_future_ret = sim_future_ret[:min_len]
+        real_future_ret = real_future_ret[:min_len]
+        
+        # 方向判断
+        sim_dir = (sim_future_ret > 0).astype(int)  # 1=预测涨
+        real_dir = (real_future_ret > 0).astype(int)  # 1=实际涨
+        
+        # 整体准确率
+        accuracy = np.mean(sim_dir == real_dir)
+        
+        # 上涨预测准确率 (实盘确实在涨时，预测对的概率)
+        up_mask = real_future_ret > 0
+        if np.sum(up_mask) > 0:
+            up_accuracy = np.mean(sim_dir[up_mask] == 1)
+        else:
+            up_accuracy = 0.5
+        
+        # 下跌预测准确率 (实盘确实在跌时，预测对的概率)
+        down_mask = real_future_ret < 0
+        if np.sum(down_mask) > 0:
+            down_accuracy = np.mean(sim_dir[down_mask] == 0)
+        else:
+            down_accuracy = 0.5
+        
+        return {
+            'accuracy': float(accuracy),
+            'up_accuracy': float(up_accuracy),
+            'down_accuracy': float(down_accuracy),
+            'horizon': horizon,
+        }
+    
+    def evaluate_magnitude(self, sim: np.ndarray, real: np.ndarray,
+                            horizon: int) -> Dict:
+        """涨跌幅度相关性"""
+        if len(sim) < horizon + 1 or len(real) < horizon + 1:
+            return {'correlation': 0.0, 'rmse': float('inf')}
+        
+        # 计算horizon期累积收益
+        sim_returns = (sim[horizon:] - sim[:-horizon]) / (sim[:-horizon] + 1e-8)
+        real_returns = (real[horizon:] - real[:-horizon]) / (real[:-horizon] + 1e-8)
+        
+        min_len = min(len(sim_returns), len(real_returns))
+        if min_len == 0:
+            return {'correlation': 0.0, 'rmse': float('inf')}
+        
+        sim_returns = sim_returns[:min_len]
+        real_returns = real_returns[:min_len]
+        
+        # Pearson相关系数
+        if np.std(sim_returns) < 1e-8 or np.std(real_returns) < 1e-8:
+            correlation = 0.0
+        else:
+            correlation = float(np.corrcoef(sim_returns, real_returns)[0, 1])
+            correlation = max(-1.0, min(1.0, correlation))
+        
+        # RMSE
+        rmse = float(np.sqrt(np.mean((sim_returns - real_returns) ** 2)))
+        
+        return {
+            'correlation': correlation,
+            'rmse': rmse,
+            'horizon': horizon,
+        }
+    
+    def evaluate_volatility_match(self, sim: np.ndarray, real: np.ndarray) -> Dict:
+        """波动率匹配度"""
+        if len(sim) < 2 or len(real) < 2:
+            return {'match_ratio': 0.0, 'sim_vol': 0.0, 'real_vol': 0.0}
+        
+        sim_returns = np.diff(sim) / (sim[:-1] + 1e-8)
+        real_returns = np.diff(real) / (real[:-1] + 1e-8)
+        
+        sim_vol = float(np.std(sim_returns))
+        real_vol = float(np.std(real_returns))
+        
+        # 波动率匹配度: 1 - |sim_vol - real_vol| / (real_vol + 1e-8)
+        if real_vol < 1e-8:
+            match_ratio = 0.5
+        else:
+            match_ratio = max(0.0, 1.0 - abs(sim_vol - real_vol) / real_vol)
+        
+        return {
+            'match_ratio': float(match_ratio),
+            'sim_vol': sim_vol,
+            'real_vol': real_vol,
+        }
+    
+    def evaluate_dtw(self, sim: np.ndarray, real: np.ndarray) -> Dict:
+        """DTW距离 (简化版)"""
+        if len(sim) < 2 or len(real) < 2:
+            return {'distance': float('inf'), 'normalized': float('inf')}
+        
+        # 归一化价格序列
+        sim_norm = (sim - sim.min()) / (sim.max() - sim.min() + 1e-8)
+        real_norm = (real - real.min()) / (real.max() - real.min() + 1e-8)
+        
+        # 简化DTW: 使用欧氏距离 (完整DTW计算太慢)
+        min_len = min(len(sim_norm), len(real_norm))
+        sim_norm = sim_norm[:min_len]
+        real_norm = real_norm[:min_len]
+        
+        # 计算累积距离 (动态规划简化版)
+        distance = float(np.sqrt(np.mean((sim_norm - real_norm) ** 2)))
+        
+        # 归一化距离
+        normalized = distance / (np.std(sim_norm) + np.std(real_norm) + 1e-8)
+        
+        return {
+            'distance': distance,
+            'normalized': float(normalized),
+        }
+    
+    def compute_composite_score(self, eval_result: Dict, 
+                                 specialty: str) -> float:
+        """
+        计算综合得分 (按专长加权)
+        - up专长: 上涨方向准确率权重高
+        - down专长: 下跌方向准确率权重高
+        - volatile专长: 波动率匹配权重高
+        - stable专长: 稳定不崩塌权重高
+        - allround: 均匀权重
+        """
+        direction_acc = eval_result.get('direction_accuracy', 0.0)
+        up_acc = eval_result.get('direction_up_accuracy', 0.5)
+        down_acc = eval_result.get('direction_down_accuracy', 0.5)
+        vol_match = eval_result.get('volatility_match', 0.0)
+        dtw = eval_result.get('dtw_normalized', 1.0)
+        
+        # DTW转分数 (越小越好)
+        dtw_score = max(0.0, 1.0 - dtw)
+        
+        # 根据专长设置权重
+        if specialty == 'up':
+            weights = {'direction': 0.2, 'up': 0.4, 'down': 0.1, 'volatility': 0.15, 'dtw': 0.15}
+        elif specialty == 'down':
+            weights = {'direction': 0.2, 'up': 0.1, 'down': 0.4, 'volatility': 0.15, 'dtw': 0.15}
+        elif specialty == 'volatile':
+            weights = {'direction': 0.15, 'up': 0.15, 'down': 0.15, 'volatility': 0.35, 'dtw': 0.20}
+        elif specialty == 'stable':
+            weights = {'direction': 0.20, 'up': 0.20, 'down': 0.20, 'volatility': 0.25, 'dtw': 0.15}
+        else:  # allround
+            weights = {'direction': 0.25, 'up': 0.20, 'down': 0.20, 'volatility': 0.20, 'dtw': 0.15}
+        
+        composite = (
+            weights['direction'] * direction_acc +
+            weights['up'] * up_acc +
+            weights['down'] * down_acc +
+            weights['volatility'] * vol_match +
+            weights['dtw'] * dtw_score
+        )
+        
+        return float(composite)
+    
+    def self_evaluate(self, simulated_prices: np.ndarray) -> Dict:
+        """
+        自评模式: 用模拟价格自身评估 (当没有实盘数据时使用)
+        """
+        result = {}
+        for horizon in [1, 3, 5]:
+            result[f'{horizon}d'] = self.evaluate(
+                simulated_prices, simulated_prices, horizon)
+        result['composite'] = self.compute_composite_score(
+            result.get('3d', {}), 'allround')
+        return result
+
+
+class CombinationTrainer:
+    """
+    单组合训练器: 包装AdversarialTrainer, 添加组合特定参数和评估
+    
+    关键:
+      - 根据CombinationProfile创建定制化的AdversarialTrainer
+      - 修改庄家参数、散户类型比例、进化参数
+      - 训练后用PredictionEvaluator评估
+    """
+    
+    def __init__(self, profile: CombinationProfile,
+                 price_benchmark: np.ndarray = None,
+                 benchmark_source: str = ""):
+        self.profile = profile
+        self.evaluator = PredictionEvaluator()
+        self.trainer = None
+        self.price_benchmark = price_benchmark
+        self.benchmark_source = benchmark_source
+        self.evaluation_result = None
+        self.training_rewards = None
+    
+    def build_trainer(self) -> AdversarialTrainer:
+        """根据profile构建定制的AdversarialTrainer"""
+        cfg = AdversarialConfig(
+            num_episodes=self.profile.episodes,
+            episode_length=self.profile.episode_length,
+            lamarck_rate=self.profile.lamarck_rate,
+            darwin_rate=self.profile.darwin_rate,
+            evolution_interval=self.profile.evolution_interval,
+        )
+        
+        trainer = AdversarialTrainer(cfg, 
+            price_benchmark=self.price_benchmark,
+            benchmark_source=self.benchmark_source)
+        
+        # 定制庄家参数
+        trainer.dealer.info_power = self.profile.dealer_info_power
+        trainer.dealer.shake_intensity = self.profile.dealer_shake_intensity
+        trainer.dealer.puppet_capital = trainer.dealer.initial_capital * self.profile.dealer_puppet_ratio
+        trainer.dealer.firing_awareness = self.profile.dealer_firing_awareness
+        
+        # 定制散户类型比例
+        trainer.retailers = self._create_custom_retailer_swarm(trainer)
+        
+        return trainer
+    
+    def _create_custom_retailer_swarm(self, trainer) -> List[RetailerAgent]:
+        """根据profile的散户权重创建定制化的散户群体"""
+        n = 20
+        total_capital = trainer.cfg.initial_price * 100000 * trainer.cfg.retailer_ratio
+        
+        types = ['herd', 'value', 'technical', 'leader', 'passive']
+        weights = [
+            self.profile.retailer_herd_weight,
+            self.profile.retailer_value_weight,
+            self.profile.retailer_technical_weight,
+            self.profile.retailer_leader_weight,
+            self.profile.retailer_passive_weight,
+        ]
+        
+        # 归一化
+        total_w = sum(weights)
+        probs = [w / total_w for w in weights]
+        
+        retailers = []
+        for i in range(n):
+            rtype = np.random.choice(types, p=probs)
+            cap = total_capital / n
+            agent = RetailerAgent(f"retailer_{rtype}_{i}", cap, trainer.cfg, rtype)
+            retailers.append(agent)
+        
+        return retailers
+    
+    def train(self) -> Dict:
+        """训练这个组合"""
+        logger.info(f"\n{'='*50}")
+        logger.info(f"  ★ 组合 [{self.profile.name}] 开始训练")
+        logger.info(f"  专长: {self.profile.specialty} | 预测: {self.profile.prediction_horizon}日")
+        logger.info(f"{'='*50}")
+        
+        self.trainer = self.build_trainer()
+        
+        # 修改MarketEnv的BENCHMARK_BLEND
+        self.trainer.env.BENCHMARK_BLEND = self.profile.benchmark_blend
+        
+        self.training_rewards = self.trainer.train(
+            num_episodes=self.profile.episodes, evolve=True)
+        
+        # 保存组合特定模型
+        self._save_combination_model()
+        
+        return self.training_rewards
+    
+    def evaluate_against_real(self, real_prices: np.ndarray) -> Dict:
+        """用实盘数据评估此组合的预测效果"""
+        sim_prices = np.array(self.trainer.env.orderbook.price_history)
+        
+        # 多维度评估
+        result = {}
+        for horizon in [1, 3, 5]:
+            result[f'{horizon}d'] = self.evaluator.evaluate(
+                sim_prices, real_prices, horizon)
+        
+        # 按专长计算综合得分
+        result['composite'] = self.evaluator.compute_composite_score(
+            result.get('3d', {}), self.profile.specialty)
+        
+        self.evaluation_result = result
+        return result
+    
+    def _save_combination_model(self):
+        """保存组合特定的模型"""
+        save_dir = ADV_MODEL_DIR / "combinations"
+        save_dir.mkdir(parents=True, exist_ok=True)
+        
+        model_data = {
+            'profile': {
+                'name': self.profile.name,
+                'name_en': self.profile.name_en,
+                'prediction_horizon': self.profile.prediction_horizon,
+                'specialty': self.profile.specialty,
+            },
+            'dealer': self.trainer.dealer.policy.state_dict(),
+            'retailers': [r.policy.state_dict() for r in self.trainer.retailers],
+            'hotmoney': [h.policy.state_dict() for h in self.trainer.hotmoney_agents],
+        }
+        
+        torch.save(model_data, save_dir / f"{self.profile.name_en}.pt")
+        logger.info(f"  组合模型已保存: {save_dir / self.profile.name_en}.pt")
+
+
+class MultiCombinationArena:
+    """
+    多组合进化竞技场 (v3.0核心)
+    
+    核心思想:
+      - 同时训练多个不同参数的庄散组合
+      - 每个组合有自己的专长（1日/3日/5日预测, 涨/跌方向）
+      - 多元化选拔：谁在哪里干得好就选拔那个
+      - 一切以最终模拟效果为准
+    
+    工作流:
+      Phase A: 训练所有组合 (各自独立训练)
+      Phase B: 多维度评估 (用实盘数据检验每个组合)
+      Phase C: 选拔专家 (每个维度选最好的)
+      Phase D: 生成集成推荐 (按场景调用不同专家)
+    """
+    
+    def __init__(self, profiles: List[CombinationProfile] = None,
+                 price_benchmark: np.ndarray = None,
+                 benchmark_source: str = "",
+                 real_eval_prices: np.ndarray = None):
+        self.profiles = profiles or PRESET_PROFILES
+        self.price_benchmark = price_benchmark
+        self.benchmark_source = benchmark_source
+        self.real_eval_prices = real_eval_prices  # 实盘评估价格序列
+        
+        self.combination_trainers: Dict[str, CombinationTrainer] = {}
+        self.evaluation_results: Dict[str, Dict] = {}
+        self.specialist_ranking: Dict[str, List] = {}
+        self.ensemble_recommendation: Dict = {}
+    
+    def run_all(self):
+        """运行完整的多组合竞技流程"""
+        logger.info(f"\n{'='*60}")
+        logger.info(f"  ★ 多组合进化竞技场 v3.0 启动")
+        logger.info(f"  组合数: {len(self.profiles)}")
+        logger.info(f"  基准线来源: {self.benchmark_source or '纯模拟'}")
+        logger.info(f"{'='*60}")
+        
+        # Phase A: 训练
+        self._train_all()
+        
+        # Phase B: 评估
+        self._evaluate_all()
+        
+        # Phase C: 选拔
+        self._select_specialists()
+        
+        # Phase D: 集成推荐
+        self._generate_ensemble_recommendation()
+        
+        # 保存结果
+        self._save_arena_results()
+        
+        return self.ensemble_recommendation
+    
+    def _train_all(self):
+        """Phase A: 训练所有组合"""
+        logger.info(f"\n{'='*60}")
+        logger.info(f"  Phase A: 训练所有组合 ({len(self.profiles)}个)")
+        logger.info(f"{'='*60}")
+        
+        for i, profile in enumerate(self.profiles):
+            logger.info(f"\n  [{i+1}/{len(self.profiles)}] 训练组合: {profile.name}")
+            
+            trainer = CombinationTrainer(
+                profile, 
+                price_benchmark=self.price_benchmark,
+                benchmark_source=self.benchmark_source
+            )
+            trainer.train()
+            self.combination_trainers[profile.name_en] = trainer
+    
+    def _evaluate_all(self):
+        """Phase B: 多维度评估所有组合"""
+        logger.info(f"\n{'='*60}")
+        logger.info(f"  Phase B: 多维度评估")
+        logger.info(f"{'='*60}")
+        
+        if self.real_eval_prices is None:
+            logger.warning("  无实盘评估数据，使用模拟价格自评")
+            # 用模拟价格做自评 (不如实盘可靠但好歹有个数)
+            for name_en, trainer in self.combination_trainers.items():
+                sim_prices = np.array(trainer.trainer.env.orderbook.price_history)
+                self.evaluation_results[name_en] = trainer.evaluator.self_evaluate(sim_prices)
+        else:
+            for name_en, trainer in self.combination_trainers.items():
+                result = trainer.evaluate_against_real(self.real_eval_prices)
+                self.evaluation_results[name_en] = result
+    
+    def _select_specialists(self):
+        """Phase C: 按专长维度选拔最佳组合"""
+        logger.info(f"\n{'='*60}")
+        logger.info(f"  Phase C: 选拔专家")
+        logger.info(f"{'='*60}")
+        
+        # 各维度的排名
+        dimensions = ['direction_1d', 'direction_3d', 'direction_5d',
+                      'direction_up', 'direction_down',
+                      'volatility_match', 'stability', 'composite']
+        
+        for dim in dimensions:
+            ranking = []
+            for name_en, eval_result in self.evaluation_results.items():
+                score = self._extract_dimension_score(eval_result, dim)
+                profile = next((p for p in self.profiles if p.name_en == name_en), None)
+                if profile:
+                    ranking.append({
+                        'name': profile.name,
+                        'name_en': name_en,
+                        'score': score,
+                        'specialty': profile.specialty,
+                        'horizon': profile.prediction_horizon,
+                    })
+            
+            ranking.sort(key=lambda x: x['score'], reverse=True)
+            self.specialist_ranking[dim] = ranking
+            
+            if ranking:
+                best = ranking[0]
+                logger.info(f"  {dim}: 🏆 {best['name']} ({best['score']:.3f})")
+        
+        # 输出最终选拔结果
+        logger.info(f"\n  ★ 专家选拔结果:")
+        for dim, ranking in self.specialist_ranking.items():
+            if ranking:
+                best = ranking[0]
+                logger.info(f"    {dim} → {best['name']} (score={best['score']:.3f})")
+    
+    def _extract_dimension_score(self, eval_result: Dict, dim: str) -> float:
+        """从评估结果中提取指定维度的得分"""
+        # direction_1d/3d/5d
+        if dim.startswith('direction_'):
+            horizon = dim.replace('direction_', '')
+            key = f'{horizon}d'
+            if key in eval_result:
+                return eval_result[key].get('direction_accuracy', 0.0)
+            return 0.0
+        
+        # direction_up / direction_down
+        if dim == 'direction_up':
+            for key in ['1d', '3d', '5d']:
+                if key in eval_result:
+                    return eval_result[key].get('direction_up_accuracy', 0.5)
+            return 0.5
+        if dim == 'direction_down':
+            for key in ['1d', '3d', '5d']:
+                if key in eval_result:
+                    return eval_result[key].get('direction_down_accuracy', 0.5)
+            return 0.5
+        
+        # volatility_match
+        if dim == 'volatility_match':
+            for key in ['1d', '3d', '5d']:
+                if key in eval_result:
+                    return eval_result[key].get('volatility_match', 0.0)
+            return 0.0
+        
+        # stability (使用DTW距离的倒数)
+        if dim == 'stability':
+            for key in ['1d', '3d', '5d']:
+                if key in eval_result:
+                    dtw = eval_result[key].get('dtw_normalized', 1.0)
+                    return max(0.0, 1.0 - dtw)
+            return 0.0
+        
+        # composite
+        if dim == 'composite':
+            return eval_result.get('composite', 0.0)
+        
+        return eval_result.get(dim, 0.0)
+    
+    def _generate_ensemble_recommendation(self):
+        """Phase D: 生成集成推荐"""
+        logger.info(f"\n{'='*60}")
+        logger.info(f"  Phase D: 集成推荐")
+        logger.info(f"{'='*60}")
+        
+        recommendation = {
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'n_combinations': len(self.profiles),
+            'specialists': {},
+            'next_actions': {},
+        }
+        
+        # 每个维度选最佳
+        for dim, ranking in self.specialist_ranking.items():
+            if ranking:
+                best = ranking[0]
+                recommendation['specialists'][dim] = {
+                    'name': best['name'],
+                    'name_en': best['name_en'],
+                    'score': best['score'],
+                }
+        
+        # 根据各维度最佳组合，预测接下来几天的行动
+        for name_en, trainer in self.combination_trainers.items():
+            profile = trainer.profile
+            # 提取庄家下一步行为
+            dealer_next = self._predict_dealer_next_action(trainer)
+            recommendation['next_actions'][name_en] = {
+                'name': profile.name,
+                'specialty': profile.specialty,
+                'horizon': profile.prediction_horizon,
+                'dealer_next': dealer_next,
+            }
+        
+        self.ensemble_recommendation = recommendation
+        logger.info(f"  集成推荐已生成，覆盖{len(recommendation['specialists'])}个维度")
+    
+    def _predict_dealer_next_action(self, trainer: CombinationTrainer) -> Dict:
+        """预测庄家下一步行动 (基于训练好的策略)"""
+        # 使用训练好的庄家策略，在当前市场状态下推理
+        dealer = trainer.trainer.dealer
+        # 构造当前状态 (简化: 用最后一个训练episode的最终状态)
+        last_state = trainer.trainer.env.orderbook.get_state()
+        
+        obs = dealer.observe(last_state)
+        obs_t = torch.FloatTensor(obs).unsqueeze(0)
+        
+        with torch.no_grad():
+            action, _, value = dealer.policy.act(obs_t, deterministic=True)
+        
+        action_idx = action.item() if hasattr(action, 'item') else int(action)
+        action_names = ['accumulate', 'hold', 'pump', 'distribute', 'shake']
+        action_name = action_names[min(action_idx, len(action_names)-1)]
+        
+        return {
+            'action': action_name,
+            'phase': dealer.phase,
+            'info_power': dealer.info_power,
+            'shake_intensity': dealer.shake_intensity,
+            'holdings_ratio': dealer.holdings * last_state.get('mid_price', 10.0) / dealer.initial_capital,
+        }
+    
+    def _save_arena_results(self):
+        """保存竞技场结果"""
+        results = {
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'n_combinations': len(self.profiles),
+            'profiles': [
+                {
+                    'name': p.name, 'name_en': p.name_en,
+                    'specialty': p.specialty, 'horizon': p.prediction_horizon,
+                }
+                for p in self.profiles
+            ],
+            'evaluation_results': {},
+            'specialist_ranking': {},
+            'ensemble_recommendation': self.ensemble_recommendation,
+        }
+        
+        # 简化评估结果 (只保存可序列化的部分)
+        for k, eval_r in self.evaluation_results.items():
+            simple_r = {}
+            for dim, v in eval_r.items():
+                if isinstance(v, (int, float, str, bool)):
+                    simple_r[dim] = v
+                elif isinstance(v, dict):
+                    simple_r[dim] = {kk: vv for kk, vv in v.items() 
+                                   if isinstance(vv, (int, float, str, bool))}
+            results['evaluation_results'][k] = simple_r
+        
+        # 简化专家排名
+        for dim, ranking in self.specialist_ranking.items():
+            results['specialist_ranking'][dim] = [
+                {'name': r['name'], 'score': r['score']} 
+                for r in ranking[:3]
+            ]
+        
+        # 保存JSON
+        results_file = RESULTS_DIR / "arena_results.json"
+        results_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(results_file, 'w', encoding='utf-8') as f:
+            json.dump(results, f, ensure_ascii=False, indent=2, default=str)
+        logger.info(f"竞技场结果已保存: {results_file}")
+
+
+# ============================================================
 #  命令行入口
 # ============================================================
 def main():
-    parser = argparse.ArgumentParser(description="庄散对抗环境 (v2.2 基准线版)")
+    parser = argparse.ArgumentParser(description="庄散对抗环境 (v3.0 多组合竞技场)")
     parser.add_argument("--mode", required=True,
-                        choices=["train", "evaluate", "demo"])
+                        choices=["train", "evaluate", "demo", "arena"])
     parser.add_argument("--episodes", type=int, default=1000)
     parser.add_argument("--evolve", action="store_true")
     parser.add_argument("--model-path", type=str,
@@ -2453,6 +3232,14 @@ def main():
                         help="价格基准线文件路径(.npy), 假数据或实盘数据; 不传则纯模拟")
     parser.add_argument("--benchmark-source", type=str, default="",
                         help="基准线来源标注: fake/real, 仅日志用")
+    
+    # ★ v3.0: 竞技场参数
+    parser.add_argument("--arena-combos", type=int, default=0,
+                        help="竞技场组合数(0=全部8个预设, N=前N个)")
+    parser.add_argument("--arena-profile", type=str, default="",
+                        help="指定组合名称(英文), 如short_momentum")
+    parser.add_argument("--real-eval-data", type=str, default="",
+                        help="实盘评估数据路径(.npy或CSV)")
     
     args = parser.parse_args()
     cfg = AdversarialConfig(num_episodes=args.episodes)
@@ -2502,6 +3289,52 @@ def main():
             bar = "█" * int(abs(p - cfg.initial_price) / cfg.initial_price * 1000)
             sign = "+" if p > cfg.initial_price else "-"
             logger.info(f"  {i:3d} | {p:.2f} {sign}{bar}")
+    
+    elif args.mode == "arena":
+        # ★ v3.0: 多组合竞技场模式
+        import pandas as pd
+        
+        # 选择要运行的组合
+        if args.arena_profile:
+            profiles = [p for p in PRESET_PROFILES if p.name_en == args.arena_profile]
+            if not profiles:
+                logger.error(f"未找到组合: {args.arena_profile}")
+                logger.info(f"可用组合: {[p.name_en for p in PRESET_PROFILES]}")
+                return
+        elif args.arena_combos > 0:
+            profiles = PRESET_PROFILES[:args.arena_combos]
+        else:
+            profiles = PRESET_PROFILES
+        
+        # 加载实盘评估数据
+        real_eval_prices = None
+        if args.real_eval_data:
+            eval_path = Path(args.real_eval_data)
+            if not eval_path.exists():
+                eval_path = DATA_DIR / args.real_eval_data
+            if eval_path.exists():
+                if eval_path.suffix == '.npy':
+                    real_eval_prices = np.load(str(eval_path))
+                elif eval_path.suffix == '.csv':
+                    df = pd.read_csv(eval_path)
+                    if 'close' in df.columns:
+                        real_eval_prices = df['close'].values.astype(np.float64)
+                    elif 'price' in df.columns:
+                        real_eval_prices = df['price'].values.astype(np.float64)
+                logger.info(f"★ 加载实盘评估数据: {eval_path} | 形状={real_eval_prices.shape if real_eval_prices is not None else 'None'}")
+            else:
+                logger.warning(f"★ 实盘评估数据不存在: {args.real_eval_data}")
+        
+        # 创建并运行竞技场
+        arena = MultiCombinationArena(
+            profiles=profiles,
+            price_benchmark=price_benchmark,
+            benchmark_source=args.benchmark_source,
+            real_eval_prices=real_eval_prices,
+        )
+        arena.run_all()
+        
+        logger.info(f"\n★ 竞技场完成! 结果已保存到: {RESULTS_DIR / 'arena_results.json'}")
 
 if __name__ == "__main__":
     main()
