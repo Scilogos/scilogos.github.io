@@ -3222,7 +3222,7 @@ class MultiCombinationArena:
 def main():
     parser = argparse.ArgumentParser(description="庄散对抗环境 (v3.0 多组合竞技场)")
     parser.add_argument("--mode", required=True,
-                        choices=["train", "evaluate", "demo", "arena"])
+                        choices=["train", "evaluate", "demo", "arena", "resume"])
     parser.add_argument("--episodes", type=int, default=1000)
     parser.add_argument("--evolve", action="store_true")
     parser.add_argument("--model-path", type=str,
@@ -3335,6 +3335,87 @@ def main():
         arena.run_all()
         
         logger.info(f"\n★ 竞技场完成! 结果已保存到: {RESULTS_DIR / 'arena_results.json'}")
+    
+    elif args.mode == "resume":
+        # ★ v2.2: 早间恢复模式 - 从检查点恢复+加载校准+热身
+        resume_file = RESULTS_DIR / "morning_resume.json"
+        if not resume_file.exists():
+            logger.error("未找到早间恢复计划 (morning_resume.json)")
+            logger.info("请先运行: python feedback_processor.py --mode daily")
+            return
+        
+        with open(resume_file, 'r', encoding='utf-8') as f:
+            resume_plan = json.load(f)
+        
+        logger.info(f"★ 早间恢复模式")
+        logger.info(f"  检查点时间: {resume_plan.get('timestamp', 'N/A')}")
+        logger.info(f"  已训练episodes: {resume_plan.get('episodes_done', 0)}")
+        logger.info(f"  热身episodes: {resume_plan.get('warmup_episodes', 50)}")
+        
+        # 1. 加载基准线
+        benchmark_path = resume_plan.get('benchmark_path', '')
+        benchmark_source = resume_plan.get('benchmark_source', '')
+        resume_benchmark = None
+        if benchmark_path and Path(benchmark_path).exists():
+            resume_benchmark = np.load(benchmark_path)
+            logger.info(f"  基准线: {benchmark_path} | 形状={resume_benchmark.shape} | 来源={benchmark_source}")
+        else:
+            logger.info(f"  基准线: 无 (纯模拟模式)")
+        
+        # 2. 创建训练器 (会自动加载calibration_params.json)
+        trainer = AdversarialTrainer(cfg,
+            price_benchmark=resume_benchmark,
+            benchmark_source=benchmark_source)
+        
+        # 3. 加载模型权重
+        model_path = resume_plan.get('model_path', str(ADV_MODEL_DIR / "adversarial_model.pt"))
+        if Path(model_path).exists():
+            ckpt = torch.load(model_path, map_location='cpu', weights_only=False)
+            trainer.dealer.policy.load_state_dict(ckpt['dealer'])
+            for i, r in enumerate(trainer.retailers):
+                if i < len(ckpt['retailers']):
+                    r.policy.load_state_dict(ckpt['retailers'][i])
+            for i, h in enumerate(trainer.hotmoney_agents):
+                if 'hotmoney' in ckpt and i < len(ckpt['hotmoney']):
+                    h.policy.load_state_dict(ckpt['hotmoney'][i])
+            logger.info(f"  模型权重已加载: {model_path}")
+        else:
+            logger.warning(f"  模型文件不存在: {model_path}，从头热身")
+        
+        # 4. 恢复训练器状态
+        ts = resume_plan.get('trainer_state')
+        if ts:
+            if 'generation' in ts:
+                trainer.generation = ts['generation']
+            if 'dealer_info_power' in ts:
+                trainer.dealer.info_power = ts['dealer_info_power']
+            if 'dealer_shake_intensity' in ts:
+                trainer.dealer.shake_intensity = ts['dealer_shake_intensity']
+            if 'dealer_puppet_capital' in ts:
+                trainer.dealer.puppet_capital = ts['dealer_puppet_capital']
+            if 'cal_reward_weight' in ts:
+                trainer._cal_reward_weight = ts['cal_reward_weight']
+            logger.info(f"  训练器状态已恢复: generation={trainer.generation}")
+        
+        # 5. 快速热身 (用新校准参数+新基准线跑几轮，让模型适应变化)
+        warmup_eps = resume_plan.get('warmup_episodes', 50)
+        logger.info(f"\n{'─'*40}")
+        logger.info(f"  热身开始: {warmup_eps} episodes")
+        logger.info(f"{'─'*40}")
+        trainer.train(num_episodes=warmup_eps, evolve=resume_plan.get('evolve', True))
+        
+        # 6. 热身完成，输出当前状态
+        logger.info(f"\n{'★'*40}")
+        logger.info(f"  热身完成! 模型已就绪")
+        logger.info(f"  庄家: info_power={trainer.dealer.info_power:.2f}, shake={trainer.dealer.shake_intensity:.3f}")
+        logger.info(f"  基准线: {benchmark_source or '纯模拟'}, {len(resume_benchmark) if resume_benchmark is not None else 0}条")
+        logger.info(f"  世代: {trainer.generation}")
+        logger.info(f"")
+        logger.info(f"  现在可以正常使用:")
+        logger.info(f"    python adversarial_env.py --mode evaluate --episodes 100")
+        logger.info(f"    python adversarial_env.py --mode arena --arena-combos 2")
+        logger.info(f"    python stock_interpreter.py --mode analyze")
+        logger.info(f"{'★'*40}")
 
 if __name__ == "__main__":
     main()
