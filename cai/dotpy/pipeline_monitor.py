@@ -943,13 +943,100 @@ def check_interpreter(verbose=False):
     return results
 
 
+def check_feedback(verbose=False):
+    """★ v2.0: 检查日更反馈系统状态"""
+    results = []
+    
+    # 1. 早间恢复计划
+    r = CheckResult("早间恢复计划", "反馈系统")
+    resume_file = RESULTS_DIR / "morning_resume.json"
+    if resume_file.exists():
+        with open(resume_file, 'r', encoding='utf-8') as f:
+            plan = json.load(f)
+        r.metric("生成时间", plan.get('timestamp', 'N/A'))
+        r.metric("热身episodes", str(plan.get('warmup_episodes', 50)))
+        r.metric("基准线来源", plan.get('benchmark_source', '无'))
+        r.metric("校准变更", "有" if plan.get('calibration', {}).get('adjustments') else "无")
+        r.pass_("早间恢复计划就绪")
+    else:
+        r.skip("无恢复计划 (运行 feedback_processor.py --mode daily 生成)")
+    results.append(r)
+    
+    # 2. 校准参数
+    r = CheckResult("校准参数", "反馈系统")
+    cal_file = RESULTS_DIR / "calibration_params.json"
+    if cal_file.exists():
+        with open(cal_file, 'r', encoding='utf-8') as f:
+            cal = json.load(f)
+        adj = cal.get('adjustments', {})
+        changes = []
+        for cat, params in adj.items():
+            for k, v in params.items():
+                if 'delta' in k and v != 0:
+                    changes.append(f"{cat}.{k}={v:+}")
+        if changes:
+            r.metric("参数变更", "; ".join(changes))
+            r.pass_(f"校准参数已生效 ({len(changes)}项变更)")
+        else:
+            r.pass_("校准参数无变更 (模型参数维持)")
+        if cal.get('need_retrain'):
+            r.warn(f"建议重训: {cal.get('retrain_reason', '')}")
+    else:
+        r.skip("无校准参数 (首次运行或未执行反馈)")
+    results.append(r)
+    
+    # 3. 检查点
+    r = CheckResult("训练检查点", "反馈系统")
+    ckpt_meta = ADV_MODEL_DIR / "checkpoint" / "checkpoint_meta.json"
+    if ckpt_meta.exists():
+        with open(ckpt_meta, 'r', encoding='utf-8') as f:
+            meta = json.load(f)
+        r.metric("保存时间", meta.get('timestamp', 'N/A'))
+        r.metric("已训练episodes", str(meta.get('episodes_done', 0)))
+        r.metric("基准线来源", meta.get('benchmark_source', 'N/A'))
+        r.pass_("检查点存在，可恢复")
+    else:
+        r.skip("无检查点 (运行 feedback_processor.py --mode daily 保存)")
+    results.append(r)
+    
+    # 4. 增量更新日志
+    r = CheckResult("数据增量更新", "反馈系统")
+    update_log = DATA_DIR / "incremental_update_log.json"
+    if update_log.exists():
+        with open(update_log, 'r', encoding='utf-8') as f:
+            log = json.load(f)
+        r.metric("上次更新", log.get('timestamp', 'N/A'))
+        r.metric("更新/跳过/失败", f"{log.get('updated',0)}/{log.get('skipped',0)}/{log.get('failed',0)}")
+        if log.get('failed', 0) > 5:
+            r.warn(f"增量更新有{log['failed']}只失败")
+        else:
+            r.pass_("增量更新日志正常")
+    else:
+        r.skip("无增量更新日志 (首次运行或未执行日更)")
+    results.append(r)
+    
+    # 5. 日更日志
+    r = CheckResult("日更日志", "反馈系统")
+    daily_log = RESULTS_DIR / "daily_routine_log.json"
+    if daily_log.exists():
+        with open(daily_log, 'r', encoding='utf-8') as f:
+            log = json.load(f)
+        r.metric("上次日更", log.get('data_update', {}).get('timestamp', 'N/A'))
+        r.pass_("日更日志存在")
+    else:
+        r.skip("无日更日志")
+    results.append(r)
+    
+    return results
+
+
 # ============================================================
 # 主入口
 # ============================================================
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="管线监察脚本 (v3.0)")
-    parser.add_argument("--focus", choices=["all", "data", "generator", "adversarial", "interpreter", "arena"],
+    parser.add_argument("--focus", choices=["all", "data", "generator", "adversarial", "interpreter", "arena", "feedback"],
                         default="all", help="检查重点")
     parser.add_argument("--verbose", action="store_true", help="详细输出")
     parser.add_argument("--quick", action="store_true", help="快速模式(跳过耗时检查)")
@@ -984,6 +1071,10 @@ def main():
     if args.focus in ("all", "arena"):
         print("\n📋 Phase 5: 多组合竞技场检查 (★ v3.0)")
         all_results.extend(check_arena(args.verbose))
+    
+    if args.focus in ("all", "feedback"):
+        print("\n📋 Phase 6: 日更反馈系统检查 (★ v2.0)")
+        all_results.extend(check_feedback(args.verbose))
     
     # 输出结果
     print()
