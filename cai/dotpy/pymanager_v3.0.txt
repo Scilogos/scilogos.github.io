@@ -1,0 +1,159 @@
+================================================================
+  对抗学习量化系统 - Phase Manager v3.0
+  多组合进化竞技场操作指南
+================================================================
+
+## 版本历史
+- v2.2: 价格基准线，实盘校准
+- v3.0: 多组合进化竞技场，8种庄散组合，多维度评估
+
+================================================================
+  Phase 3 多组合竞技场 (★ v3.0 新增)
+================================================================
+
+### 竞技场概述
+
+多组合进化竞技场同时训练8种不同参数的庄散组合:
+- 短线追涨 (short_momentum): 1日预测，专长追涨
+- 短线杀跌 (short_panic): 1日预测，专长杀跌
+- 中线吸筹 (mid_accumulate): 3日预测，专长稳健
+- 中线拉抬 (mid_pump): 3日预测，专长追涨
+- 长线价值 (long_value): 5日预测，均衡全能
+- 技术波段 (tech_swing): 3日预测，专长波动
+- 暴力震仓 (aggressive_shake): 1日预测，专长杀跌
+- 均衡全能 (balanced): 5日预测，均衡全能
+
+### 评估维度
+- direction_1d: 1日方向预测准确率
+- direction_3d: 3日方向预测准确率
+- direction_5d: 5日方向预测准确率
+- direction_up: 上涨预测准确率
+- direction_down: 下跌预测准确率
+- volatility_match: 波动率匹配度
+- stability: 价格稳定性
+- composite: 综合评分
+
+================================================================
+  快速开始
+================================================================
+
+### 运行全部8个预设组合（耗时较长，建议分开跑）
+python adversarial_env.py --mode arena
+
+### 只跑前4个组合试试
+python adversarial_env.py --mode arena --arena-combos 4
+
+### 只跑一个指定组合
+python adversarial_env.py --mode arena --arena-profile short_momentum
+
+### 带实盘评估数据的竞技
+python adversarial_env.py --mode arena --price-data "..\adversarial data\generated_1000.npy" --benchmark-source fake --real-eval-data "..\stockdata\some_stock_daily.csv"
+
+================================================================
+  进阶用法
+================================================================
+
+### 查看可用组合名称
+python adversarial_env.py --mode arena --arena-profile help
+
+### 使用自定义基准线运行
+python adversarial_env.py --mode arena --price-data generated_1000.npy --benchmark-source fake
+
+### 带实盘数据评估
+python adversarial_env.py --mode arena --real-eval-data "path/to/real_prices.csv"
+
+================================================================
+  解读竞技场结果
+================================================================
+
+### 查看竞技场报告
+python stock_interpreter.py --mode arena-report
+
+### 指定竞技场结果文件
+python stock_interpreter.py --mode arena-report --arena-results "results\arena_results.json"
+
+================================================================
+  监察竞技场状态
+================================================================
+
+### 检查竞技场状态
+python pipeline_monitor.py --focus arena
+
+### 详细输出
+python pipeline_monitor.py --focus arena --verbose
+
+### 全量检查（包括竞技场）
+python pipeline_monitor.py --focus all
+
+================================================================
+  完整工作流
+================================================================
+
+1. 生成训练数据（如果需要）
+   python stock_generator.py --mode generate
+
+2. 运行多组合竞技场
+   python adversarial_env.py --mode arena
+
+3. 查看竞技场报告
+   python stock_interpreter.py --mode arena-report
+
+4. 监察状态
+   python pipeline_monitor.py --focus arena
+
+================================================================
+  竞技场输出文件
+================================================================
+
+- results/arena_results.json: 竞技场完整结果
+- results/arena_report.txt: 竞技场报告文本
+- models/adversarial/combinations/*.pt: 各组合模型
+
+================================================================
+  理解竞技场结果
+================================================================
+
+### 专家选拔
+
+每个维度会选拔表现最好的组合作为"专家":
+- 1日方向预测专家: 最擅长预测明日涨跌
+- 3日方向预测专家: 最擅长预测3日内涨跌
+- 5日方向预测专家: 最擅长预测5日内涨跌
+- 波动率匹配专家: 最擅长匹配市场波动特征
+- 综合专家: 各项指标综合最佳
+
+### 集成推荐
+
+集成推荐告诉你在不同场景下应该使用哪个组合:
+- 短期追涨: 使用"短线追涨"或"中线拉抬"
+- 短期杀跌: 使用"短线杀跌"或"暴力震仓"
+- 中期布局: 使用"中线吸筹"或"技术波段"
+- 长期持有: 使用"长线价值"或"均衡全能"
+
+### 庄家行动预测
+
+每个组合的庄家都有不同的行为模式:
+- accumulate: 吸筹（暗中买入）
+- hold: 持仓（观望）
+- pump: 拉抬（拉升股价）
+- distribute: 派发（高位出货）
+- shake: 震仓（洗盘）
+
+================================================================
+  故障排除
+================================================================
+
+Q: 竞技场运行很慢怎么办？
+A: 使用 --arena-combos 4 只运行前4个组合，或使用 --arena-profile 
+   只运行单个组合测试。
+
+Q: 实盘评估数据格式是什么？
+A: 支持 .npy (numpy数组) 或 .csv (包含 close 或 price 列)
+
+Q: 竞技场结果怎么看？
+A: 运行 stock_interpreter.py --mode arena-report 生成格式化报告
+
+Q: 某个组合表现很差怎么办？
+A: 可能是参数不适合你的数据，可以调整 CombinationProfile 中的参数后重试
+
+================================================================
