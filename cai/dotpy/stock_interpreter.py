@@ -712,17 +712,262 @@ class StockInterpreter:
         
         return "\n".join(lines)
 
+
+# ============================================================
+#  ★ v3.0: 多组合对比解读器
+# ============================================================
+class MultiCombinationInterpreter:
+    """多组合对比解读器 - 解读多组合竞技场结果"""
+    
+    def __init__(self, data_dir: Path = DATA_DIR):
+        self.data_dir = data_dir
+        self.base_interpreter = StockInterpreter(InterpreterConfig(), data_dir)
+    
+    def compare_combinations(self, arena_results: Dict) -> Dict:
+        """
+        对比多个组合的优劣势
+        
+        Args:
+            arena_results: MultiCombinationArena保存的结果
+            
+        Returns:
+            对比分析结果
+        """
+        profiles = arena_results.get('profiles', [])
+        eval_results = arena_results.get('evaluation_results', {})
+        rankings = arena_results.get('specialist_ranking', {})
+        
+        comparison = {
+            'summary': {},
+            'by_horizon': {},
+            'by_specialty': {},
+            'recommendations': [],
+        }
+        
+        # 按预测周期分组
+        for profile in profiles:
+            name_en = profile['name_en']
+            horizon = profile['horizon']
+            specialty = profile['specialty']
+            eval_data = eval_results.get(name_en, {})
+            
+            # 提取各维度得分
+            scores = {}
+            for dim in ['direction_1d', 'direction_3d', 'direction_5d']:
+                if dim in rankings:
+                    for r in rankings[dim]:
+                        if r.get('name') == profile['name']:
+                            scores[dim] = r.get('score', 0)
+                            break
+            
+            scores['composite'] = eval_data.get('composite', 0)
+            
+            # 按周期分组
+            if horizon not in comparison['by_horizon']:
+                comparison['by_horizon'][horizon] = []
+            comparison['by_horizon'][horizon].append({
+                'name': profile['name'],
+                'name_en': name_en,
+                'specialty': specialty,
+                'scores': scores,
+            })
+            
+            # 按专长分组
+            if specialty not in comparison['by_specialty']:
+                comparison['by_specialty'][specialty] = []
+            comparison['by_specialty'][specialty].append({
+                'name': profile['name'],
+                'horizon': horizon,
+                'scores': scores,
+            })
+        
+        # 生成推荐
+        comparison['recommendations'] = self._generate_recommendations(comparison, rankings)
+        
+        return comparison
+    
+    def _generate_recommendations(self, comparison: Dict, rankings: Dict) -> List[Dict]:
+        """生成使用建议"""
+        recs = []
+        
+        # 每个维度选最佳
+        for dim in ['direction_1d', 'direction_3d', 'direction_5d', 'composite']:
+            if dim in rankings and rankings[dim]:
+                best = rankings[dim][0]
+                horizon_map = {'direction_1d': '1日', 'direction_3d': '3日', 
+                              'direction_5d': '5日', 'composite': '综合'}
+                recs.append({
+                    'dimension': dim,
+                    'dimension_cn': horizon_map.get(dim, dim),
+                    'best_combination': best['name'],
+                    'score': best['score'],
+                    'recommendation': f"预测{horizon_map.get(dim, dim)}行情时推荐使用【{best['name']}】组合",
+                })
+        
+        return recs
+    
+    def generate_specialist_report(self, specialist_ranking: Dict) -> str:
+        """
+        生成专家选拔报告
+        
+        Args:
+            specialist_ranking: 各维度专家排名
+            
+        Returns:
+            格式化报告文本
+        """
+        lines = []
+        lines.append("=" * 60)
+        lines.append("  多组合进化竞技场 - 专家选拔报告")
+        lines.append("=" * 60)
+        lines.append("")
+        
+        # 维度中文映射
+        dim_cn = {
+            'direction_1d': '1日方向预测',
+            'direction_3d': '3日方向预测',
+            'direction_5d': '5日方向预测',
+            'direction_up': '上涨预测',
+            'direction_down': '下跌预测',
+            'volatility_match': '波动率匹配',
+            'stability': '价格稳定性',
+            'composite': '综合评分',
+        }
+        
+        for dim, ranking in specialist_ranking.items():
+            dim_name = dim_cn.get(dim, dim)
+            lines.append(f"【{dim_name}】")
+            
+            for i, entry in enumerate(ranking[:3]):
+                medal = ['🥇', '🥈', '🥉'][i] if i < 3 else f"#{i+1}"
+                lines.append(f"  {medal} {entry['name']} (得分: {entry.get('score', 0):.3f})")
+            
+            if ranking:
+                lines.append(f"  → 推荐: 【{ranking[0]['name']}】\n")
+        
+        lines.append("=" * 60)
+        return "\n".join(lines)
+    
+    def generate_action_forecast(self, next_actions: Dict,
+                                   current_market_data: Dict = None) -> str:
+        """
+        生成各组合庄家下一步行动预测
+        
+        Args:
+            next_actions: 各组合的庄家下一步行动
+            current_market_data: 当前市场数据 (可选)
+            
+        Returns:
+            格式化预测文本
+        """
+        lines = []
+        lines.append("=" * 60)
+        lines.append("  庄家下一步行动预测")
+        lines.append("=" * 60)
+        lines.append("")
+        
+        if current_market_data:
+            lines.append(f"当前市场状态: {current_market_data.get('regime', 'unknown')}")
+            lines.append("")
+        
+        # 按专长分类
+        by_specialty = {}
+        for name_en, action in next_actions.items():
+            specialty = action.get('specialty', 'unknown')
+            if specialty not in by_specialty:
+                by_specialty[specialty] = []
+            by_specialty[specialty].append(action)
+        
+        # 庄家行为中文映射
+        action_cn = {
+            'accumulate': '吸筹',
+            'hold': '持仓',
+            'pump': '拉抬',
+            'distribute': '派发',
+            'shake': '震仓',
+        }
+        
+        specialty_cn = {
+            'up': '追涨型',
+            'down': '杀跌型',
+            'volatile': '波动型',
+            'stable': '稳健型',
+            'allround': '全能型',
+        }
+        
+        for specialty, actions in by_specialty.items():
+            lines.append(f"【{specialty_cn.get(specialty, specialty)}组合】")
+            for action in actions:
+                dealer_action = action.get('dealer_next', {})
+                act_name = dealer_action.get('action', 'unknown')
+                act_cn = action_cn.get(act_name, act_name)
+                holdings = dealer_action.get('holdings_ratio', 0)
+                
+                lines.append(f"  • {action['name']}: {act_cn} (持仓比例: {holdings:.1%})")
+            lines.append("")
+        
+        lines.append("=" * 60)
+        return "\n".join(lines)
+    
+    def generate_full_arena_report(self, arena_results: Dict) -> str:
+        """
+        生成完整的竞技场报告
+        
+        Args:
+            arena_results: 竞技场结果
+            
+        Returns:
+            完整报告文本
+        """
+        lines = []
+        lines.append("=" * 70)
+        lines.append("  ★ 多组合进化竞技场 v3.0 - 完整报告")
+        lines.append("=" * 70)
+        lines.append("")
+        
+        # 基本信息
+        lines.append(f"生成时间: {arena_results.get('timestamp', 'N/A')}")
+        lines.append(f"组合数量: {arena_results.get('n_combinations', 0)}")
+        lines.append("")
+        
+        # 专家选拔报告
+        specialist_ranking = arena_results.get('specialist_ranking', {})
+        lines.append(self.generate_specialist_report(specialist_ranking))
+        lines.append("")
+        
+        # 庄家行动预测
+        recommendation = arena_results.get('ensemble_recommendation', {})
+        next_actions = recommendation.get('next_actions', {})
+        if next_actions:
+            lines.append(self.generate_action_forecast(next_actions))
+        
+        # 对比分析
+        comparison = self.compare_combinations(arena_results)
+        if comparison.get('recommendations'):
+            lines.append("")
+            lines.append("【使用建议】")
+            for rec in comparison['recommendations']:
+                lines.append(f"  • {rec.get('recommendation', '')}")
+        
+        lines.append("")
+        lines.append("=" * 70)
+        return "\n".join(lines)
+
+
 # ============================================================
 # 命令行入口
 # ============================================================
 def main():
-    parser = argparse.ArgumentParser(description="对抗学习结果解读器")
+    parser = argparse.ArgumentParser(description="对抗学习结果解读器 (v3.0)")
     parser.add_argument("--mode", required=True,
-                        choices=["analyze", "interpret", "report"])
+                        choices=["analyze", "interpret", "report", "arena-report"])
     parser.add_argument("--data-dir", type=str, default=str(DATA_DIR))
     parser.add_argument("--price-file", type=str, default=None,
                         help="价格数据CSV路径")
     parser.add_argument("--output", type=str, default=str(RESULTS_DIR / "interpretation_report.json"))
+    parser.add_argument("--arena-results", type=str, 
+                        default=str(RESULTS_DIR / "arena_results.json"),
+                        help="竞技场结果文件路径")
     
     args = parser.parse_args()
     cfg = InterpreterConfig()
@@ -772,6 +1017,30 @@ def main():
             logger.info(report['summary'])
         else:
             logger.error("无可用数据")
+    
+    elif args.mode == "arena-report":
+        # ★ v3.0: 竞技场报告模式
+        arena_file = Path(args.arena_results)
+        if not arena_file.exists():
+            logger.error(f"竞技场结果文件不存在: {arena_file}")
+            logger.info("请先运行: python adversarial_env.py --mode arena")
+            return
+        
+        with open(arena_file, 'r', encoding='utf-8') as f:
+            arena_results = json.load(f)
+        
+        # 创建多组合解读器
+        multi_interp = MultiCombinationInterpreter(Path(args.data_dir))
+        
+        # 生成完整报告
+        full_report = multi_interp.generate_full_arena_report(arena_results)
+        print(full_report)
+        
+        # 保存报告
+        report_output = RESULTS_DIR / "arena_report.txt"
+        with open(report_output, 'w', encoding='utf-8') as f:
+            f.write(full_report)
+        logger.info(f"\n报告已保存: {report_output}")
 
 if __name__ == "__main__":
     main()
