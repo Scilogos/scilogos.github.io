@@ -455,6 +455,13 @@ class CTimeGAN:
         g_steps_per_d = 3         # D训练时G走3步; D不训练时G走1步
         d_warmup_epochs = 2       # Phase C前2个epoch不训练D, 让E+R+S+G先热身
         
+        # ★ v2.3: 最佳模型保存 + 早停 (防D崩塌后G漂移)
+        best_score = float('inf')
+        best_state = None
+        patience_counter = 0
+        patience_limit = 20       # 连续20轮D-G平衡恶化则早停
+        min_epochs_before_stop = 10  # 至少跑10轮才允许早停
+        
         for epoch in range(self.cfg.phase_c_epochs):
             d_losses, g_losses = [], []
             n_batches = 0
@@ -536,6 +543,55 @@ class CTimeGAN:
                     logger.warning(f"  ⚠ G_loss={avg_g:.2f} 异常偏高，可能梯度爆炸")
                 if avg_d >= 0 and avg_d < 0.01:
                     logger.warning(f"  ⚠ D_loss={avg_d:.4f} 过低，判别器可能过强")
+            
+            # ★ v2.3: 最佳模型保存 + 早停
+            if avg_d >= 0:
+                # D-G平衡度评分: 越小越好
+                # 理想状态: D≈1.0~1.5, G≈0.8~1.2, 差距小
+                balance = abs(avg_d - avg_g) + abs(avg_d - 1.386)  # 1.386=ln4, 理想D值
+                if balance < best_score:
+                    best_score = balance
+                    best_state = {
+                        'embedder': {k: v.clone() for k, v in self.embedder.state_dict().items()},
+                        'recovery': {k: v.clone() for k, v in self.recovery.state_dict().items()},
+                        'supervisor': {k: v.clone() for k, v in self.supervisor.state_dict().items()},
+                        'generator': {k: v.clone() for k, v in self.generator.state_dict().items()},
+                        'discriminator': {k: v.clone() for k, v in self.discriminator.state_dict().items()},
+                        'cond_encoder': {k: v.clone() for k, v in self.cond_encoder.state_dict().items()},
+                    }
+                    patience_counter = 0
+                    if epoch >= min_epochs_before_stop:
+                        logger.info(f"  ★ 最佳模型 @Epoch {epoch+1} | D={avg_d:.4f} G={avg_g:.4f} balance={balance:.4f}")
+                else:
+                    patience_counter += 1
+                
+                # 早停判断
+                if (patience_counter >= patience_limit and 
+                    epoch >= min_epochs_before_stop):
+                    logger.info(f"\n  ⚡ 早停触发 @Epoch {epoch+1} | 连续{patience_limit}轮无改善")
+                    logger.info(f"  最佳balance={best_score:.4f}, 当前balance={balance:.4f}")
+                    break
+            else:
+                # warmup期间不评分，但保存初始状态
+                if best_state is None and epoch == d_warmup_epochs - 1:
+                    best_state = {
+                        'embedder': {k: v.clone() for k, v in self.embedder.state_dict().items()},
+                        'recovery': {k: v.clone() for k, v in self.recovery.state_dict().items()},
+                        'supervisor': {k: v.clone() for k, v in self.supervisor.state_dict().items()},
+                        'generator': {k: v.clone() for k, v in self.generator.state_dict().items()},
+                        'discriminator': {k: v.clone() for k, v in self.discriminator.state_dict().items()},
+                        'cond_encoder': {k: v.clone() for k, v in self.cond_encoder.state_dict().items()},
+                    }
+        
+        # ★ v2.3: 恢复最佳模型 (而不是用崩塌后的最后一轮)
+        if best_state is not None:
+            self.embedder.load_state_dict(best_state['embedder'])
+            self.recovery.load_state_dict(best_state['recovery'])
+            self.supervisor.load_state_dict(best_state['supervisor'])
+            self.generator.load_state_dict(best_state['generator'])
+            self.discriminator.load_state_dict(best_state['discriminator'])
+            self.cond_encoder.load_state_dict(best_state['cond_encoder'])
+            logger.info(f"\n  ★ 已恢复Phase C最佳模型 (balance={best_score:.4f})")
     
     # ── 生成 ──
     @torch.no_grad()
@@ -834,9 +890,11 @@ class Deduplicator:
 def main():
     parser = argparse.ArgumentParser(description="C-TimeGAN 市场生成器")
     parser.add_argument("--mode", required=True,
-                        choices=["train", "validate", "generate"])
+                        choices=["train", "validate", "generate", "retrain-c"])
     parser.add_argument("--data-dir", type=str, default=str(DATA_DIR))
     parser.add_argument("--model-path", type=str, default=str(ADV_MODEL_DIR / "phase_c.pt"))
+    parser.add_argument("--pretrained-path", type=str, default="",
+                        help="retrain-c模式: 加载Phase A+B的预训练模型路径")
     parser.add_argument("--max-stocks", type=int, default=0)
     parser.add_argument("--phase-a-epochs", type=int, default=100)
     parser.add_argument("--phase-b-epochs", type=int, default=100)
@@ -911,6 +969,40 @@ def main():
         out = ADV_DATA_DIR / f"generated_{args.num_samples}.npy"
         np.save(out, fake)
         logger.info(f"生成数据已保存: {out} | 形状{fake.shape}")
+    
+    elif args.mode == "retrain-c":
+        # ★ v2.3: 只重训Phase C (复用已训好的Phase A+B)
+        # 加载数据
+        adapter = DataAdapter(Path(args.data_dir))
+        stocks = adapter.list_stocks(min_length=50)
+        if args.max_stocks > 0:
+            stocks = stocks[:args.max_stocks]
+        
+        logger.info(f"加载 {len(stocks)} 只股票...")
+        all_data, _ = adapter.load_batch(stocks)
+        if len(all_data) == 0:
+            logger.error("无可用数据！")
+            return
+        logger.info(f"数据形状: {all_data.shape}")
+        
+        dataset = TensorDataset(torch.FloatTensor(all_data))
+        loader = DataLoader(dataset, batch_size=cfg.batch_size, shuffle=True, drop_last=True)
+        
+        # 加载预训练模型 (Phase A+B的权重)
+        model = CTimeGAN(cfg, device=args.device)
+        pretrained = args.pretrained_path or str(ADV_MODEL_DIR / "phase_c.pt")
+        if Path(pretrained).exists():
+            model.load(pretrained)
+            logger.info(f"已加载预训练权重: {pretrained}")
+        else:
+            logger.error(f"预训练模型不存在: {pretrained}")
+            return
+        
+        # 只跑Phase C (带v2.3最佳模型保存+早停)
+        history = {'phase_a': [], 'phase_b': [], 'phase_c': []}
+        model._train_phase_c(loader, history)
+        model._save(ADV_MODEL_DIR / "phase_c.pt")
+        logger.info(f"★ Phase C重训完成！模型已保存 (含最佳模型恢复+早停)")
 
 if __name__ == "__main__":
     main()
