@@ -319,19 +319,32 @@ class CTimeGAN:
         logger.info(f"  Phase C: {self.cfg.phase_c_epochs} epochs")
         logger.info("=" * 60)
         
+        # ★ v2.3: 计算训练数据统计量 (用于生成时反归一化)
+        data_stats = None
+        try:
+            all_data = torch.cat([batch[0] for batch in data_loader], dim=0)
+            data_stats = {
+                'mean': all_data.mean(dim=(0, 1)).cpu().numpy().tolist(),
+                'std': all_data.std(dim=(0, 1)).cpu().numpy().tolist(),
+            }
+            logger.info(f"  数据统计: mean={[f'{v:.4f}' for v in data_stats['mean'][:3]]}... "
+                       f"std={[f'{v:.4f}' for v in data_stats['std'][:3]]}...")
+        except:
+            logger.warning("  数据统计量计算失败, 生成时将无法反归一化")
+        
         history = {'phase_a': [], 'phase_b': [], 'phase_c': []}
         
         # Phase A: 自编码器
         self._train_phase_a(data_loader, history)
-        self._save(save_dir / "phase_a.pt")
+        self._save(save_dir / "phase_a.pt", data_stats=data_stats)
         
         # Phase B: 有监督
         self._train_phase_b(data_loader, history)
-        self._save(save_dir / "phase_b.pt")
+        self._save(save_dir / "phase_b.pt", data_stats=data_stats)
         
         # Phase C: 对抗
         self._train_phase_c(data_loader, history)
-        self._save(save_dir / "phase_c.pt")
+        self._save(save_dir / "phase_c.pt", data_stats=data_stats)
         
         # 保存训练历史
         with open(save_dir / "train_history.json", 'w') as f:
@@ -619,8 +632,8 @@ class CTimeGAN:
         return x_fake.cpu().numpy()
     
     # ── 保存/加载 ──
-    def _save(self, path):
-        torch.save({
+    def _save(self, path, data_stats=None):
+        save_dict = {
             'embedder': self.embedder.state_dict(),
             'recovery': self.recovery.state_dict(),
             'supervisor': self.supervisor.state_dict(),
@@ -628,7 +641,11 @@ class CTimeGAN:
             'discriminator': self.discriminator.state_dict(),
             'cond_encoder': self.cond_encoder.state_dict(),
             'cfg': vars(self.cfg),
-        }, path)
+        }
+        # ★ v2.3: 保存数据统计量 (用于生成时反归一化)
+        if data_stats is not None:
+            save_dict['data_stats'] = data_stats
+        torch.save(save_dict, path)
         logger.info(f"模型已保存: {path}")
     
     def load(self, path):
@@ -639,6 +656,7 @@ class CTimeGAN:
         self.generator.load_state_dict(ckpt['generator'])
         self.discriminator.load_state_dict(ckpt['discriminator'])
         self.cond_encoder.load_state_dict(ckpt['cond_encoder'])
+        self._data_stats = ckpt.get('data_stats', None)  # ★ v2.3: 加载数据统计量
         logger.info(f"模型已加载: {path}")
 
 # ============================================================
@@ -966,6 +984,20 @@ def main():
         model.load(args.model_path)
         
         fake = model.generate(num_samples=args.num_samples)
+        
+        # ★ v2.3: 反归一化 (如果模型中有统计量)
+        if hasattr(model, '_data_stats') and model._data_stats is not None:
+            stats = model._data_stats
+            mean = np.array(stats['mean']).reshape(1, 1, -1)
+            std = np.array(stats['std']).reshape(1, 1, -1)
+            fake_raw = fake * std + mean
+            logger.info(f"  反归一化: mean={[f'{v:.4f}' for v in stats['mean'][:3]]}... "
+                       f"std={[f'{v:.4f}' for v in stats['std'][:3]]}...")
+            logger.info(f"  原始范围: [{fake.min():.4f}, {fake.max():.4f}] → "
+                       f"反归一化范围: [{fake_raw.min():.4f}, {fake_raw.max():.4f}]")
+            fake = fake_raw
+        else:
+            logger.warning("  模型中无数据统计量, 输出为z-score格式 (未反归一化)")
         
         out = ADV_DATA_DIR / f"generated_{args.num_samples}.npy"
         np.save(out, fake)
