@@ -3240,6 +3240,8 @@ def main():
                         help="指定组合名称(英文), 如short_momentum")
     parser.add_argument("--real-eval-data", type=str, default="",
                         help="实盘评估数据路径(.npy或CSV)")
+    parser.add_argument("--arena-episodes", type=int, default=0,
+                        help="竞技场统一覆盖episodes数(0=使用各组合预设值, N=所有组合统一训N轮)")
     
     args = parser.parse_args()
     cfg = AdversarialConfig(num_episodes=args.episodes)
@@ -3305,6 +3307,12 @@ def main():
             profiles = PRESET_PROFILES[:args.arena_combos]
         else:
             profiles = PRESET_PROFILES
+        
+        # ★ 覆盖episodes: --arena-episodes > 0 时统一拉高训练轮次
+        if args.arena_episodes > 0:
+            for p in profiles:
+                p.episodes = args.arena_episodes
+            logger.info(f"★ 统一覆盖episodes: {args.arena_episodes} (原预设总计{sum(pp.episodes for pp in PRESET_PROFILES)}→现总计{len(profiles)*args.arena_episodes})")
         
         # 加载实盘评估数据
         real_eval_prices = None
