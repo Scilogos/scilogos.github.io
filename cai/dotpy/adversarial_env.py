@@ -944,37 +944,55 @@ class MarketEnv:
         self.day_count = 0
     
     def _setup_benchmark(self, price_benchmark):
-        """★ v2.2: 设置价格基准线, 将生成数据/实盘数据转为每tick价格序列"""
-        self.benchmark_prices = None  # list of arrays, 每个array是该日的240个tick价格
+        """
+        ★ v2.2→v2.3: 设置价格基准线, 正确处理多种数据格式
+        
+        支持格式:
+          1. 原始价格 (全部>0, 均值>1): 直接用, 内部算pct
+          2. z-score归一化 (mean≈0, std≈1, 有正有负): 差分→缩放→重建价格
+          3. pct收益率 (范围[-0.2, 0.2]): cumprod(1+x)
+          4. 归一化但全正 (如z-score的open列, 0.05~0.2): 差分→缩放→重建价格
+          5. 2D数组 (num_days, T): 直接当价格序列
+        """
+        self.benchmark_prices = None
         
         if price_benchmark is None:
             return
         
         try:
             data = np.array(price_benchmark)
+            
             if data.ndim == 3:
-                # (num_days, T, F) → 取close列(第0列, 因为normalize后close在第0位)
-                # normalize_ohlcv的输出: [close_pct, high_pct, low_pct, open_pct, volume_pct]
+                # (num_days, T, F) → 提取close列(第3列)
                 self.benchmark_prices = []
+                n_features = data.shape[-1]
+                
                 for day_idx in range(data.shape[0]):
-                    day_prices = data[day_idx, :, 0]  # 取第0列(close_pct)
-                    # 从百分比变化重建绝对价格序列
-                    # 假设normalize后close_pct是收益率, 需要累积乘积
-                    # 但更简单: 直接用pct的累积和 * base_price
-                    abs_prices = np.cumprod(1 + day_prices) * self.cfg.initial_price
-                    # 插值到240个tick (如果T≠240)
+                    # 取close列 (OHLCV中close=第3列)
+                    if n_features >= 4:
+                        close_vals = data[day_idx, :, 3].copy()
+                    else:
+                        close_vals = data[day_idx, :, 0].copy()
+                    
+                    abs_prices = self._convert_to_price_trajectory(close_vals)
+                    
+                    if abs_prices is None:
+                        continue
+                    
+                    # 插值到240个tick
                     if len(abs_prices) != 240:
                         from scipy.interpolate import interp1d
                         x_old = np.linspace(0, 239, len(abs_prices))
                         f = interp1d(x_old, abs_prices, kind='linear')
                         abs_prices = f(np.arange(240))
+                    
                     self.benchmark_prices.append(abs_prices)
                     
             elif data.ndim == 2:
                 # (num_days, T) → 直接作为价格
                 self.benchmark_prices = []
                 for day_idx in range(data.shape[0]):
-                    day_prices = data[day_idx]
+                    day_prices = data[day_idx].copy()
                     if len(day_prices) != 240:
                         from scipy.interpolate import interp1d
                         x_old = np.linspace(0, 239, len(day_prices))
@@ -982,10 +1000,92 @@ class MarketEnv:
                         day_prices = f(np.arange(240))
                     self.benchmark_prices.append(day_prices)
             
-            logger.info(f"  ★ 基准线已解析: {len(self.benchmark_prices)}个交易日")
+            if self.benchmark_prices and len(self.benchmark_prices) > 0:
+                # 统计基准线信息
+                sample = self.benchmark_prices[0]
+                all_p = np.concatenate(self.benchmark_prices)
+                logger.info(f"  ★ 基准线已解析: {len(self.benchmark_prices)}个交易日 | "
+                           f"价格范围=[{all_p.min():.2f}, {all_p.max():.2f}] | "
+                           f"首日首价={sample[0]:.2f}")
+            else:
+                logger.warning("  ★ 基准线解析结果为空, 退回纯模拟")
+                self.benchmark_prices = None
+                
         except Exception as e:
             logger.warning(f"  ★ 基准线解析失败, 退回纯模拟: {e}")
             self.benchmark_prices = None
+    
+    def _convert_to_price_trajectory(self, values: np.ndarray) -> Optional[np.ndarray]:
+        """
+        ★ v2.3: 将任意格式的值序列转为绝对价格轨迹
+        
+        核心思路: 无论输入什么格式, 都先提取"相对变化信号",
+        再缩放到A股日收益率的合理范围(±2-3%日波动率),
+        最后用cumprod重建价格轨迹
+        """
+        T = len(values)
+        
+        # ── 格式检测 ──
+        all_positive = (values > 0).all()
+        val_mean = np.abs(values).mean()
+        val_std = values.std()
+        val_range = values.max() - values.min()
+        
+        if all_positive and val_mean > 1.0:
+            # ── 格式1: 原始价格 (如 10.5, 10.8, ...) ──
+            pct = np.zeros(T)
+            pct[1:] = (values[1:] - values[:-1]) / (values[:-1] + 1e-8)
+            abs_prices = np.cumprod(1 + pct) * values[0]
+            self._benchmark_format = "raw_price"
+            
+        elif all_positive and val_mean < 1.0 and val_range < 0.5:
+            # ── 格式4: 归一化但全正 (z-score的open列常见, 值域0.05~0.2) ──
+            # 差分提取变化信号
+            diff = np.zeros(T)
+            diff[1:] = np.diff(values)
+            return self._diff_to_price(diff)
+            
+        elif val_range < 0.4 and np.abs(values).max() < 0.2:
+            # ── 格式3: pct收益率 (范围[-0.2, 0.2]) ──
+            abs_prices = np.cumprod(1 + values) * self.cfg.initial_price
+            self._benchmark_format = "pct"
+            
+        else:
+            # ── 格式2: z-score归一化 (mean≈0, std≈1, 有正有负) ──
+            # 差分 = 信号的方向和相对强度
+            diff = np.zeros(T)
+            diff[1:] = np.diff(values)
+            return self._diff_to_price(diff)
+        
+        return abs_prices
+    
+    def _diff_to_price(self, diff: np.ndarray) -> Optional[np.ndarray]:
+        """
+        ★ v2.3: 将差分信号转为价格轨迹
+        
+        差分信号保留了原始数据中的方向和相对强度信息,
+        但绝对值不对应真实收益率。需要缩放:
+          scale = target_volatility / diff_volatility
+          target_volatility = 0.02 (A股典型日波动率2%)
+        """
+        diff_std = np.std(diff[1:]) if len(diff) > 1 else 0
+        if diff_std < 1e-10:
+            # 信号太弱, 生成微小随机波动
+            diff[1:] = np.random.randn(len(diff) - 1) * 0.005
+            diff_std = np.std(diff[1:])
+        
+        # 缩放到A股日收益率量级
+        target_vol = 0.02  # 2%日波动率
+        scale = target_vol / diff_std
+        returns = diff * scale
+        
+        # 限制极端单日波动 (涨跌停保护)
+        returns = np.clip(returns, -0.08, 0.08)
+        
+        # cumprod重建价格
+        abs_prices = np.cumprod(1 + returns) * self.cfg.initial_price
+        
+        return abs_prices
     
     def reset(self):
         # ★ v2.2: 用基准线开盘价reset(如果有)
