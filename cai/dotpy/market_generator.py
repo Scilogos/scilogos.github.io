@@ -442,7 +442,7 @@ class CTimeGAN:
         opt_r = optim.Adam(self.recovery.parameters(), lr=lr)
         opt_s = optim.Adam(self.supervisor.parameters(), lr=lr)  # ← 关键：必须独立
         opt_g = optim.Adam(self.generator.parameters(), lr=lr)
-        opt_d = optim.Adam(self.discriminator.parameters(), lr=lr * 0.1)  # ★ Bug#17修复: D学习率大幅降低(0.5→0.1)防碾压
+        opt_d = optim.Adam(self.discriminator.parameters(), lr=lr * 0.3)  # ★ v2.3: D学习率0.1→0.3, 0.1太弱长跑必崩
         
         all_params = (list(self.embedder.parameters()) + 
                      list(self.recovery.parameters()) +
@@ -451,8 +451,9 @@ class CTimeGAN:
         
         # ★ Bug#18修复: D训练频率控制 + 自适应G步数
         # 核心策略: D不是每批都训练，给G更多成长空间
-        d_train_freq = 3          # 每隔3个batch才训练1次D (StyleGAN2同款策略)
-        g_steps_per_d = 3         # D训练时G走3步; D不训练时G走1步
+        # ★ v2.3: D-G平衡修复 - D不能太弱否则长跑必崩
+        d_train_freq = 2          # 每隔2个batch训练1次D (3→2, D需要更多训练机会)
+        g_steps_per_d = 2         # D训练时G走2步 (3→2, 减少G的碾压优势)
         d_warmup_epochs = 2       # Phase C前2个epoch不训练D, 让E+R+S+G先热身
         
         # ★ v2.3: 最佳模型保存 + 早停 (防D崩塌后G漂移)
@@ -990,7 +991,7 @@ def main():
         
         # 加载预训练模型 (Phase A+B的权重)
         model = CTimeGAN(cfg, device=args.device)
-        pretrained = args.pretrained_path or str(ADV_MODEL_DIR / "phase_c.pt")
+        pretrained = args.pretrained_path or str(ADV_MODEL_DIR / "phase_b.pt")
         if Path(pretrained).exists():
             model.load(pretrained)
             logger.info(f"已加载预训练权重: {pretrained}")
