@@ -1,0 +1,5 @@
+# A股数据更新脚本依赖
+baostock>=0.8.8
+pandas>=1.5.0
+schedule>=1.1.0
+mootdx>=0.7.0

@@ -1,0 +1,56 @@
+{
+    "github": {
+        "repo_url": "https://github.com/yourusername/stockdata.git",
+        "branch": "main",
+        "commit_message": "Auto update stock data - {date}"
+    },
+    "schedule": {
+        "update_time": "16:00",
+        "timezone": "Asia/Shanghai",
+        "retry_times": 3,
+        "retry_delay": 300
+    },
+    "stocks": {
+        "indices": [
+            "sh.000001",
+            "sh.399001", 
+            "sh.399006"
+        ],
+        "custom": [
+            "sh.600519",
+            "sz.000858",
+            "sh.601318",
+            "sz.000333"
+        ]
+    },
+    "data": {
+        "storage_dir": "stockdata",
+        "history_years": 1,
+        "csv_columns": [
+            "date",
+            "code",
+            "name",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "amount",
+            "turnover",
+            "pct_change",
+            "is_limit_up",
+            "is_limit_down"
+        ]
+    },
+    "log": {
+        "level": "INFO",
+        "file": "stockdata_update.log",
+        "max_bytes": 10485760,
+        "backup_count": 5
+    },
+    "data_sources": {
+        "primary": "baostock",
+        "backup": "mootdx"
+    }
+}
+

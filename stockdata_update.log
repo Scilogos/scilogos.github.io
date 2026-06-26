@@ -1,0 +1,58 @@
+2026-06-26 23:27:36,309 - StockDataUpdater - INFO - 股票列表共 7 个: ['sh.000001', 'sh.399001', 'sh.399006', 'sh.600519', 'sz.000858', 'sh.601318', 'sz.000333']
+2026-06-26 23:27:36,310 - StockDataUpdater - INFO - ==================================================
+2026-06-26 23:27:36,311 - StockDataUpdater - INFO - 开始执行数据更新 - 2026-06-26
+2026-06-26 23:27:36,311 - StockDataUpdater - INFO - ==================================================
+2026-06-26 23:27:36,313 - StockDataUpdater - INFO - 存储目录: stockdata
+2026-06-26 23:27:36,314 - StockDataUpdater - INFO - 连接Baostock...
+2026-06-26 23:27:41,316 - StockDataUpdater - INFO - 数据范围: 2025-06-26 至 2026-06-26
+2026-06-26 23:27:41,317 - StockDataUpdater - INFO - 进度: 1/7 - sh.000001
+2026-06-26 23:27:41,317 - StockDataUpdater - INFO - Baostock获取数据: sh.000001 (2025-06-26 ~ 2026-06-26)
+2026-06-26 23:27:41,320 - StockDataUpdater - WARNING - sh.000001 无数据
+2026-06-26 23:27:41,334 - StockDataUpdater - WARNING - sh.000001 baostock无数据，尝试mootdx...
+2026-06-26 23:27:41,335 - StockDataUpdater - INFO - Mootdx备用获取数据: sh.000001
+2026-06-26 23:27:45,012 - StockDataUpdater - ERROR - mootdx未安装，请运行: pip install 'mootdx[all]'
+2026-06-26 23:27:45,514 - StockDataUpdater - INFO - 进度: 2/7 - sh.399001
+2026-06-26 23:27:45,515 - StockDataUpdater - INFO - Baostock获取数据: sh.399001 (2025-06-26 ~ 2026-06-26)
+2026-06-26 23:27:45,515 - StockDataUpdater - WARNING - sh.399001 无数据
+2026-06-26 23:27:45,516 - StockDataUpdater - WARNING - sh.399001 baostock无数据，尝试mootdx...
+2026-06-26 23:27:45,516 - StockDataUpdater - INFO - Mootdx备用获取数据: sh.399001
+2026-06-26 23:27:45,518 - StockDataUpdater - ERROR - mootdx未安装，请运行: pip install 'mootdx[all]'
+2026-06-26 23:27:46,020 - StockDataUpdater - INFO - 进度: 3/7 - sh.399006
+2026-06-26 23:27:46,020 - StockDataUpdater - INFO - Baostock获取数据: sh.399006 (2025-06-26 ~ 2026-06-26)
+2026-06-26 23:27:46,021 - StockDataUpdater - WARNING - sh.399006 无数据
+2026-06-26 23:27:46,022 - StockDataUpdater - WARNING - sh.399006 baostock无数据，尝试mootdx...
+2026-06-26 23:27:46,022 - StockDataUpdater - INFO - Mootdx备用获取数据: sh.399006
+2026-06-26 23:27:46,024 - StockDataUpdater - ERROR - mootdx未安装，请运行: pip install 'mootdx[all]'
+2026-06-26 23:27:46,525 - StockDataUpdater - INFO - 进度: 4/7 - sh.600519
+2026-06-26 23:27:46,526 - StockDataUpdater - INFO - Baostock获取数据: sh.600519 (2025-06-26 ~ 2026-06-26)
+2026-06-26 23:27:46,526 - StockDataUpdater - WARNING - sh.600519 无数据
+2026-06-26 23:27:46,528 - StockDataUpdater - WARNING - sh.600519 baostock无数据，尝试mootdx...
+2026-06-26 23:27:46,528 - StockDataUpdater - INFO - Mootdx备用获取数据: sh.600519
+2026-06-26 23:27:46,531 - StockDataUpdater - ERROR - mootdx未安装，请运行: pip install 'mootdx[all]'
+2026-06-26 23:27:47,032 - StockDataUpdater - INFO - 进度: 5/7 - sz.000858
+2026-06-26 23:27:47,033 - StockDataUpdater - INFO - Baostock获取数据: sz.000858 (2025-06-26 ~ 2026-06-26)
+2026-06-26 23:27:47,034 - StockDataUpdater - WARNING - sz.000858 无数据
+2026-06-26 23:27:47,035 - StockDataUpdater - WARNING - sz.000858 baostock无数据，尝试mootdx...
+2026-06-26 23:27:47,036 - StockDataUpdater - INFO - Mootdx备用获取数据: sz.000858
+2026-06-26 23:27:47,037 - StockDataUpdater - ERROR - mootdx未安装，请运行: pip install 'mootdx[all]'
+2026-06-26 23:27:47,539 - StockDataUpdater - INFO - 进度: 6/7 - sh.601318
+2026-06-26 23:27:47,539 - StockDataUpdater - INFO - Baostock获取数据: sh.601318 (2025-06-26 ~ 2026-06-26)
+2026-06-26 23:27:47,540 - StockDataUpdater - WARNING - sh.601318 无数据
+2026-06-26 23:27:47,541 - StockDataUpdater - WARNING - sh.601318 baostock无数据，尝试mootdx...
+2026-06-26 23:27:47,541 - StockDataUpdater - INFO - Mootdx备用获取数据: sh.601318
+2026-06-26 23:27:47,542 - StockDataUpdater - ERROR - mootdx未安装，请运行: pip install 'mootdx[all]'
+2026-06-26 23:27:48,044 - StockDataUpdater - INFO - 进度: 7/7 - sz.000333
+2026-06-26 23:27:48,044 - StockDataUpdater - INFO - Baostock获取数据: sz.000333 (2025-06-26 ~ 2026-06-26)
+2026-06-26 23:27:48,044 - StockDataUpdater - WARNING - sz.000333 无数据
+2026-06-26 23:27:48,046 - StockDataUpdater - WARNING - sz.000333 baostock无数据，尝试mootdx...
+2026-06-26 23:27:48,047 - StockDataUpdater - INFO - Mootdx备用获取数据: sz.000333
+2026-06-26 23:27:48,048 - StockDataUpdater - ERROR - mootdx未安装，请运行: pip install 'mootdx[all]'
+2026-06-26 23:27:48,549 - StockDataUpdater - INFO - 数据获取完成: 成功 0, 失败 7
+2026-06-26 23:27:48,549 - StockDataUpdater - INFO - 开始Git同步...
+2026-06-26 23:27:48,550 - StockDataUpdater - INFO - 非Git仓库，初始化...
+2026-06-26 23:27:50,256 - StockDataUpdater - INFO - Git添加文件...
+2026-06-26 23:27:50,706 - StockDataUpdater - INFO - Git提交: Auto update stock data - 2026-06-26
+2026-06-26 23:27:51,161 - StockDataUpdater - INFO - Git推送...
+2026-06-26 23:27:51,855 - StockDataUpdater - ERROR - Git操作失败: Command '['git', 'push', '-u', 'origin', 'main', '--force']' returned non-zero exit status 1.
+2026-06-26 23:27:51,857 - StockDataUpdater - INFO - 更新完成! 耗时: 15.5秒
+2026-06-26 23:27:56,043 - StockDataUpdater - INFO - Baostock已断开连接
