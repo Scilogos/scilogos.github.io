@@ -1,6 +1,6 @@
 {
     "github": {
-        "repo_url": "https://github.com/yourusername/stockdata.git",
+        "repo_url": "https://github.com/Scilogos/scilogos.github.io.git",
         "branch": "main",
         "commit_message": "Auto update stock data - {date}"
     },
@@ -53,4 +53,3 @@
         "backup": "mootdx"
     }
 }
-
