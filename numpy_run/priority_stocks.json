@@ -1,832 +1,832 @@
 {
-  "description": "庄散对抗系统重点标的列表",
+  "description": "庄散对抗系统重点标的列表（已优化：仅含普通散户可交易标的）",
   "total_count": 205,
+  "updated": "2026-06-30 00:06",
   "categories": {
-    "科创板": 80,
-    "创业板": 60,
-    "002系": 60,
-    "ETF": 5
+    "沪市主板": 160,
+    "深市主板": 20,
+    "中小板": 25
   },
   "stocks": [
     {
-      "code": "sh.688001",
-      "category": "科创板"
+      "code": "sh.600000",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688002",
-      "category": "科创板"
+      "code": "sh.600004",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688003",
-      "category": "科创板"
+      "code": "sh.600006",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688004",
-      "category": "科创板"
+      "code": "sh.600007",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688005",
-      "category": "科创板"
+      "code": "sh.600008",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688006",
-      "category": "科创板"
+      "code": "sh.600009",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688007",
-      "category": "科创板"
+      "code": "sh.600010",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688008",
-      "category": "科创板"
+      "code": "sh.600011",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688009",
-      "category": "科创板"
+      "code": "sh.600012",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688010",
-      "category": "科创板"
+      "code": "sh.600015",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688011",
-      "category": "科创板"
+      "code": "sh.600016",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688012",
-      "category": "科创板"
+      "code": "sh.600017",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688013",
-      "category": "科创板"
+      "code": "sh.600018",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688015",
-      "category": "科创板"
+      "code": "sh.600019",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688016",
-      "category": "科创板"
+      "code": "sh.600020",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688017",
-      "category": "科创板"
+      "code": "sh.600021",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688018",
-      "category": "科创板"
+      "code": "sh.600022",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688019",
-      "category": "科创板"
+      "code": "sh.600023",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688020",
-      "category": "科创板"
+      "code": "sh.600025",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688021",
-      "category": "科创板"
+      "code": "sh.600026",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688022",
-      "category": "科创板"
+      "code": "sh.600027",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688023",
-      "category": "科创板"
+      "code": "sh.600028",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688025",
-      "category": "科创板"
+      "code": "sh.600029",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688026",
-      "category": "科创板"
+      "code": "sh.600030",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688027",
-      "category": "科创板"
+      "code": "sh.600031",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688028",
-      "category": "科创板"
+      "code": "sh.600032",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688029",
-      "category": "科创板"
+      "code": "sh.600033",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688030",
-      "category": "科创板"
+      "code": "sh.600035",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688031",
-      "category": "科创板"
+      "code": "sh.600036",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688032",
-      "category": "科创板"
+      "code": "sh.600037",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688033",
-      "category": "科创板"
+      "code": "sh.600038",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688035",
-      "category": "科创板"
+      "code": "sh.600039",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688036",
-      "category": "科创板"
+      "code": "sh.600048",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688037",
-      "category": "科创板"
+      "code": "sh.600050",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688038",
-      "category": "科创板"
+      "code": "sh.600051",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688039",
-      "category": "科创板"
+      "code": "sh.600052",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688041",
-      "category": "科创板"
+      "code": "sh.600053",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688045",
-      "category": "科创板"
+      "code": "sh.600054",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688046",
-      "category": "科创板"
+      "code": "sh.600055",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688047",
-      "category": "科创板"
+      "code": "sh.600056",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688048",
-      "category": "科创板"
+      "code": "sh.600057",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688049",
-      "category": "科创板"
+      "code": "sh.600058",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688050",
-      "category": "科创板"
+      "code": "sh.600059",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688051",
-      "category": "科创板"
+      "code": "sh.600060",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688052",
-      "category": "科创板"
+      "code": "sh.600061",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688053",
-      "category": "科创板"
+      "code": "sh.600062",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688055",
-      "category": "科创板"
+      "code": "sh.600063",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688056",
-      "category": "科创板"
+      "code": "sh.600064",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688057",
-      "category": "科创板"
+      "code": "sh.600066",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688058",
-      "category": "科创板"
+      "code": "sh.600067",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688059",
-      "category": "科创板"
+      "code": "sh.600071",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688060",
-      "category": "科创板"
+      "code": "sh.600072",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688061",
-      "category": "科创板"
+      "code": "sh.600073",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688062",
-      "category": "科创板"
+      "code": "sh.600075",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688063",
-      "category": "科创板"
+      "code": "sh.600076",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688065",
-      "category": "科创板"
+      "code": "sh.600078",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688066",
-      "category": "科创板"
+      "code": "sh.600079",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688067",
-      "category": "科创板"
+      "code": "sh.600080",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688068",
-      "category": "科创板"
+      "code": "sh.600081",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688069",
-      "category": "科创板"
+      "code": "sh.600082",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688070",
-      "category": "科创板"
+      "code": "sh.600084",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688071",
-      "category": "科创板"
+      "code": "sh.600085",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688072",
-      "category": "科创板"
+      "code": "sh.600088",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688073",
-      "category": "科创板"
+      "code": "sh.600089",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688075",
-      "category": "科创板"
+      "code": "sh.600094",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688076",
-      "category": "科创板"
+      "code": "sh.600095",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688077",
-      "category": "科创板"
+      "code": "sh.600096",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688078",
-      "category": "科创板"
+      "code": "sh.600097",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688079",
-      "category": "科创板"
+      "code": "sh.600098",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688080",
-      "category": "科创板"
+      "code": "sh.600099",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688081",
-      "category": "科创板"
+      "code": "sh.600100",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688082",
-      "category": "科创板"
+      "code": "sh.600101",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688083",
-      "category": "科创板"
+      "code": "sh.600103",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688084",
-      "category": "科创板"
+      "code": "sh.600104",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688085",
-      "category": "科创板"
+      "code": "sh.600105",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688087",
-      "category": "科创板"
+      "code": "sh.600106",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688088",
-      "category": "科创板"
+      "code": "sh.600107",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688089",
-      "category": "科创板"
+      "code": "sh.600108",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688090",
-      "category": "科创板"
+      "code": "sh.600109",
+      "category": "沪市主板"
     },
     {
-      "code": "sh.688091",
-      "category": "科创板"
+      "code": "sh.600110",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300001",
-      "category": "创业板"
+      "code": "sh.601000",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300002",
-      "category": "创业板"
+      "code": "sh.601001",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300003",
-      "category": "创业板"
+      "code": "sh.601002",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300004",
-      "category": "创业板"
+      "code": "sh.601003",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300005",
-      "category": "创业板"
+      "code": "sh.601005",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300006",
-      "category": "创业板"
+      "code": "sh.601006",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300007",
-      "category": "创业板"
+      "code": "sh.601007",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300008",
-      "category": "创业板"
+      "code": "sh.601008",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300009",
-      "category": "创业板"
+      "code": "sh.601009",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300010",
-      "category": "创业板"
+      "code": "sh.601010",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300011",
-      "category": "创业板"
+      "code": "sh.601011",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300012",
-      "category": "创业板"
+      "code": "sh.601012",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300013",
-      "category": "创业板"
+      "code": "sh.601015",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300014",
-      "category": "创业板"
+      "code": "sh.601016",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300015",
-      "category": "创业板"
+      "code": "sh.601018",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300016",
-      "category": "创业板"
+      "code": "sh.601019",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300017",
-      "category": "创业板"
+      "code": "sh.601020",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300018",
-      "category": "创业板"
+      "code": "sh.601021",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300019",
-      "category": "创业板"
+      "code": "sh.601022",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300020",
-      "category": "创业板"
+      "code": "sh.601026",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300021",
-      "category": "创业板"
+      "code": "sh.601033",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300022",
-      "category": "创业板"
+      "code": "sh.601038",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300024",
-      "category": "创业板"
+      "code": "sh.601058",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300025",
-      "category": "创业板"
+      "code": "sh.601059",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300026",
-      "category": "创业板"
+      "code": "sh.601061",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300027",
-      "category": "创业板"
+      "code": "sh.601065",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300029",
-      "category": "创业板"
+      "code": "sh.601066",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300030",
-      "category": "创业板"
+      "code": "sh.601068",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300031",
-      "category": "创业板"
+      "code": "sh.601069",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300032",
-      "category": "创业板"
+      "code": "sh.601077",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300033",
-      "category": "创业板"
+      "code": "sh.601083",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300034",
-      "category": "创业板"
+      "code": "sh.601086",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300035",
-      "category": "创业板"
+      "code": "sh.601088",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300036",
-      "category": "创业板"
+      "code": "sh.601089",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300037",
-      "category": "创业板"
+      "code": "sh.601096",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300039",
-      "category": "创业板"
+      "code": "sh.601098",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300040",
-      "category": "创业板"
+      "code": "sh.601099",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300041",
-      "category": "创业板"
+      "code": "sh.601100",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300042",
-      "category": "创业板"
+      "code": "sh.601101",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300043",
-      "category": "创业板"
+      "code": "sh.601106",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300044",
-      "category": "创业板"
+      "code": "sh.601107",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300045",
-      "category": "创业板"
+      "code": "sh.601108",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300046",
-      "category": "创业板"
+      "code": "sh.601111",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300047",
-      "category": "创业板"
+      "code": "sh.601112",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300048",
-      "category": "创业板"
+      "code": "sh.601113",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300049",
-      "category": "创业板"
+      "code": "sh.601116",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300050",
-      "category": "创业板"
+      "code": "sh.601117",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300051",
-      "category": "创业板"
+      "code": "sh.601118",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300052",
-      "category": "创业板"
+      "code": "sh.601121",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300053",
-      "category": "创业板"
+      "code": "sh.601126",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300054",
-      "category": "创业板"
+      "code": "sh.603000",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300055",
-      "category": "创业板"
+      "code": "sh.603001",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300056",
-      "category": "创业板"
+      "code": "sh.603002",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300057",
-      "category": "创业板"
+      "code": "sh.603004",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300058",
-      "category": "创业板"
+      "code": "sh.603005",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300059",
-      "category": "创业板"
+      "code": "sh.603006",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300061",
-      "category": "创业板"
+      "code": "sh.603007",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300062",
-      "category": "创业板"
+      "code": "sh.603008",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300063",
-      "category": "创业板"
+      "code": "sh.603009",
+      "category": "沪市主板"
     },
     {
-      "code": "sz.300065",
-      "category": "创业板"
+      "code": "sh.603010",
+      "category": "沪市主板"
+    },
+    {
+      "code": "sh.603011",
+      "category": "沪市主板"
+    },
+    {
+      "code": "sh.603012",
+      "category": "沪市主板"
+    },
+    {
+      "code": "sh.603013",
+      "category": "沪市主板"
+    },
+    {
+      "code": "sh.603014",
+      "category": "沪市主板"
+    },
+    {
+      "code": "sh.603015",
+      "category": "沪市主板"
+    },
+    {
+      "code": "sh.603016",
+      "category": "沪市主板"
+    },
+    {
+      "code": "sh.603017",
+      "category": "沪市主板"
+    },
+    {
+      "code": "sh.603018",
+      "category": "沪市主板"
+    },
+    {
+      "code": "sh.603019",
+      "category": "沪市主板"
+    },
+    {
+      "code": "sh.603020",
+      "category": "沪市主板"
+    },
+    {
+      "code": "sh.603021",
+      "category": "沪市主板"
+    },
+    {
+      "code": "sh.603022",
+      "category": "沪市主板"
+    },
+    {
+      "code": "sh.603023",
+      "category": "沪市主板"
+    },
+    {
+      "code": "sh.603025",
+      "category": "沪市主板"
+    },
+    {
+      "code": "sh.603026",
+      "category": "沪市主板"
+    },
+    {
+      "code": "sh.603027",
+      "category": "沪市主板"
+    },
+    {
+      "code": "sh.603028",
+      "category": "沪市主板"
+    },
+    {
+      "code": "sh.603029",
+      "category": "沪市主板"
+    },
+    {
+      "code": "sh.603030",
+      "category": "沪市主板"
+    },
+    {
+      "code": "sh.603031",
+      "category": "沪市主板"
+    },
+    {
+      "code": "sz.000001",
+      "category": "深市主板"
+    },
+    {
+      "code": "sz.000002",
+      "category": "深市主板"
+    },
+    {
+      "code": "sz.000004",
+      "category": "深市主板"
+    },
+    {
+      "code": "sz.000006",
+      "category": "深市主板"
+    },
+    {
+      "code": "sz.000007",
+      "category": "深市主板"
+    },
+    {
+      "code": "sz.000008",
+      "category": "深市主板"
+    },
+    {
+      "code": "sz.000009",
+      "category": "深市主板"
+    },
+    {
+      "code": "sz.000010",
+      "category": "深市主板"
+    },
+    {
+      "code": "sz.000011",
+      "category": "深市主板"
+    },
+    {
+      "code": "sz.000012",
+      "category": "深市主板"
+    },
+    {
+      "code": "sz.000014",
+      "category": "深市主板"
+    },
+    {
+      "code": "sz.000016",
+      "category": "深市主板"
+    },
+    {
+      "code": "sz.000017",
+      "category": "深市主板"
+    },
+    {
+      "code": "sz.000019",
+      "category": "深市主板"
+    },
+    {
+      "code": "sz.000020",
+      "category": "深市主板"
+    },
+    {
+      "code": "sz.000021",
+      "category": "深市主板"
+    },
+    {
+      "code": "sz.000025",
+      "category": "深市主板"
+    },
+    {
+      "code": "sz.000026",
+      "category": "深市主板"
+    },
+    {
+      "code": "sz.000027",
+      "category": "深市主板"
+    },
+    {
+      "code": "sz.000028",
+      "category": "深市主板"
     },
     {
       "code": "sz.002001",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002003",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002004",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002005",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002006",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002007",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002008",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002009",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002010",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002011",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002012",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002014",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002015",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002016",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002017",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002019",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002020",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002021",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002022",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002023",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002024",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002025",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002026",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002027",
-      "category": "002系(潜在科技)"
+      "category": "中小板"
     },
     {
       "code": "sz.002028",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002029",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002030",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002031",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002032",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002033",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002034",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002035",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002036",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002037",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002038",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002039",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002040",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002041",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002042",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002043",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002044",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002045",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002046",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002047",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002048",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002049",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002050",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002051",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002052",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002053",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002054",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002055",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002056",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002057",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002058",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002059",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002060",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002061",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002062",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sz.002063",
-      "category": "002系(潜在科技)"
-    },
-    {
-      "code": "sh.512480",
-      "category": "半导体ETF"
-    },
-    {
-      "code": "sh.512760",
-      "category": "芯片ETF"
-    },
-    {
-      "code": "sh.588080",
-      "category": "科创50ETF"
-    },
-    {
-      "code": "sh.518880",
-      "category": "黄金ETF"
-    },
-    {
-      "code": "sh.515980",
-      "category": "AIETF"
+      "category": "中小板"
     }
   ]
 }
